@@ -72,3 +72,126 @@ body.autobgm-modal-open{
 .autobgm-modal-b{
   padding:12px 14px 14px;
 }
+
+/* ===== AutoBGM Modal UI ===== */
+.abgm-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.abgm-grid{
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  gap:12px;
+}
+
+@media (max-width: 860px){
+  .abgm-grid{ grid-template-columns: 1fr; }
+}
+
+.abgm-card{
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  padding:12px;
+}
+
+.abgm-card-h{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.abgm-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+}
+
+.abgm-inline{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.abgm-select{
+  width:100%;
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:inherit;
+}
+
+.abgm-range{
+  width:180px;
+}
+
+.abgm-hr{
+  margin:12px 0;
+  opacity:.18;
+}
+
+.abgm-minihelp{
+  margin-top:10px;
+  font-size:12px;
+  opacity:.75;
+  line-height:1.35;
+}
+
+.abgm-tablewrap{
+  margin-top:10px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.abgm-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+.abgm-table thead{
+  background:rgba(255,255,255,.05);
+}
+
+.abgm-table th, .abgm-table td{
+  padding:8px 10px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  vertical-align:middle;
+}
+
+.abgm-table input[type="text"],
+.abgm-table input[type="number"]{
+  width:100%;
+  padding:6px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:inherit;
+}
+
+.abgm-volcell{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.abgm-volcell input[type="range"]{
+  width:100%;
+}
+
+.abgm-iconbtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:30px;
+}
