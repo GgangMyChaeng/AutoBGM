@@ -10,11 +10,19 @@ function fitModalToViewport(overlay) {
   const modal = overlay?.querySelector?.(".autobgm-modal");
   if (!modal) return;
 
-  const h = window.visualViewport?.height || window.innerHeight || 600;
-  const maxH = Math.max(240, Math.floor(h - 24));
+  const vv = window.visualViewport;
+  const hRaw = Math.max(vv?.height || 0, window.innerHeight || 0, 600);
+  const maxH = Math.max(240, Math.floor(hRaw - 24));
 
+  modal.style.boxSizing = "border-box";
+  modal.style.minHeight = "240px";
   modal.style.maxHeight = `${maxH}px`;
-  modal.style.minHeight = `240px`;
+
+  // ✅ 핵심: 모바일에서 “얇은 줄” 방지용 강제 height
+  modal.style.height = `${maxH}px`;
+
+  // ✅ 혹시 테마가 투명으로 덮으면 인라인이 이김
+  modal.style.background = "rgba(20,20,20,.96)";
 }
 
 /** ========= util ========= */
@@ -302,9 +310,15 @@ async function openModal() {
   });
 
   document.body.appendChild(overlay);
-  fitModalToViewport(overlay);
+
+// ✅ 즉시 + 다음 프레임 + 약간 후에 한번 더
+fitModalToViewport(overlay);
+requestAnimationFrame(() => fitModalToViewport(overlay));
+setTimeout(() => fitModalToViewport(overlay), 120);
+
 window.visualViewport?.addEventListener("resize", () => fitModalToViewport(overlay));
 window.addEventListener("resize", () => fitModalToViewport(overlay));
+
 
   document.body.classList.add("autobgm-modal-open");
   window.addEventListener("keydown", onEscClose);
@@ -903,6 +917,10 @@ async function mount() {
 }
 
 function init() {
+  // ✅ 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
+  if (window.__AUTOBGM_BOOTED__) return;
+  window.__AUTOBGM_BOOTED__ = true;
+
   mount();
   const obs = new MutationObserver(() => mount());
   obs.observe(document.body, { childList: true, subtree: true });
