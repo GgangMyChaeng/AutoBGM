@@ -6,10 +6,90 @@ console.log("[AutoBGM] index.js loaded", import.meta.url);
 const SETTINGS_KEY = "autobgm";
 const MODAL_OVERLAY_ID = "abgm_modal_overlay";
 
+/** ========= util ========= */
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+function getActivePreset(settings) {
+  return settings.presets[settings.activePresetId];
+}
 
+/** ========= IndexedDB Assets =========
+ * key: fileKey (예: "neutral_01.mp3")
+ * value: Blob(File)
+ */
+const DB_NAME = "autobgm_db";
+const DB_VER = 1;
+const STORE_ASSETS = "assets";
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_ASSETS)) db.createObjectStore(STORE_ASSETS);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbPut(key, blob) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readwrite");
+    tx.objectStore(STORE_ASSETS).put(blob, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readonly");
+    const req = tx.objectStore(STORE_ASSETS).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbDel(key) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readwrite");
+    tx.objectStore(STORE_ASSETS).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/** settings.assets = { [fileKey]: { fileKey, label } } */
+function ensureAssetList(settings) {
+  settings.assets ??= {};
+  return settings.assets;
+}
+
+/** ========= Template loader ========= */
+async function loadHtml(relPath) {
+  const url = new URL(relPath, import.meta.url);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Template fetch failed: ${res.status} ${url}`);
+  return await res.text();
+}
+
+/** ========= Settings schema + migration =========
+ * preset.bgms[]: { id, fileKey, keywords, priority, volume }
+ * preset.defaultBgmKey: "neutral_01.mp3"
+ */
 function ensureSettings() {
   extension_settings[SETTINGS_KEY] ??= {
     enabled: true,
@@ -25,52 +105,163 @@ function ensureSettings() {
         bgms: [],
       },
     },
+    assets: {},
   };
 
   const s = extension_settings[SETTINGS_KEY];
 
-  // 구버전 호환: settings.defaultBgmId -> active preset의 defaultBgmId로 이동
-  if (s.defaultBgmId && s.presets?.[s.activePresetId] && !s.presets[s.activePresetId].defaultBgmId) {
-    s.presets[s.activePresetId].defaultBgmId = s.defaultBgmId;
-    delete s.defaultBgmId;
-  }
-
   // 안전장치
   if (!s.presets || Object.keys(s.presets).length === 0) {
     s.presets = {
-      default: { id: "default", name: "Default", defaultBgmId: "", bgms: [] },
+      default: { id: "default", name: "Default", defaultBgmKey: "", bgms: [] },
     };
     s.activePresetId = "default";
   }
+  if (!s.presets[s.activePresetId]) s.activePresetId = Object.keys(s.presets)[0];
 
-  if (!s.presets[s.activePresetId]) {
-    s.activePresetId = Object.keys(s.presets)[0];
-  }
+  ensureAssetList(s);
 
-  // preset 스키마 보정
+  // 프리셋/곡 스키마 보정 + 구버전 변환
   Object.values(s.presets).forEach((p) => {
-    p.defaultBgmId ??= "";
+    p.defaultBgmKey ??= "";
     p.bgms ??= [];
+
+    // 구버전: preset.defaultBgmId가 있으면 -> defaultBgmKey로 변환
+    if (p.defaultBgmId && !p.defaultBgmKey) {
+      const hit = p.bgms.find((b) => b.id === p.defaultBgmId);
+      if (hit?.fileKey) p.defaultBgmKey = hit.fileKey;
+      else if (hit?.name) p.defaultBgmKey = `${hit.name}.mp3`;
+      delete p.defaultBgmId;
+    }
+
+    // bgm들 fileKey 없으면 채워주기 (최소한 안 터지게)
+    p.bgms.forEach((b) => {
+      if (!b.fileKey) {
+        if (b.name) b.fileKey = `${b.name}.mp3`;
+        else b.fileKey = "";
+      }
+      b.keywords ??= "";
+      b.priority ??= 0;
+      b.volume ??= 1.0;
+    });
+
+    // default 비었으면 첫 곡 fileKey로
+    if (!p.defaultBgmKey && p.bgms.length && p.bgms[0].fileKey) {
+      p.defaultBgmKey = p.bgms[0].fileKey;
+    }
   });
+
+  // 구버전: settings.defaultBgmId 같은 전역 값 남아있으면 제거 (있어도 안 쓰게)
+  if (s.defaultBgmId) delete s.defaultBgmId;
 
   return s;
 }
 
-async function loadHtml(relPath) {
-  const url = new URL(relPath, import.meta.url);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Template fetch failed: ${res.status} ${url}`);
-  return await res.text();
+/** ========= Legacy: dataUrl -> idb로 옮기기 (있으면 한번만) ========= */
+let _legacyMigrated = false;
+async function migrateLegacyDataUrlsToIDB(settings) {
+  if (_legacyMigrated) return;
+  _legacyMigrated = true;
+
+  let changed = false;
+  const assets = ensureAssetList(settings);
+
+  for (const p of Object.values(settings.presets)) {
+    for (const b of p.bgms) {
+      if (b.dataUrl && b.fileKey) {
+        try {
+          const blob = await (await fetch(b.dataUrl)).blob();
+          await idbPut(b.fileKey, blob);
+          assets[b.fileKey] = { fileKey: b.fileKey, label: b.fileKey.replace(/\.mp3$/i, "") };
+          delete b.dataUrl;
+          changed = true;
+        } catch (e) {
+          console.warn("[AutoBGM] legacy dataUrl migrate failed:", b.fileKey, e);
+        }
+      }
+    }
+  }
+
+  if (changed) saveSettingsDebounced();
 }
 
-// ===== Modal open/close =====
+/** ========= Audio player (test) ========= */
+const _testAudio = new Audio();
+let _testUrl = "";
+async function playAsset(fileKey, volume01) {
+  const blob = await idbGet(fileKey);
+  if (!blob) {
+    console.warn("[AutoBGM] missing asset:", fileKey);
+    return;
+  }
+
+  if (_testUrl) URL.revokeObjectURL(_testUrl);
+  _testUrl = URL.createObjectURL(blob);
+
+  _testAudio.pause();
+  _testAudio.currentTime = 0;
+  _testAudio.src = _testUrl;
+  _testAudio.volume = Math.max(0, Math.min(1, volume01));
+  _testAudio.play().catch(() => {});
+}
+
+/** ========= ZIP (JSZip 필요) ========= */
+async function ensureJSZipLoaded() {
+  if (window.JSZip) return window.JSZip;
+
+  // ✅ 너가 vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드됨
+  const s = document.createElement("script");
+  s.src = new URL("vendor/jszip.min.js", import.meta.url);
+  document.head.appendChild(s);
+
+  await new Promise((resolve, reject) => {
+    s.onload = resolve;
+    s.onerror = reject;
+  });
+
+  return window.JSZip;
+}
+
+async function importZip(file, settings) {
+  const JSZip = await ensureJSZipLoaded();
+  const zip = await JSZip.loadAsync(file);
+
+  const assets = ensureAssetList(settings);
+  const importedKeys = [];
+
+  const entries = Object.values(zip.files).filter(
+    (f) => !f.dir && f.name.toLowerCase().endsWith(".mp3")
+  );
+
+  for (const entry of entries) {
+    const blob = await entry.async("blob");
+    const fileKey = entry.name.split("/").pop(); // 폴더 제거
+
+    await idbPut(fileKey, blob);
+    assets[fileKey] = { fileKey, label: fileKey.replace(/\.mp3$/i, "") };
+    importedKeys.push(fileKey);
+  }
+
+  saveSettingsDebounced();
+  return importedKeys;
+}
+
+/** ========= Helpers: asset delete safely ========= */
+function isFileKeyReferenced(settings, fileKey) {
+  for (const p of Object.values(settings.presets)) {
+    if (p.defaultBgmKey === fileKey) return true;
+    if (p.bgms?.some((b) => b.fileKey === fileKey)) return true;
+  }
+  return false;
+}
+
+/** ========= Modal open/close ========= */
 function closeModal() {
   const overlay = document.getElementById(MODAL_OVERLAY_ID);
   if (overlay) overlay.remove();
   document.body.classList.remove("autobgm-modal-open");
   window.removeEventListener("keydown", onEscClose);
 }
-
 function onEscClose(e) {
   if (e.key === "Escape") closeModal();
 }
@@ -107,20 +298,7 @@ async function openModal() {
   console.log("[AutoBGM] modal opened");
 }
 
-// ===== Modal UI logic =====
-function getActivePreset(settings) {
-  return settings.presets[settings.activePresetId];
-}
-
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
+/** ========= UI render ========= */
 function renderPresetSelect(root, settings) {
   const sel = root.querySelector("#abgm_preset_select");
   const nameInput = root.querySelector("#abgm_preset_name");
@@ -144,6 +322,7 @@ function renderDefaultSelect(root, settings) {
   if (!sel) return;
 
   sel.innerHTML = "";
+
   const none = document.createElement("option");
   none.value = "";
   none.textContent = "(none)";
@@ -151,9 +330,9 @@ function renderDefaultSelect(root, settings) {
 
   preset.bgms.forEach((b) => {
     const opt = document.createElement("option");
-    opt.value = b.id;
-    opt.textContent = b.name || b.id;
-    if (b.id === (preset.defaultBgmId ?? "")) opt.selected = true;
+    opt.value = b.fileKey || "";
+    opt.textContent = b.fileKey || "(missing fileKey)";
+    if (opt.value && opt.value === (preset.defaultBgmKey ?? "")) opt.selected = true;
     sel.appendChild(opt);
   });
 }
@@ -170,7 +349,7 @@ function renderBgmTable(root, settings) {
     tr.dataset.id = b.id;
 
     tr.innerHTML = `
-      <td><input type="text" class="abgm_name" value="${escapeHtml(b.name ?? "")}" placeholder="BGM name"></td>
+      <td><input type="text" class="abgm_name" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3"></td>
       <td><input type="text" class="abgm_keywords" value="${escapeHtml(b.keywords ?? "")}" placeholder="rain, storm..."></td>
       <td><input type="number" class="abgm_priority" value="${Number(b.priority ?? 0)}" step="1"></td>
       <td>
@@ -190,7 +369,6 @@ function renderBgmTable(root, settings) {
         </div>
       </td>
     `;
-
     tbody.appendChild(tr);
   });
 }
@@ -201,61 +379,79 @@ function rerenderAll(root, settings) {
   renderBgmTable(root, settings);
 }
 
-// ===== Preset Import/Export (preset 단위) =====
+/** ========= Preset Import/Export (preset 단위 / 파일은 포함 안 함) ========= */
 function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+// export는 "룰만" 보냄 (dataUrl 없음)
 function exportPresetFile(preset) {
+  const clean = {
+    id: preset.id,
+    name: preset.name,
+    defaultBgmKey: preset.defaultBgmKey ?? "",
+    bgms: (preset.bgms ?? []).map((b) => ({
+      id: b.id,
+      fileKey: b.fileKey ?? "",
+      keywords: b.keywords ?? "",
+      priority: Number(b.priority ?? 0),
+      volume: Number(b.volume ?? 1),
+    })),
+  };
+
   return {
     type: "autobgm_preset",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    preset: clone(preset),
+    preset: clean,
   };
 }
 
 function rekeyPreset(preset) {
   const p = clone(preset);
-  const oldToNew = new Map();
 
   p.id = uid();
+  p.name = (p.name && String(p.name).trim()) ? p.name : "Imported Preset";
+  p.defaultBgmKey ??= "";
 
-  (p.bgms ?? []).forEach((b) => {
-    const newId = uid();
-    oldToNew.set(b.id, newId);
-    b.id = newId;
-  });
+  p.bgms = (p.bgms ?? []).map((b) => ({
+    id: uid(),
+    fileKey: b.fileKey ?? "",
+    keywords: b.keywords ?? "",
+    priority: Number(b.priority ?? 0),
+    volume: Number(b.volume ?? 1),
+  }));
 
-  if (p.defaultBgmId && oldToNew.has(p.defaultBgmId)) {
-    p.defaultBgmId = oldToNew.get(p.defaultBgmId);
-  } else if (p.bgms?.length) {
-    p.defaultBgmId = p.bgms[0].id;
-  } else {
-    p.defaultBgmId = "";
+  if (!p.defaultBgmKey && p.bgms.length && p.bgms[0].fileKey) {
+    p.defaultBgmKey = p.bgms[0].fileKey;
   }
 
-  p.name = (p.name && String(p.name).trim()) ? p.name : "Imported Preset";
   return p;
 }
 
 function pickPresetFromImportData(data) {
   if (data?.type === "autobgm_preset" && data?.preset) return data.preset;
 
+  // (구형 전체 설정 파일) 들어오면 activePreset 하나만 뽑아서 import
   if (data?.presets && typeof data.presets === "object") {
     const pid =
       data.activePresetId && data.presets[data.activePresetId]
         ? data.activePresetId
         : Object.keys(data.presets)[0];
+
     return data.presets?.[pid] ?? null;
   }
 
   return null;
 }
 
+/** ========= Modal logic ========= */
 function initModal(overlay) {
   const settings = ensureSettings();
   const root = overlay;
+
+  // 구버전 dataUrl 있으면 IndexedDB로 옮김 (있어도 한번만)
+  migrateLegacyDataUrlsToIDB(settings);
 
   // 상단 옵션
   const kw = root.querySelector("#abgm_keywordMode");
@@ -286,8 +482,7 @@ function initModal(overlay) {
   });
 
   // 프리셋 선택
-  const presetSel = root.querySelector("#abgm_preset_select");
-  presetSel?.addEventListener("change", (e) => {
+  root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
     settings.activePresetId = e.target.value;
     saveSettingsDebounced();
     rerenderAll(root, settings);
@@ -296,7 +491,7 @@ function initModal(overlay) {
   // 프리셋 추가/삭제/이름변경
   root.querySelector("#abgm_preset_add")?.addEventListener("click", () => {
     const id = uid();
-    settings.presets[id] = { id, name: "New Preset", defaultBgmId: "", bgms: [] };
+    settings.presets[id] = { id, name: "New Preset", defaultBgmKey: "", bgms: [] };
     settings.activePresetId = id;
     saveSettingsDebounced();
     rerenderAll(root, settings);
@@ -319,56 +514,108 @@ function initModal(overlay) {
     rerenderAll(root, settings);
   });
 
-  // BGM 추가
-  const fileInput = root.querySelector("#abgm_bgm_file");
-  root.querySelector("#abgm_bgm_add")?.addEventListener("click", () => fileInput?.click());
+  // ===== MP3 추가 (Assets 저장 + 현재 프리셋에 룰 row 추가) =====
+  const mp3Input = root.querySelector("#abgm_bgm_file");
+  root.querySelector("#abgm_bgm_add")?.addEventListener("click", () => mp3Input?.click());
 
-  fileInput?.addEventListener("change", async (e) => {
+  mp3Input?.addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const dataUrl = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = () => reject(r.error);
-      r.readAsDataURL(file);
-    });
-
     const preset = getActivePreset(settings);
-    const id = uid();
-   preset.bgms.push({
-  id,
-  fileKey: file.name,
-  keywords: "",
-  priority: 0,
-  volume: 1.0,
-});
+    const fileKey = file.name;
 
-if (!preset.defaultBgmKey) preset.defaultBgmKey = file.name;
+    // asset 저장
+    await idbPut(fileKey, file);
+    const assets = ensureAssetList(settings);
+    assets[fileKey] = { fileKey, label: fileKey.replace(/\.mp3$/i, "") };
+
+    // 룰 row 없으면 추가
+    const exists = preset.bgms.some((b) => b.fileKey === fileKey);
+    if (!exists) {
+      preset.bgms.push({
+        id: uid(),
+        fileKey,
+        keywords: "",
+        priority: 0,
+        volume: 1.0,
+      });
+    }
+
+    if (!preset.defaultBgmKey) preset.defaultBgmKey = fileKey;
 
     e.target.value = "";
     saveSettingsDebounced();
     rerenderAll(root, settings);
   });
 
-  // Default select
+  // ===== ZIP 추가 (Assets 저장 + 현재 프리셋에 row 자동 생성) =====
+  const zipInput = root.querySelector("#abgm_zip_file");
+  root.querySelector("#abgm_zip_add")?.addEventListener("click", () => zipInput?.click());
+
+  zipInput?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const importedKeys = await importZip(file, settings);
+      const preset = getActivePreset(settings);
+
+      // 룰 row 자동 생성 (이미 있으면 스킵)
+      for (const fk of importedKeys) {
+        if (!preset.bgms.some((b) => b.fileKey === fk)) {
+          preset.bgms.push({
+            id: uid(),
+            fileKey: fk,
+            keywords: "",
+            priority: 0,
+            volume: 1.0,
+          });
+        }
+      }
+
+      if (!preset.defaultBgmKey && preset.bgms.length && preset.bgms[0].fileKey) {
+        preset.defaultBgmKey = preset.bgms[0].fileKey;
+      }
+
+      saveSettingsDebounced();
+      rerenderAll(root, settings);
+    } catch (err) {
+      console.error("[AutoBGM] zip import failed:", err);
+      console.warn("[AutoBGM] vendor/jszip.min.js 없으면 zip 안 됨");
+    } finally {
+      e.target.value = "";
+    }
+  });
+
+  // Default select (fileKey로 저장)
   root.querySelector("#abgm_default_select")?.addEventListener("change", (e) => {
     const preset = getActivePreset(settings);
     preset.defaultBgmKey = e.target.value;
     saveSettingsDebounced();
   });
 
-  // 테이블 이벤트 위임
+  // 테이블 input 이벤트 (fileKey/keywords/priority/volume)
   root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
     const tr = e.target.closest("tr");
     if (!tr) return;
-    const id = tr.dataset.id;
 
+    const id = tr.dataset.id;
     const preset = getActivePreset(settings);
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
 
-    if (e.target.classList.contains("abgm_name")) bgm.name = e.target.value;
+    // 첫 컬럼(abgm_name)을 fileKey로 씀
+    if (e.target.classList.contains("abgm_name")) {
+      const oldKey = bgm.fileKey;
+      const newKey = String(e.target.value || "").trim();
+
+      bgm.fileKey = newKey;
+
+      // default가 이 곡이었다면 같이 따라가게
+      if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
+    }
+
     if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
     if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
 
@@ -384,35 +631,47 @@ if (!preset.defaultBgmKey) preset.defaultBgmKey = file.name;
   });
 
   // 테스트/삭제
-  const testAudio = new Audio();
-  root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", (e) => {
+  root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
     const tr = e.target.closest("tr");
     if (!tr) return;
-    const id = tr.dataset.id;
 
+    const id = tr.dataset.id;
     const preset = getActivePreset(settings);
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
 
     if (e.target.closest(".abgm_del")) {
+      const fileKey = bgm.fileKey;
+
+      // 룰 row 삭제
       preset.bgms = preset.bgms.filter((x) => x.id !== id);
-      if (preset.defaultBgmId === id) preset.defaultBgmId = preset.bgms[0]?.id ?? "";
+
+      // default가 이거였으면 첫 곡으로
+      if (preset.defaultBgmKey === fileKey) {
+        preset.defaultBgmKey = preset.bgms[0]?.fileKey ?? "";
+      }
+
+      // asset도 같이 지울지? → "어디에서도 안 쓰면"만 삭제
+      if (fileKey && !isFileKeyReferenced(settings, fileKey)) {
+        try {
+          await idbDel(fileKey);
+          delete settings.assets[fileKey];
+        } catch {}
+      }
+
       saveSettingsDebounced();
       rerenderAll(root, settings);
       return;
     }
 
     if (e.target.closest(".abgm_test")) {
-      testAudio.pause();
-      testAudio.currentTime = 0;
-      testAudio.src = bgm.dataUrl || "";
-      testAudio.volume = (settings.globalVolume ?? 0.7) * (bgm.volume ?? 1);
-      testAudio.play().catch(() => {});
+      const vol = (settings.globalVolume ?? 0.7) * (bgm.volume ?? 1);
+      await playAsset(bgm.fileKey, vol);
       return;
     }
   });
 
-  // Import/Export (preset 1개)
+  // Import/Export (preset 1개: 룰만)
   const importFile = root.querySelector("#abgm_import_file");
   root.querySelector("#abgm_import")?.addEventListener("click", () => importFile?.click());
 
@@ -460,114 +719,9 @@ if (!preset.defaultBgmKey) preset.defaultBgmKey = file.name;
   });
 
   rerenderAll(root, settings);
-} // ✅ initModal 닫힘 (이거 없어서 니 확장 증발했음)
-
-// ===== IndexedDB (Assets 저장) =====
-const DB_NAME = "autobgm_db";
-const DB_VER = 1;
-const STORE_ASSETS = "assets"; // key: fileKey (예: "rain_01.mp3"), value: Blob
-
-function openDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE_ASSETS)) {
-        db.createObjectStore(STORE_ASSETS);
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
 }
 
-async function idbPut(key, blob) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readwrite");
-    tx.objectStore(STORE_ASSETS).put(blob, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function idbGet(key) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readonly");
-    const req = tx.objectStore(STORE_ASSETS).get(key);
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbDel(key) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readwrite");
-    tx.objectStore(STORE_ASSETS).delete(key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-// ===== Assets 메타 (settings에 "목록"만 저장) =====
-// settings.assets = { [fileKey]: { fileKey, label } }
-function ensureAssetList(settings) {
-  settings.assets ??= {};
-  return settings.assets;
-}
-
-// ===== 재생할 때: Blob -> ObjectURL =====
-async function playAsset(fileKey, volume01 = 1) {
-  const blob = await idbGet(fileKey);
-  if (!blob) {
-    console.warn("[AutoBGM] missing asset:", fileKey);
-    return;
-  }
-  const url = URL.createObjectURL(blob);
-  const a = new Audio(url);
-  a.volume = volume01;
-  a.onended = () => URL.revokeObjectURL(url);
-  a.play().catch(() => URL.revokeObjectURL(url));
-}
-
-// ===== ZIP 로더: JSZip 필요 =====
-async function ensureJSZipLoaded() {
-  if (window.JSZip) return window.JSZip;
-
-  // 확장 폴더에 vendor/jszip.min.js 넣는 방식 (추천)
-  const s = document.createElement("script");
-  s.src = new URL("vendor/jszip.min.js", import.meta.url);
-  document.head.appendChild(s);
-
-  await new Promise((resolve, reject) => {
-    s.onload = resolve;
-    s.onerror = reject;
-  });
-
-  return window.JSZip;
-}
-
-async function importZip(file, settings) {
-  const JSZip = await ensureJSZipLoaded();
-  const zip = await JSZip.loadAsync(file);
-
-  const assets = ensureAssetList(settings);
-
-  const entries = Object.values(zip.files)
-    .filter(f => !f.dir && f.name.toLowerCase().endsWith(".mp3"));
-
-  for (const entry of entries) {
-    const blob = await entry.async("blob");
-    const fileKey = entry.name.split("/").pop(); // "rain_01.mp3" 만 남김
-
-    await idbPut(fileKey, blob);
-    assets[fileKey] = { fileKey, label: fileKey.replace(/\.mp3$/i, "") };
-  }
-}
-
-// ===== Side menu mount =====
+/** ========= Side menu mount ========= */
 async function mount() {
   const host = document.querySelector("#extensions_settings");
   if (!host) return;
@@ -590,7 +744,6 @@ async function mount() {
 
   const enable = root.querySelector("#autobgm_enabled");
   const openBtn = root.querySelector("#autobgm_open");
-
   if (!enable || !openBtn) return;
 
   enable.checked = !!settings.enabled;
