@@ -1,8 +1,8 @@
 # Autobgm (For SillyTavern)
 
 ## 기능 (원하는...)
-- 제작 목적: 프리셋에 추가한 BGM들에 키워드를 매칭, Ai의 마지막 메시지에 해당 키워드가 있을 시 우선도에 따라 mp3 파일 자동 재생
-- 사용 방법:
+제작 목적: 프리셋에 추가한 BGM들에 키워드를 매칭, Ai의 마지막 메시지에 해당 키워드가 있을 시 우선도에 따라 mp3 파일 자동 재생
+사용 방법:
 0) 해당 확장을 SillyTavern의 확장 프로그램 설치를 눌러 설치
   * 링크: https://github.com/GgangMyChaeng/AutoBGM
 1) 확장 메뉴 중 AutoBGM을 눌러 메뉴를 펼친 뒤 Enabled를 눌러 해당 확장을 활성화
