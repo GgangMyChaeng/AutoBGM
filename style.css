@@ -42,27 +42,45 @@ body.autobgm-modal-open{
   position:fixed;
   inset:0;
   display:flex;
-  align-items:flex-start;          /* ✅ center 말고 위에서 시작 */
+  align-items:flex-start;
   justify-content:center;
-  overflow:auto;                   /* ✅ overlay 자체가 스크롤 */
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
   background:rgba(0,0,0,.55);
   z-index:99999;
 
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-right: max(12px, env(safe-area-inset-right));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  padding-left: max(12px, env(safe-area-inset-left));
+  /* ✅ 기본값(구형/웹뷰 안전) */
+  padding:12px;
+}
+
+/* ✅ safe-area 지원하는 애들만 오버라이드 */
+@supports (padding: max(0px, env(safe-area-inset-top))){
+  .autobgm-overlay{
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
 }
 
 .autobgm-modal{
   width:min(900px, 96vw);
-  max-height: calc(100dvh - 24px); /* ✅ vh 말고 dvh */
+
+  /* ✅ dvh 쓰지 말고 vh/svh로 */
+  max-height: calc(100vh - 24px);
   overflow:auto;
 
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;
   background:rgba(20,20,20,.96);
   box-shadow:0 10px 40px rgba(0,0,0,.55);
+}
+
+/* ✅ svh 지원하면 더 안정적으로 */
+@supports (height: 100svh){
+  .autobgm-modal{
+    max-height: calc(100svh - 24px);
+  }
 }
 
 .autobgm-modal-h{
