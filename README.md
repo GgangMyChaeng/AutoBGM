@@ -78,3 +78,7 @@ AutoBGM/vendor 폴더 안에:
     - BGM mp3 파일별 개별 볼륨 조절 설정(mp3 파일의 사운드 트랙 볼륨이 다를 수 있으므로 확장에서 세부적으로 따로 조절할 수 있도록)
 
 </project_description>
+
+## License
+This project is licensed under CC BY-NC-ND 4.0.
+Third-party libraries are licensed separately (see NOTICE).
