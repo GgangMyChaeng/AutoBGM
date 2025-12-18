@@ -13,20 +13,27 @@ function uid() {
 function ensureSettings() {
   // 기본 스키마
   extension_settings[SETTINGS_KEY] ??= {
-    enabled: true,
-    keywordMode: true,
-    globalVolume: 0.7,
-    useDefault: true,
-    defaultBgmId: "",
-    activePresetId: "default",
-    presets: {
-      default: {
-        id: "default",
-        name: "Default",
-        bgms: [] // {id,name,dataUrl,keywords,priority,volume}
-      },
+  enabled: true,
+  keywordMode: true,
+  globalVolume: 0.7,
+  useDefault: true,
+  activePresetId: "default",
+  presets: {
+    default: {
+      id: "default",
+      name: "Default",
+      defaultBgmId: "",     // ✅ preset 단위
+      bgms: [],
     },
-  };
+  },
+};
+
+  // 기존 데이터 호환: preset.defaultBgmId 없으면 만들어주기
+const s = extension_settings[SETTINGS_KEY];
+Object.values(s.presets ?? {}).forEach(p => {
+  p.defaultBgmId ??= "";
+  p.bgms ??= [];
+});
 
   // 안전장치
   const s = extension_settings[SETTINGS_KEY];
@@ -128,7 +135,7 @@ function renderDefaultSelect(root, settings) {
     const opt = document.createElement("option");
     opt.value = b.id;
     opt.textContent = b.name || b.id;
-    if (b.id === settings.defaultBgmId) opt.selected = true;
+    if (b.id === (preset.defaultBgmId ?? "")) opt.selected = true; // ✅
     sel.appendChild(opt);
   });
 }
@@ -183,6 +190,65 @@ function rerenderAll(root, settings) {
   renderPresetSelect(root, settings);
   renderDefaultSelect(root, settings);
   renderBgmTable(root, settings);
+}
+
+function clone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function exportPresetFile(preset) {
+  return {
+    type: "autobgm_preset",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    preset: clone(preset),
+  };
+}
+
+// id 충돌 방지용: 프리셋/ BGM 전부 새로 발급
+function rekeyPreset(preset) {
+  const p = clone(preset);
+  const oldToNew = new Map();
+
+  const newPresetId = uid();
+  p.id = newPresetId;
+
+  (p.bgms ?? []).forEach(b => {
+    const newId = uid();
+    oldToNew.set(b.id, newId);
+    b.id = newId;
+  });
+
+  if (p.defaultBgmId && oldToNew.has(p.defaultBgmId)) {
+    p.defaultBgmId = oldToNew.get(p.defaultBgmId);
+  } else if (p.bgms?.length) {
+    // default가 비었거나 매핑 불가면 첫 곡으로
+    p.defaultBgmId = p.bgms[0].id;
+  } else {
+    p.defaultBgmId = "";
+  }
+
+  // name 비었으면 대충
+  p.name = (p.name && String(p.name).trim()) ? p.name : "Imported Preset";
+
+  return p;
+}
+
+// import 파일 포맷 2종 지원
+// 1) {type:"autobgm_preset", preset:{...}}  ✅ 우리가 새로 쓰는 방식
+// 2) 예전처럼 {presets:{...}, activePresetId:"..."} 들어오면 그 중 1개만 뽑아서 import
+function pickPresetFromImportData(data) {
+  if (data?.type === "autobgm_preset" && data?.preset) return data.preset;
+
+  if (data?.presets && typeof data.presets === "object") {
+    const pid = data.activePresetId && data.presets[data.activePresetId]
+      ? data.activePresetId
+      : Object.keys(data.presets)[0];
+
+    return data.presets?.[pid] ?? null;
+  }
+
+  return null;
 }
 
 function initModal(overlay) {
@@ -279,7 +345,7 @@ function initModal(overlay) {
     });
 
     // default 없으면 자동 지정
-    if (!settings.defaultBgmId) settings.defaultBgmId = id;
+    if (!preset.defaultBgmId) preset.defaultBgmId = id;
 
     e.target.value = "";
     saveSettingsDebounced();
@@ -288,9 +354,10 @@ function initModal(overlay) {
 
   // Default select
   root.querySelector("#abgm_default_select")?.addEventListener("change", (e) => {
-    settings.defaultBgmId = e.target.value;
-    saveSettingsDebounced();
-  });
+  const preset = getActivePreset(settings);
+  preset.defaultBgmId = e.target.value;
+  saveSettingsDebounced();
+});
 
   // 테이블 이벤트 위임
   root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
@@ -330,7 +397,7 @@ function initModal(overlay) {
 
     if (e.target.closest(".abgm_del")) {
       preset.bgms = preset.bgms.filter((x) => x.id !== id);
-      if (settings.defaultBgmId === id) settings.defaultBgmId = preset.bgms[0]?.id ?? "";
+      if (preset.defaultBgmId === id) preset.defaultBgmId = preset.bgms[0]?.id ?? "";
       saveSettingsDebounced();
       rerenderAll(root, settings);
       return;
@@ -348,45 +415,61 @@ function initModal(overlay) {
 
   // Import/Export
   const importFile = root.querySelector("#abgm_import_file");
-  root.querySelector("#abgm_import")?.addEventListener("click", () => importFile?.click());
+root.querySelector("#abgm_import")?.addEventListener("click", () => importFile?.click());
 
-  importFile?.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+importFile?.addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
 
-      // 아주 느슨하게 병합
-      if (data?.presets) extension_settings[SETTINGS_KEY] = data;
-      ensureSettings();
-
-      saveSettingsDebounced();
-      rerenderAll(root, ensureSettings());
-    } catch (err) {
-      console.error("[AutoBGM] import failed", err);
-    } finally {
-      e.target.value = "";
+    const incomingPresetRaw = pickPresetFromImportData(data);
+    if (!incomingPresetRaw) {
+      console.error("[AutoBGM] import failed: invalid preset file");
+      return;
     }
-  });
 
-  root.querySelector("#abgm_export")?.addEventListener("click", () => {
-    const s = ensureSettings();
-    const blob = new Blob([JSON.stringify(s, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    const settings = ensureSettings();
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "autobgm_preset_export.json";
-    a.click();
+    // ✅ 기존 presets 유지 + 새 프리셋만 추가
+    const incomingPreset = rekeyPreset(incomingPresetRaw);
 
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+    // 이름 중복이면 살짝 꼬리 달기
+    const names = new Set(Object.values(settings.presets).map(p => p.name));
+    if (names.has(incomingPreset.name)) incomingPreset.name = `${incomingPreset.name} (imported)`;
 
-  // 최초 렌더
-  rerenderAll(root, settings);
-}
+    settings.presets[incomingPreset.id] = incomingPreset;
+    settings.activePresetId = incomingPreset.id;
+
+    saveSettingsDebounced();
+    rerenderAll(root, settings);
+    console.log("[AutoBGM] preset imported:", incomingPreset.name);
+  } catch (err) {
+    console.error("[AutoBGM] import failed", err);
+  } finally {
+    e.target.value = "";
+  }
+});
+
+root.querySelector("#abgm_export")?.addEventListener("click", () => {
+  const settings = ensureSettings();
+  const preset = getActivePreset(settings);
+
+  // ✅ “프리셋 1개만” 내보내기
+  const out = exportPresetFile(preset);
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `autobgm_preset_${(preset.name || preset.id).replace(/[^\w\-]+/g, "_")}.json`;
+  a.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 
 // ===== Side menu mount =====
 async function mount() {
