@@ -91,21 +91,42 @@
             <select id="abgm_default_select" class="abgm-select"></select>
           </div>
 
+          <div class="abgm-row" style="gap:10px; flex-wrap:wrap; margin-top:8px;">
+  <div class="abgm-inline" style="min-width:240px;">
+    <small style="opacity:.85;">Sort</small>
+    <select id="abgm_sort" class="abgm-select abgm-select-slim">
+      <option value="added_asc">Added (old → new)</option>
+      <option value="added_desc">Added (new → old)</option>
+      <option value="name_asc">Name (A → Z)</option>
+      <option value="name_desc">Name (Z → A)</option>
+    </select>
+  </div>
+
+  <div class="menu_button" id="abgm_delete_selected" title="Delete selected rows">
+    <i class="fa-solid fa-trash"></i> Delete Selected
+  </div>
+  <small id="abgm_selected_count" style="opacity:.75;">0 selected</small>
+</div>
+
           <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
         </div>
 
         <div class="abgm-tablewrap">
           <table class="abgm-table">
             <thead>
-              <tr>
-                <th style="width:26%;">Name</th>
-                <th>Keywords</th>
-                <th style="width:86px;">Priority</th>
-                <th style="width:120px;">Vol</th>
-                <th style="width:90px;">Test</th>
-                <th style="width:56px;">Del</th>
-              </tr>
-            </thead>
+  <tr>
+    <th class="abgm-col-check">
+      <input type="checkbox" id="abgm_sel_all" title="Select all">
+    </th>
+    <th style="width:26%;">File</th>
+    <th>Keywords</th>
+    <th style="width:86px;">Priority</th>
+    <th style="width:120px;">Vol</th>
+    <th style="width:90px;">Test</th>
+    <th style="width:56px;">Del</th>
+  </tr>
+</thead>
+
             <tbody id="abgm_bgm_tbody">
               <!-- rows -->
             </tbody>
