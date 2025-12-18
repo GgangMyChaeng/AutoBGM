@@ -55,10 +55,11 @@ function fitModalToHost(overlay, host) {
   if (!modal) return;
 
   const pad = 12;
-  const r = host?.getBoundingClientRect?.() || { width: window.innerWidth, height: window.innerHeight };
-
-  const w = Math.max(280, Math.floor(r.width - pad * 2));
-  const h = Math.max(240, Math.floor(r.height - pad * 2));
+  const vv = window.visualViewport;
+  const vw = vv?.width || window.innerWidth;
+  const vh = vv?.height || window.innerHeight;
+  const w = Math.max(280, Math.floor(vw - pad * 2));
+  const h = Math.max(240, Math.floor(vh - pad * 2));
 
   const setI = (k, v) => modal.style.setProperty(k, v, "important");
 
@@ -404,6 +405,17 @@ _abgmViewportHandler = () => {
   // 키보드 올라왔다 내려올 때 width/height가 바뀜
   fitModalToHost(overlay, host);
 };
+
+// ✅ 키보드 내려갈 때 resize 이벤트가 안 오기도 해서, 포커스 빠질 때 강제 재계산
+const kickFit = () => {
+  _abgmViewportHandler?.();
+  setTimeout(() => _abgmViewportHandler?.(), 60);
+  setTimeout(() => _abgmViewportHandler?.(), 240);
+};
+
+overlay.addEventListener("focusout", kickFit, true);
+overlay.addEventListener("touchend", kickFit, { passive: true });
+overlay.addEventListener("pointerup", kickFit, { passive: true });
 
 // window resize도 유지
 window.addEventListener("resize", _abgmViewportHandler);
