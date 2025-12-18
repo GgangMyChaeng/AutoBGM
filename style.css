@@ -42,16 +42,21 @@ body.autobgm-modal-open{
   position:fixed;
   inset:0;
   display:flex;
-  align-items:center;
+  align-items:flex-start;          /* ✅ center 말고 위에서 시작 */
   justify-content:center;
+  overflow:auto;                   /* ✅ overlay 자체가 스크롤 */
   background:rgba(0,0,0,.55);
   z-index:99999;
-  padding:16px;
+
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-right: max(12px, env(safe-area-inset-right));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding-left: max(12px, env(safe-area-inset-left));
 }
 
 .autobgm-modal{
-  width:min(760px, 92vw);
-  max-height:85vh;
+  width:min(900px, 96vw);
+  max-height: calc(100dvh - 24px); /* ✅ vh 말고 dvh */
   overflow:auto;
 
   border:1px solid rgba(255,255,255,.14);
@@ -84,12 +89,8 @@ body.autobgm-modal-open{
 
 .abgm-grid{
   display:grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 1fr;      /* ✅ 무조건 1컬럼 */
   gap:12px;
-}
-
-@media (max-width: 860px){
-  .abgm-grid{ grid-template-columns: 1fr; }
 }
 
 .abgm-card{
