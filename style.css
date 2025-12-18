@@ -225,3 +225,40 @@ body.autobgm-modal-open{
   width:34px;
   height:30px;
 }
+
+/* ✅ 좁은 화면에서 flex/grid 애들이 안 줄어드는 문제 방지 */
+.autobgm-modal,
+.abgm-card,
+.abgm-row,
+.abgm-inline {
+  min-width: 0;
+}
+
+.autobgm-modal input,
+.autobgm-modal select,
+.autobgm-modal .text_pole {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ✅ 지금 tablewrap이 overflow:hidden이라 좁으면 내용이 잘려서 개판남 */
+.abgm-tablewrap{
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 테이블은 최소폭 유지하고, 좁은 화면에선 가로 스크롤로 처리 */
+.abgm-table{
+  min-width: 720px;
+}
+
+/* 좁은 화면에선 select 최소폭 강제 해제 */
+@media (max-width: 520px){
+  .abgm-select-slim{
+    min-width: 0;
+    width: 100%;
+  }
+  .abgm-range{
+    width: 100%;
+  }
+}
