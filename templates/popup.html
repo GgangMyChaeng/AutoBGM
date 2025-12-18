@@ -52,4 +52,67 @@
 
         <hr class="abgm-hr"/>
 
-        <div class="abgm-row" style=
+        <div class="abgm-row" style="gap:10px; flex-wrap:wrap;">
+          <div class="menu_button" id="abgm_import"><i class="fa-solid fa-file-import"></i> Import</div>
+          <div class="menu_button" id="abgm_export"><i class="fa-solid fa-file-export"></i> Export</div>
+
+          <input id="abgm_import_file" type="file" accept="application/json" style="display:none;">
+        </div>
+
+        <div class="abgm-minihelp">
+          프리셋은 “채팅별 세팅 묶음”이라고 보면 됨<br/>
+          (나중에 캐릭터/채팅 id랑 연결할 자리)
+        </div>
+      </section>
+
+      <!-- RIGHT: BGM List -->
+      <section class="abgm-card">
+        <div class="abgm-card-h">
+          <b>BGM List</b>
+          <div class="abgm-row">
+            <div class="menu_button" id="abgm_bgm_add" title="Add MP3">
+              <i class="fa-solid fa-music"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="abgm-row" style="gap:10px; flex-wrap:wrap;">
+          <label class="checkbox_label" style="margin:0;">
+            <input type="checkbox" id="abgm_useDefault">
+            <small>Use Default when no keyword</small>
+          </label>
+
+          <div class="abgm-inline" style="min-width:220px;">
+            <small style="opacity:.85;">Default</small>
+            <select id="abgm_default_select" class="abgm-select"></select>
+          </div>
+
+          <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
+        </div>
+
+        <div class="abgm-tablewrap">
+          <table class="abgm-table">
+            <thead>
+              <tr>
+                <th style="width:26%;">Name</th>
+                <th>Keywords</th>
+                <th style="width:86px;">Priority</th>
+                <th style="width:120px;">Vol</th>
+                <th style="width:90px;">Test</th>
+                <th style="width:56px;">Del</th>
+              </tr>
+            </thead>
+            <tbody id="abgm_bgm_tbody">
+              <!-- rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="abgm-minihelp">
+          키워드는 쉼표로 구분 (예: rain, storm, thunder)<br/>
+          우선도 높은 놈이 이김 / 키워드 변동 없으면 유지(이 로직은 다음 단계)
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
