@@ -21,7 +21,7 @@ function ensureSettings() {
       default: {
         id: "default",
         name: "Default",
-        defaultBgmId: "",
+        defaultBgmKey: "",
         bgms: [],
       },
     },
@@ -336,16 +336,15 @@ function initModal(overlay) {
 
     const preset = getActivePreset(settings);
     const id = uid();
-    preset.bgms.push({
-      id,
-      name: file.name.replace(/\.(mp3)$/i, ""),
-      dataUrl,
-      keywords: "",
-      priority: 0,
-      volume: 1.0,
-    });
+   preset.bgms.push({
+  id,
+  fileKey: file.name,
+  keywords: "",
+  priority: 0,
+  volume: 1.0,
+});
 
-    if (!preset.defaultBgmId) preset.defaultBgmId = id;
+if (!preset.defaultBgmKey) preset.defaultBgmKey = file.name;
 
     e.target.value = "";
     saveSettingsDebounced();
@@ -355,7 +354,7 @@ function initModal(overlay) {
   // Default select
   root.querySelector("#abgm_default_select")?.addEventListener("change", (e) => {
     const preset = getActivePreset(settings);
-    preset.defaultBgmId = e.target.value;
+    preset.defaultBgmKey = e.target.value;
     saveSettingsDebounced();
   });
 
