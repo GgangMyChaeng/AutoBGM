@@ -1,13 +1,17 @@
+console.log("[AutoBGM] index.js loaded", import.meta.url);
+
 import { extension_settings, renderExtensionTemplateAsync } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
-// ✅ 설치 폴더명 자동 추출 (AutoBGM / AutoBGM-main 등)
+console.log("[AutoBGM] index.js loaded", import.meta.url);
+
+const SETTINGS_KEY = "autobgm";
+
+// ✅ 설치된 “폴더명” 자동 추출 (AutoBGM-main 같은 케이스 대응)
 const EXTENSION_NAME = new URL(".", import.meta.url).pathname
   .split("/")
   .filter(Boolean)
   .pop();
-
-const SETTINGS_KEY = "autobgm";
 
 function ensureSettings() {
   extension_settings[SETTINGS_KEY] ??= { enabled: true };
@@ -16,9 +20,16 @@ function ensureSettings() {
 
 async function mount() {
   const host = document.querySelector("#extensions_settings");
-  if (!host) return;
+
+  // ✅ 왜 안 붙는지 로그 남김
+  if (!host) {
+    console.log("[AutoBGM] mount skipped: #extensions_settings not found yet");
+    return;
+  }
 
   if (document.getElementById("autobgm-root")) return;
+
+  console.log("[AutoBGM] mounting... EXTENSION_NAME =", EXTENSION_NAME);
 
   const settings = ensureSettings();
 
@@ -26,7 +37,7 @@ async function mount() {
   try {
     html = await renderExtensionTemplateAsync(EXTENSION_NAME, "window");
   } catch (e) {
-    console.error("[AutoBGM] template load failed:", e, "EXTENSION_NAME=", EXTENSION_NAME);
+    console.error("[AutoBGM] template load failed:", e, "EXTENSION_NAME =", EXTENSION_NAME);
     return;
   }
 
@@ -43,7 +54,10 @@ async function mount() {
     enable.addEventListener("change", (e) => {
       settings.enabled = !!e.target.checked;
       saveSettingsDebounced();
+      console.log("[AutoBGM] enabled =", settings.enabled);
     });
+  } else {
+    console.warn("[AutoBGM] #autobgm_enabled not found (window.html id 확인)");
   }
 
   if (openBtn) {
@@ -51,21 +65,23 @@ async function mount() {
       console.log("[AutoBGM] open settings clicked");
       alert("Settings modal (TODO)");
     });
+  } else {
+    console.warn("[AutoBGM] #autobgm_open not found (window.html id 확인)");
   }
 
-  console.log("[AutoBGM] mounted");
+  console.log("[AutoBGM] mounted OK");
 }
 
+// ✅ ST는 메뉴 열 때 DOM이 늦게 생길 수 있어서 옵저버로 재시도
 function init() {
-  // 1) 즉시 한 번 시도
   mount();
 
-  // 2) 나중에 Extensions 패널 열리면서 DOM 생기면 그때 붙이기
   const obs = new MutationObserver(() => {
     if (document.querySelector("#extensions_settings") && !document.getElementById("autobgm-root")) {
       mount();
     }
   });
+
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
