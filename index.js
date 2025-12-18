@@ -1,5 +1,5 @@
 // index.js
-import { extension_settings, renderExtensionTemplateAsync } from "../../../extensions.js";
+import { extension_settings, renderExtensionTemplateAsync } from "../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
 const EXTENSION_NAME = "AutoBGM";   // 폴더명(대소문자 포함) == third-party/AutoBGM
