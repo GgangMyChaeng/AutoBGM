@@ -15,9 +15,12 @@ function fitModalToViewport(overlay) {
   const maxH = Math.max(240, Math.floor(hRaw - 24));
 
   modal.style.boxSizing = "border-box";
-  modal.style.width = "96vw";
-  modal.style.maxWidth = "900px";
-  modal.style.margin = "12px auto";
+
+  // ✅ 폭 좁아도 무조건 화면 안으로 박제
+  modal.style.width = "calc(100vw - 24px)";
+  modal.style.maxWidth = "calc(100vw - 24px)";
+  modal.style.margin = "12px";           // auto(중앙정렬) 금지 → 밖으로 밀리는 거 방지
+  modal.style.minWidth = "0";
 
   modal.style.minHeight = "240px";
   modal.style.height = `${maxH}px`;
