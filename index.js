@@ -463,6 +463,111 @@ function initModal(overlay) {
   rerenderAll(root, settings);
 } // ✅ initModal 닫힘 (이거 없어서 니 확장 증발했음)
 
+// ===== IndexedDB (Assets 저장) =====
+const DB_NAME = "autobgm_db";
+const DB_VER = 1;
+const STORE_ASSETS = "assets"; // key: fileKey (예: "rain_01.mp3"), value: Blob
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_ASSETS)) {
+        db.createObjectStore(STORE_ASSETS);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbPut(key, blob) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readwrite");
+    tx.objectStore(STORE_ASSETS).put(blob, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readonly");
+    const req = tx.objectStore(STORE_ASSETS).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbDel(key) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readwrite");
+    tx.objectStore(STORE_ASSETS).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ===== Assets 메타 (settings에 "목록"만 저장) =====
+// settings.assets = { [fileKey]: { fileKey, label } }
+function ensureAssetList(settings) {
+  settings.assets ??= {};
+  return settings.assets;
+}
+
+// ===== 재생할 때: Blob -> ObjectURL =====
+async function playAsset(fileKey, volume01 = 1) {
+  const blob = await idbGet(fileKey);
+  if (!blob) {
+    console.warn("[AutoBGM] missing asset:", fileKey);
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = new Audio(url);
+  a.volume = volume01;
+  a.onended = () => URL.revokeObjectURL(url);
+  a.play().catch(() => URL.revokeObjectURL(url));
+}
+
+// ===== ZIP 로더: JSZip 필요 =====
+async function ensureJSZipLoaded() {
+  if (window.JSZip) return window.JSZip;
+
+  // 확장 폴더에 vendor/jszip.min.js 넣는 방식 (추천)
+  const s = document.createElement("script");
+  s.src = new URL("vendor/jszip.min.js", import.meta.url);
+  document.head.appendChild(s);
+
+  await new Promise((resolve, reject) => {
+    s.onload = resolve;
+    s.onerror = reject;
+  });
+
+  return window.JSZip;
+}
+
+async function importZip(file, settings) {
+  const JSZip = await ensureJSZipLoaded();
+  const zip = await JSZip.loadAsync(file);
+
+  const assets = ensureAssetList(settings);
+
+  const entries = Object.values(zip.files)
+    .filter(f => !f.dir && f.name.toLowerCase().endsWith(".mp3"));
+
+  for (const entry of entries) {
+    const blob = await entry.async("blob");
+    const fileKey = entry.name.split("/").pop(); // "rain_01.mp3" 만 남김
+
+    await idbPut(fileKey, blob);
+    assets[fileKey] = { fileKey, label: fileKey.replace(/\.mp3$/i, "") };
+  }
+}
+
 // ===== Side menu mount =====
 async function mount() {
   const host = document.querySelector("#extensions_settings");
