@@ -342,6 +342,12 @@ function closeModal() {
   if (overlay) overlay.remove();
   document.body.classList.remove("autobgm-modal-open");
   window.removeEventListener("keydown", onEscClose);
+  if (_abgmViewportHandler) {
+  window.removeEventListener("resize", _abgmViewportHandler);
+  window.visualViewport?.removeEventListener("resize", _abgmViewportHandler);
+  window.visualViewport?.removeEventListener("scroll", _abgmViewportHandler);
+  _abgmViewportHandler = null;
+}
 }
 function onEscClose(e) {
   if (e.key === "Escape") closeModal();
@@ -391,6 +397,21 @@ host.appendChild(overlay);
 fitModalToHost(overlay, host);
 requestAnimationFrame(() => fitModalToHost(overlay, host));
 setTimeout(() => fitModalToHost(overlay, host), 120);
+
+// ✅ 키보드/주소창 변화 대응 (visualViewport)
+_abgmViewportHandler = () => {
+  // 키보드 올라왔다 내려올 때 width/height가 바뀜
+  fitModalToHost(overlay, host);
+};
+
+// window resize도 유지
+window.addEventListener("resize", _abgmViewportHandler);
+
+// visualViewport가 있으면 더 정확히
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", _abgmViewportHandler);
+  window.visualViewport.addEventListener("scroll", _abgmViewportHandler); // ✅ 중요: 키보드 올라오면 scroll도 같이 변함
+}
 
 window.addEventListener("resize", () => fitModalToHost(overlay, host));
 window.visualViewport?.addEventListener("resize", () => fitModalToHost(overlay, host));
@@ -951,6 +972,13 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
 
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
+  
+  overlay.addEventListener("focusin", () => {
+  // 키보드 뜨기 직전에 한번, 뜬 뒤에 한번
+  requestAnimationFrame(() => fitModalToHost(overlay, getModalHost()));
+  setTimeout(() => fitModalToHost(overlay, getModalHost()), 120);
+});
+
 
   rerenderAll(root, settings);
 }
