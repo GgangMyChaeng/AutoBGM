@@ -6,21 +6,25 @@
     </div>
 
     <div class="inline-drawer-content">
-      <label class="checkbox_label" for="autobgm_enabled">
-        <input type="checkbox" id="autobgm_enabled" />
-        <small>Enabled</small>
-      </label>
 
-      <div style="margin-top:8px; opacity:.85; font-size:12px;">
-            사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
-      </div>
+      <!-- Enabled + Settings 버튼 한 줄 -->
+      <div class="autobgm-toprow">
+        <label class="checkbox_label" for="autobgm_enabled" style="margin:0;">
+          <input type="checkbox" id="autobgm_enabled" />
+          <small>Enabled</small>
+        </label>
 
-      <div class="flex row-reverse align-center justify-end gap-12" style="margin-top:10px;">
-        <label for="autobgm_open">Settings</label>
-        <div id="autobgm_open" class="menu_button">
-          <i class="fa-solid fa-gear fa-lg"></i>
+        <div class="autobgm-gearwrap" title="Settings">
+          <div id="autobgm_open" class="menu_button">
+            <i class="fa-solid fa-gear fa-lg"></i>
+          </div>
         </div>
       </div>
+
+      <div style="margin-top:8px; opacity:.85; font-size:12px;">
+        사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
+      </div>
+
     </div>
   </div>
 </div>
