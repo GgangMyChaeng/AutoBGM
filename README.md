@@ -1,4 +1,5 @@
 <project_description>
+ 
 # Autobgm (For SillyTavern)
 
 ## 설명
@@ -68,4 +69,5 @@ AutoBGM/templates 폴더 안에:
     - 해당 채팅에서 나왔을 때는 자동으로 OFF되어야 함
     - 해당 채팅에 다시 들어갔을 때는 자동으로 ON되어야 함(확장 enabled일 때만)
     - BGM mp3 파일별 개별 볼륨 조절 설정(mp3 파일의 사운드 트랙 볼륨이 다를 수 있으므로 확장에서 세부적으로 따로 조절할 수 있도록)
+  
 </project_description>
