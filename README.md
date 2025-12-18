@@ -7,9 +7,9 @@
 
 - 제작 목적: 프리셋에 추가한 BGM들에 키워드를 매칭, Ai의 마지막 메시지에 해당 키워드가 있을 시 우선도에 따라 mp3 파일을 웹으로 자동 재생하는 확장을 만들고 싶었음
 
-- 사용 방법:
+### 사용 방법
 0) 해당 확장을 SillyTavern의 확장 프로그램 설치를 눌러 설치
-  * 링크: https://github.com/GgangMyChaeng/AutoBGM
+( 링크: https://github.com/GgangMyChaeng/AutoBGM )
 1) 확장 메뉴 중 AutoBGM을 눌러 메뉴를 펼친 뒤 Enabled를 눌러 해당 확장을 활성화
 2) Enabled 버튼 아래 톱니바퀴(Settings) 버튼 클릭을 통해 해당 확장의 모달 화면 활성화
 3) 프리셋 제작 or 캐릭터 카드 전용 프리셋 (봇 카드 선택 시 자동 생성됨) or 프리셋 불러오기
@@ -23,32 +23,32 @@
   * 키워드 모드(Keyword Mode): 해당 기능을 활성화할 시, Ai의 마지막 메시지에서 키워드가 인식되면 자동으로 해당 BGM이 조건에(키워드 인식, 우선도 등) 따라 자동 재생됨
 
 ## 현재 깃허브 폴더 상태
-AutoBGM 폴더(github root) 안에:
+### AutoBGM 폴더(github root) 안에:
 - index.js
 - manifest.json
 - style.css
-AutoBGM/templates 폴더 안에:
+### AutoBGM/templates 폴더 안에:
 - popup.html
 - window.html
-AutoBGM/vendor 폴더 안에:
+### AutoBGM/vendor 폴더 안에:
 - jszip.min.js
 
-### 체크 리스트
-#### @SillyTavern확장 메뉴에서...@
+## 체크 리스트
+### @SillyTavern확장 메뉴에서...@
 - 해당 확장이 SillyTavern 내의 확장 메뉴에 뜨는가? (o)
 - 확장 메뉴 ui가 적용됐는가? (o)
 - 확장 메뉴에서 톱니바퀴 버튼(settings)을 눌렀을 때 모달이 뜨는가? (o)
-#### @모달에서...@
+### @모달에서...@
 - 모달 ui가 적용됐는가? (o)
 - 화면폭이 줄어들거나 넓어짐에 따라 모달 창 크기가 최적화되는가? (O)
 - 프리셋 ui가 정상적으로 세팅됐는가? (O)
 - BGM list의 ui가 정상적으로 세팅됐는가? (o)
-#### @프레셋에서...@
+### @프레셋에서...@
 - 프리셋 기능인
   * 저장, 삭제가 작동하는가? (o)
   * 불러오기, 내보내기가 작동하는가? (o)
   * 불러오기 시, 유저의 기존 프리셋이 초기화되지 않고 해당 프리셋만 추가로 불러와지는가? (o)
-#### @BGM list에서...@
+### @BGM list에서...@
 - BGM list의 기능인
   * BGM 개별 삽입, 삭제가 작동하는가? (O)
   * mp3 파일이 담긴 zip 폴더를 삽입했을 시 BGM 파일을 인식하는가? (o)
