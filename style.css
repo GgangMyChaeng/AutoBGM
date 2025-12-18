@@ -33,3 +33,42 @@
   opacity:.8;
 }
 
+/* ===== AutoBGM Modal ===== */
+body.autobgm-modal-open{
+  overflow:hidden;
+}
+
+.autobgm-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.55);
+  z-index:99999;
+  padding:16px;
+}
+
+.autobgm-modal{
+  width:min(760px, 92vw);
+  max-height:85vh;
+  overflow:auto;
+
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;
+  background:rgba(20,20,20,.96);
+  box-shadow:0 10px 40px rgba(0,0,0,.55);
+}
+
+.autobgm-modal-h{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+
+.autobgm-modal-b{
+  padding:12px 14px 14px;
+}
