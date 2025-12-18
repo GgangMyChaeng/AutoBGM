@@ -8,16 +8,48 @@
   </div>
 
   <div class="autobgm-modal-b">
-    <div style="opacity:.85; font-size:12px;">
-      여기부터 프리셋 / BGM 리스트 / 키워드 / 볼륨 / 우선순위 / 재생 / 삭제 UI 붙일 자리
+    <!-- 상단 옵션 -->
+    <div class="abgm-topbar">
+      <label class="checkbox_label" style="margin:0;">
+        <input type="checkbox" id="abgm_keywordMode">
+        <small>Keyword Mode</small>
+      </label>
+
+      <div class="abgm-inline">
+        <small style="opacity:.85;">Global Volume</small>
+        <input id="abgm_globalVol" type="range" min="0" max="100" value="70" class="abgm-range">
+        <small id="abgm_globalVolText" style="opacity:.85; width:38px; text-align:right;">70</small>
+      </div>
     </div>
 
-    <hr style="margin:12px 0; opacity:.2;" />
+    <hr class="abgm-hr"/>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <div class="menu_button" id="abgm_import"><i class="fa-solid fa-file-import"></i> Import</div>
-      <div class="menu_button" id="abgm_export"><i class="fa-solid fa-file-export"></i> Export</div>
-    </div>
-  </div>
-</div>
+    <div class="abgm-grid">
+      <!-- LEFT: Presets -->
+      <section class="abgm-card">
+        <div class="abgm-card-h">
+          <b>Presets</b>
+          <div class="abgm-row">
+            <div class="menu_button" id="abgm_preset_add" title="New Preset">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="menu_button" id="abgm_preset_del" title="Delete Preset">
+              <i class="fa-solid fa-trash"></i>
+            </div>
+          </div>
+        </div>
 
+        <div class="abgm-row" style="gap:8px;">
+          <select id="abgm_preset_select" class="abgm-select"></select>
+        </div>
+
+        <div class="abgm-row" style="gap:8px; margin-top:8px;">
+          <input id="abgm_preset_name" class="text_pole" placeholder="Preset name" style="flex:1;">
+          <div class="menu_button" id="abgm_preset_rename" title="Rename">
+            <i class="fa-solid fa-pen"></i>
+          </div>
+        </div>
+
+        <hr class="abgm-hr"/>
+
+        <div class="abgm-row" style=
