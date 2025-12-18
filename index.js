@@ -106,9 +106,13 @@ function ensureSettings() {
       },
     },
     assets: {},
+    ui: { bgmSort: "added_asc" },
   };
 
   const s = extension_settings[SETTINGS_KEY];
+
+  s.ui ??= { bgmSort: "added_asc" };
+  s.ui.bgmSort ??= "added_asc";
 
   // 안전장치
   if (!s.presets || Object.keys(s.presets).length === 0) {
@@ -299,6 +303,29 @@ async function openModal() {
 }
 
 /** ========= UI render ========= */
+function getBgmSort(settings) {
+  return settings?.ui?.bgmSort ?? "added_asc";
+}
+
+function getSortedBgms(preset, sort) {
+  const arr = [...(preset?.bgms ?? [])];
+  const mode = sort || "added_asc";
+
+  if (mode === "added_desc") return arr.reverse();
+
+  if (mode === "name_asc" || mode === "name_desc") {
+    arr.sort((a, b) =>
+      String(a?.fileKey ?? "").localeCompare(String(b?.fileKey ?? ""), undefined, {
+        numeric: true,
+        sensitivity: "base",
+      })
+    );
+    if (mode === "name_desc") arr.reverse();
+    return arr;
+  }
+  return arr; // added_asc
+}
+
 function renderPresetSelect(root, settings) {
   const sel = root.querySelector("#abgm_preset_select");
   const nameInput = root.querySelector("#abgm_preset_name");
@@ -328,16 +355,20 @@ function renderDefaultSelect(root, settings) {
   none.textContent = "(none)";
   sel.appendChild(none);
 
-  preset.bgms.forEach((b) => {
-    const opt = document.createElement("option");
-    opt.value = b.fileKey || "";
-    opt.textContent = b.fileKey || "(missing fileKey)";
-    if (opt.value && opt.value === (preset.defaultBgmKey ?? "")) opt.selected = true;
-    sel.appendChild(opt);
-  });
+  const list = getSortedBgms(preset, getBgmSort(settings));
 }
 
 function renderBgmTable(root, settings) {
+  const selected = root?.__abgmSelected instanceof Set ? root.__abgmSelected : new Set();
+const list = getSortedBgms(preset, getBgmSort(settings));
+
+tr.innerHTML = `
+  <td class="abgm-col-check">
+    <input type="checkbox" class="abgm_sel" ${selected.has(b.id) ? "checked" : ""}>
+  </td>
+  ...
+`;
+
   const preset = getActivePreset(settings);
   const tbody = root.querySelector("#abgm_bgm_tbody");
   if (!tbody) return;
@@ -377,6 +408,9 @@ function rerenderAll(root, settings) {
   renderPresetSelect(root, settings);
   renderDefaultSelect(root, settings);
   renderBgmTable(root, settings);
+}
+if (typeof root?.__abgmUpdateSelectionUI === "function") {
+  root.__abgmUpdateSelectionUI();
 }
 
 /** ========= Preset Import/Export (preset 단위 / 파일은 포함 안 함) ========= */
@@ -449,6 +483,25 @@ function pickPresetFromImportData(data) {
 function initModal(overlay) {
   const settings = ensureSettings();
   const root = overlay;
+  root.__abgmSelected = new Set();
+
+const updateSelectionUI = () => {
+  const preset = getActivePreset(settings);
+  const list = getSortedBgms(preset, getBgmSort(settings));
+  const selected = root.__abgmSelected;
+
+  const countEl = root.querySelector("#abgm_selected_count");
+  if (countEl) countEl.textContent = `${selected.size} selected`;
+
+  const allChk = root.querySelector("#abgm_sel_all");
+  if (allChk) {
+    const total = list.length;
+    const checked = list.filter((b) => selected.has(b.id)).length;
+    allChk.checked = total > 0 && checked === total;
+    allChk.indeterminate = checked > 0 && checked < total;
+  }
+};
+root.__abgmUpdateSelectionUI = updateSelectionUI;
 
   // 구버전 dataUrl 있으면 IndexedDB로 옮김 (있어도 한번만)
   migrateLegacyDataUrlsToIDB(settings);
