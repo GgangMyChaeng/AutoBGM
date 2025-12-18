@@ -323,6 +323,7 @@ function getSortedBgms(preset, sort) {
     if (mode === "name_desc") arr.reverse();
     return arr;
   }
+
   return arr; // added_asc
 }
 
@@ -356,30 +357,33 @@ function renderDefaultSelect(root, settings) {
   sel.appendChild(none);
 
   const list = getSortedBgms(preset, getBgmSort(settings));
+  list.forEach((b) => {
+    const opt = document.createElement("option");
+    opt.value = b.fileKey || "";
+    opt.textContent = b.fileKey || "(missing fileKey)";
+    if (opt.value && opt.value === (preset.defaultBgmKey ?? "")) opt.selected = true;
+    sel.appendChild(opt);
+  });
 }
 
 function renderBgmTable(root, settings) {
-  const selected = root?.__abgmSelected instanceof Set ? root.__abgmSelected : new Set();
-const list = getSortedBgms(preset, getBgmSort(settings));
-
-tr.innerHTML = `
-  <td class="abgm-col-check">
-    <input type="checkbox" class="abgm_sel" ${selected.has(b.id) ? "checked" : ""}>
-  </td>
-  ...
-`;
-
   const preset = getActivePreset(settings);
   const tbody = root.querySelector("#abgm_bgm_tbody");
   if (!tbody) return;
 
+  const selected = root?.__abgmSelected instanceof Set ? root.__abgmSelected : new Set();
+  const list = getSortedBgms(preset, getBgmSort(settings));
+
   tbody.innerHTML = "";
 
-  preset.bgms.forEach((b) => {
+  list.forEach((b) => {
     const tr = document.createElement("tr");
     tr.dataset.id = b.id;
 
     tr.innerHTML = `
+      <td class="abgm-col-check">
+        <input type="checkbox" class="abgm_sel" ${selected.has(b.id) ? "checked" : ""}>
+      </td>
       <td><input type="text" class="abgm_name" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3"></td>
       <td><input type="text" class="abgm_keywords" value="${escapeHtml(b.keywords ?? "")}" placeholder="rain, storm..."></td>
       <td><input type="number" class="abgm_priority" value="${Number(b.priority ?? 0)}" step="1"></td>
@@ -400,6 +404,7 @@ tr.innerHTML = `
         </div>
       </td>
     `;
+
     tbody.appendChild(tr);
   });
 }
@@ -408,9 +413,11 @@ function rerenderAll(root, settings) {
   renderPresetSelect(root, settings);
   renderDefaultSelect(root, settings);
   renderBgmTable(root, settings);
-}
-if (typeof root?.__abgmUpdateSelectionUI === "function") {
-  root.__abgmUpdateSelectionUI();
+
+  // ✅ 이건 “함수 안”에 있어야 함
+  if (typeof root?.__abgmUpdateSelectionUI === "function") {
+    root.__abgmUpdateSelectionUI();
+  }
 }
 
 /** ========= Preset Import/Export (preset 단위 / 파일은 포함 안 함) ========= */
@@ -503,6 +510,74 @@ const updateSelectionUI = () => {
 };
 root.__abgmUpdateSelectionUI = updateSelectionUI;
 
+  // ===== 선택/정렬 UI 이벤트 (updateSelectionUI 만든 직후에 넣기) =====
+const sortSel = root.querySelector("#abgm_sort");
+if (sortSel) {
+  sortSel.value = getBgmSort(settings);
+  sortSel.addEventListener("change", (e) => {
+    settings.ui.bgmSort = e.target.value;
+    saveSettingsDebounced();
+    rerenderAll(root, settings);
+  });
+}
+
+// select all
+root.querySelector("#abgm_sel_all")?.addEventListener("change", (e) => {
+  const preset = getActivePreset(settings);
+  const list = getSortedBgms(preset, getBgmSort(settings));
+  const selected = root.__abgmSelected;
+
+  if (e.target.checked) list.forEach((b) => selected.add(b.id));
+  else selected.clear();
+
+  rerenderAll(root, settings);
+});
+
+// row checkbox
+root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", (e) => {
+  if (!e.target.classList?.contains("abgm_sel")) return;
+  const tr = e.target.closest("tr");
+  if (!tr) return;
+
+  const id = tr.dataset.id;
+  if (e.target.checked) root.__abgmSelected.add(id);
+  else root.__abgmSelected.delete(id);
+
+  updateSelectionUI();
+});
+
+// bulk delete
+root.querySelector("#abgm_delete_selected")?.addEventListener("click", async () => {
+  const selected = root.__abgmSelected;
+  if (!selected.size) return;
+
+  const preset = getActivePreset(settings);
+  const idsToDelete = new Set(selected);
+  const removedKeys = [];
+
+  for (const id of idsToDelete) {
+    const bgm = preset.bgms.find((x) => x.id === id);
+    if (bgm?.fileKey) removedKeys.push(bgm.fileKey);
+  }
+
+  preset.bgms = preset.bgms.filter((x) => !idsToDelete.has(x.id));
+
+  if (preset.defaultBgmKey && !preset.bgms.some((b) => b.fileKey === preset.defaultBgmKey)) {
+    preset.defaultBgmKey = preset.bgms[0]?.fileKey ?? "";
+  }
+
+  selected.clear();
+
+  for (const fk of removedKeys) {
+    if (!fk) continue;
+    if (isFileKeyReferenced(settings, fk)) continue;
+    try { await idbDel(fk); delete settings.assets[fk]; } catch {}
+  }
+
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+});
+  
   // 구버전 dataUrl 있으면 IndexedDB로 옮김 (있어도 한번만)
   migrateLegacyDataUrlsToIDB(settings);
 
@@ -534,12 +609,13 @@ root.__abgmUpdateSelectionUI = updateSelectionUI;
     saveSettingsDebounced();
   });
 
-  // 프리셋 선택
-  root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
-    settings.activePresetId = e.target.value;
-    saveSettingsDebounced();
-    rerenderAll(root, settings);
-  });
+  // 프리셋 선택: 선택목록 초기화까지
+root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
+  settings.activePresetId = e.target.value;
+  root.__abgmSelected.clear();
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+});
 
   // 프리셋 추가/삭제/이름변경
   root.querySelector("#abgm_preset_add")?.addEventListener("click", () => {
@@ -694,6 +770,7 @@ root.__abgmUpdateSelectionUI = updateSelectionUI;
     if (!bgm) return;
 
     if (e.target.closest(".abgm_del")) {
+      root.__abgmSelected?.delete(id);
       const fileKey = bgm.fileKey;
 
       // 룰 row 삭제
