@@ -14,25 +14,30 @@ function fitModalToViewport(overlay) {
   const hRaw = Math.max(vv?.height || 0, window.innerHeight || 0, 600);
   const maxH = Math.max(240, Math.floor(hRaw - 24));
 
-  modal.style.boxSizing = "border-box";
+  const setI = (k, v) => modal.style.setProperty(k, v, "important");
 
-  // ✅ 폭 좁아도 무조건 화면 안으로 박제
-  modal.style.width = "calc(100vw - 24px)";
-  modal.style.maxWidth = "calc(100vw - 24px)";
-  modal.style.margin = "12px";           // auto(중앙정렬) 금지 → 밖으로 밀리는 거 방지
-  modal.style.minWidth = "0";
+  // ✅ 좁은 폭에서도 무조건 화면 안
+  setI("box-sizing", "border-box");
+  setI("display", "block");
+  setI("position", "relative");
+  setI("width", "calc(100vw - 24px)");
+  setI("max-width", "calc(100vw - 24px)");
+  setI("min-width", "0");
+  setI("margin", "12px");
 
-  modal.style.minHeight = "240px";
-  modal.style.height = `${maxH}px`;
-  modal.style.maxHeight = `${maxH}px`;
-  modal.style.overflow = "auto";
+  // ✅ 높이 강제 (CSS !important도 뚫음)
+  setI("min-height", "240px");
+  setI("height", `${maxH}px`);
+  setI("max-height", `${maxH}px`);
+  setI("overflow", "auto");
 
-  modal.style.background = "rgba(20,20,20,.96)";
-  modal.style.border = "1px solid rgba(255,255,255,.14)";
-  modal.style.borderRadius = "14px";
-  modal.style.transform = "none";
-  modal.style.opacity = "1";
-  modal.style.visibility = "visible";
+  setI("visibility", "visible");
+  setI("opacity", "1");
+  setI("transform", "none");
+
+  setI("background", "rgba(20,20,20,.96)");
+  setI("border", "1px solid rgba(255,255,255,.14)");
+  setI("border-radius", "14px");
 }
 
 /** ========= util ========= */
@@ -319,18 +324,19 @@ async function openModal() {
     if (e.target === overlay) closeModal();
   });
 
-    // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지)
-  overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.right = "0";
-  overlay.style.bottom = "0";
-  overlay.style.display = "block";
-  overlay.style.overflow = "auto";
-  overlay.style.webkitOverflowScrolling = "touch";
-  overlay.style.background = "rgba(0,0,0,.55)";
-  overlay.style.zIndex = "2147483647";
-  overlay.style.padding = "12px";
+   // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
+  const setO = (k, v) => overlay.style.setProperty(k, v, "important");
+  setO("position", "fixed");
+  setO("top", "0");
+  setO("left", "0");
+  setO("right", "0");
+  setO("bottom", "0");
+  setO("display", "block");
+  setO("overflow", "auto");
+  setO("-webkit-overflow-scrolling", "touch");
+  setO("background", "rgba(0,0,0,.55)");
+  setO("z-index", "2147483647");
+  setO("padding", "12px");
 
   document.body.appendChild(overlay);
 
