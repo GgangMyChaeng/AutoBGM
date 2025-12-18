@@ -40,6 +40,49 @@ function fitModalToViewport(overlay) {
   setI("border-radius", "14px");
 }
 
+function getModalHost() {
+  return (
+    document.querySelector("#app") ||
+    document.querySelector("#sillytavern") ||
+    document.querySelector("main") ||
+    document.body
+  );
+}
+
+function fitModalToHost(overlay, host) {
+  const modal = overlay?.querySelector?.(".autobgm-modal");
+  if (!modal) return;
+
+  const pad = 12;
+  const r = host?.getBoundingClientRect?.() || { width: window.innerWidth, height: window.innerHeight };
+
+  const w = Math.max(280, Math.floor(r.width - pad * 2));
+  const h = Math.max(240, Math.floor(r.height - pad * 2));
+
+  const setI = (k, v) => modal.style.setProperty(k, v, "important");
+
+  setI("box-sizing", "border-box");
+  setI("display", "block");
+  setI("position", "relative");
+  setI("width", `${w}px`);
+  setI("max-width", `${w}px`);
+  setI("min-width", "0");
+  setI("margin", `${pad}px auto`);
+
+  setI("min-height", "240px");
+  setI("height", `${h}px`);
+  setI("max-height", `${h}px`);
+  setI("overflow", "auto");
+
+  setI("visibility", "visible");
+  setI("opacity", "1");
+  setI("transform", "none");
+
+  setI("background", "rgba(20,20,20,.96)");
+  setI("border", "1px solid rgba(255,255,255,.14)");
+  setI("border-radius", "14px");
+}
+
 /** ========= util ========= */
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -336,16 +379,32 @@ setO("background", "rgba(0,0,0,.55)");
 setO("z-index", "2147483647");
 setO("padding", "12px");
 
-document.documentElement.appendChild(overlay);
+const host = getModalHost();
 
-// ✅ 즉시 + 다음 프레임 + 약간 후에 한번 더
-fitModalToViewport(overlay);
-requestAnimationFrame(() => fitModalToViewport(overlay));
-setTimeout(() => fitModalToViewport(overlay), 120);
+// host가 static이면 absolute overlay가 제대로 안 잡힘
+const cs = getComputedStyle(host);
+if (cs.position === "static") host.style.position = "relative";
 
-window.visualViewport?.addEventListener("resize", () => fitModalToViewport(overlay));
-window.addEventListener("resize", () => fitModalToViewport(overlay));
+// overlay는 fixed 말고 absolute로 (컨테이너 기준)
+const setO = (k, v) => overlay.style.setProperty(k, v, "important");
+setO("position", "absolute");
+setO("inset", "0");
+setO("display", "block");
+setO("overflow", "auto");
+setO("-webkit-overflow-scrolling", "touch");
+setO("background", "rgba(0,0,0,.55)");
+setO("z-index", "2147483647");
+setO("padding", "0"); // modal이 margin/pad 갖고 있으니 overlay는 0
 
+host.appendChild(overlay);
+
+// ✅ 컨테이너 기준으로 사이징
+fitModalToHost(overlay, host);
+requestAnimationFrame(() => fitModalToHost(overlay, host));
+setTimeout(() => fitModalToHost(overlay, host), 120);
+
+window.addEventListener("resize", () => fitModalToHost(overlay, host));
+window.visualViewport?.addEventListener("resize", () => fitModalToHost(overlay, host));
 
   document.body.classList.add("autobgm-modal-open");
   window.addEventListener("keydown", onEscClose);
