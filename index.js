@@ -6,6 +6,17 @@ console.log("[AutoBGM] index.js loaded", import.meta.url);
 const SETTINGS_KEY = "autobgm";
 const MODAL_OVERLAY_ID = "abgm_modal_overlay";
 
+function fitModalToViewport(overlay) {
+  const modal = overlay?.querySelector?.(".autobgm-modal");
+  if (!modal) return;
+
+  const h = window.visualViewport?.height || window.innerHeight || 600;
+  const maxH = Math.max(240, Math.floor(h - 24));
+
+  modal.style.maxHeight = `${maxH}px`;
+  modal.style.minHeight = `240px`;
+}
+
 /** ========= util ========= */
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -291,6 +302,10 @@ async function openModal() {
   });
 
   document.body.appendChild(overlay);
+  fitModalToViewport(overlay);
+window.visualViewport?.addEventListener("resize", () => fitModalToViewport(overlay));
+window.addEventListener("resize", () => fitModalToViewport(overlay));
+
   document.body.classList.add("autobgm-modal-open");
   window.addEventListener("keydown", onEscClose);
 
