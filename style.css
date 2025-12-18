@@ -129,6 +129,21 @@ body.autobgm-modal-open{
   color:inherit;
 }
 
+.abgm-select-slim{
+  width:auto;
+  min-width:200px;
+}
+
+.abgm-col-check{
+  width:38px;
+  text-align:center;
+  padding:8px 6px !important;
+}
+
+.abgm-table input.abgm_sel{
+  transform:scale(1.05);
+}
+
 .abgm-range{
   width:180px;
 }
