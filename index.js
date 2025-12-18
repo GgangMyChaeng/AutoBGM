@@ -45,6 +45,13 @@ async function mount() {
 
   const settings = ensureSettings();
 
+  const res = await fetch(`/scripts/extensions/third-party/${EXTENSION_NAME}/window.html`);
+  if (!res.ok) {
+    console.error("[AutoBGM] window.html load failed", res.status);
+    return;
+  }
+  const html = await res.text();
+
   const html = await renderExtensionTemplateAsync(EXTENSION_NAME, "settings");
   const root = document.createElement("div");
   root.id = "autobgm-root";
