@@ -15,14 +15,21 @@ function fitModalToViewport(overlay) {
   const maxH = Math.max(240, Math.floor(hRaw - 24));
 
   modal.style.boxSizing = "border-box";
+  modal.style.width = "96vw";
+  modal.style.maxWidth = "900px";
+  modal.style.margin = "12px auto";
+
   modal.style.minHeight = "240px";
-  modal.style.maxHeight = `${maxH}px`;
-
-  // ✅ 핵심: 모바일에서 “얇은 줄” 방지용 강제 height
   modal.style.height = `${maxH}px`;
+  modal.style.maxHeight = `${maxH}px`;
+  modal.style.overflow = "auto";
 
-  // ✅ 혹시 테마가 투명으로 덮으면 인라인이 이김
   modal.style.background = "rgba(20,20,20,.96)";
+  modal.style.border = "1px solid rgba(255,255,255,.14)";
+  modal.style.borderRadius = "14px";
+  modal.style.transform = "none";
+  modal.style.opacity = "1";
+  modal.style.visibility = "visible";
 }
 
 /** ========= util ========= */
@@ -308,6 +315,19 @@ async function openModal() {
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
+
+    // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지)
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.right = "0";
+  overlay.style.bottom = "0";
+  overlay.style.display = "block";
+  overlay.style.overflow = "auto";
+  overlay.style.webkitOverflowScrolling = "touch";
+  overlay.style.background = "rgba(0,0,0,.55)";
+  overlay.style.zIndex = "2147483647";
+  overlay.style.padding = "12px";
 
   document.body.appendChild(overlay);
 
@@ -884,36 +904,49 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
 async function mount() {
   const host = document.querySelector("#extensions_settings");
   if (!host) return;
+
+  // ✅ 이미 붙었으면 끝
   if (document.getElementById("autobgm-root")) return;
 
-  const settings = ensureSettings();
+  // ✅ mount 레이스 방지 (핵심)
+  if (window.__AUTOBGM_MOUNTING__) return;
+  window.__AUTOBGM_MOUNTING__ = true;
 
-  let html;
   try {
-    html = await loadHtml("templates/window.html");
-  } catch (e) {
-    console.error("[AutoBGM] window.html load failed", e);
-    return;
+    const settings = ensureSettings();
+
+    let html;
+    try {
+      html = await loadHtml("templates/window.html");
+    } catch (e) {
+      console.error("[AutoBGM] window.html load failed", e);
+      return;
+    }
+
+    // 혹시 레이스로 여기 도달 전에 다른 mount가 붙였으면 종료
+    if (document.getElementById("autobgm-root")) return;
+
+    const root = document.createElement("div");
+    root.id = "autobgm-root";
+    root.innerHTML = html;
+    host.appendChild(root);
+
+    const enable = root.querySelector("#autobgm_enabled");
+    const openBtn = root.querySelector("#autobgm_open");
+    if (!enable || !openBtn) return;
+
+    enable.checked = !!settings.enabled;
+    enable.addEventListener("change", (e) => {
+      settings.enabled = !!e.target.checked;
+      saveSettingsDebounced();
+    });
+
+    openBtn.addEventListener("click", () => openModal());
+
+    console.log("[AutoBGM] mounted OK");
+  } finally {
+    window.__AUTOBGM_MOUNTING__ = false;
   }
-
-  const root = document.createElement("div");
-  root.id = "autobgm-root";
-  root.innerHTML = html;
-  host.appendChild(root);
-
-  const enable = root.querySelector("#autobgm_enabled");
-  const openBtn = root.querySelector("#autobgm_open");
-  if (!enable || !openBtn) return;
-
-  enable.checked = !!settings.enabled;
-  enable.addEventListener("change", (e) => {
-    settings.enabled = !!e.target.checked;
-    saveSettingsDebounced();
-  });
-
-  openBtn.addEventListener("click", () => openModal());
-
-  console.log("[AutoBGM] mounted OK");
 }
 
 function init() {
