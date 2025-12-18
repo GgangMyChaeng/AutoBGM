@@ -66,21 +66,17 @@ body.autobgm-modal-open{
 .autobgm-modal{
   width:min(900px, 96vw);
 
-  /* ✅ dvh 쓰지 말고 vh/svh로 */
+  /* ✅ 모바일 웹뷰에서 svh/dvh 뻘짓 방지 */
   max-height: calc(100vh - 24px);
+  min-height: 240px;
+
   overflow:auto;
+  box-sizing: border-box;
 
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;
   background:rgba(20,20,20,.96);
   box-shadow:0 10px 40px rgba(0,0,0,.55);
-}
-
-/* ✅ svh 지원하면 더 안정적으로 */
-@supports (height: 100svh){
-  .autobgm-modal{
-    max-height: calc(100svh - 24px);
-  }
 }
 
 .autobgm-modal-h{
