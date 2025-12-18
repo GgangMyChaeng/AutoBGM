@@ -1,7 +1,7 @@
-import { extension_settings, renderExtensionTemplateAsync } from "../../../extensions.js";
+import { extension_settings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
-const EXTENSION_NAME = "AutoBGM";   // 폴더명 정확히 (대소문자 포함)
+const EXTENSION_NAME = "AutoBGM";
 const SETTINGS_KEY = "autobgm";
 
 function ensureSettings() {
@@ -12,20 +12,23 @@ function ensureSettings() {
 async function mount() {
   const host = document.querySelector("#extensions_settings");
   if (!host) return;
-
   if (document.getElementById("autobgm-root")) return;
 
   const settings = ensureSettings();
 
-  const html = await renderExtensionTemplateAsync(EXTENSION_NAME, "settings");
+  const res = await fetch(`/scripts/extensions/third-party/${EXTENSION_NAME}/window.html`);
+  if (!res.ok) {
+    console.error("[AutoBGM] window.html load failed", res.status);
+    return;
+  }
+  const html = await res.text();
+
   const root = document.createElement("div");
   root.id = "autobgm-root";
   root.innerHTML = html;
   host.appendChild(root);
 
   const enable = root.querySelector("#abgm_enable");
-  const btn = root.querySelector("#abgm_openSettings");
-
   if (enable) {
     enable.checked = !!settings.enabled;
     enable.addEventListener("change", (e) => {
@@ -34,14 +37,11 @@ async function mount() {
     });
   }
 
-  if (btn) {
-    btn.addEventListener("click", () => {
-      alert("Settings modal (TODO)");
-    });
-  }
+  root.querySelector("#abgm_openSettings")?.addEventListener("click", () => {
+    alert("Settings modal (TODO)");
+  });
 
-  console.log("[AutoBGM] mounted in extensions menu");
+  console.log("[AutoBGM] mounted");
 }
 
-jQuery(() => { mount(); });
-
+jQuery(() => mount());
