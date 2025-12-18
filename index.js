@@ -5,6 +5,7 @@ console.log("[AutoBGM] index.js loaded", import.meta.url);
 
 const SETTINGS_KEY = "autobgm";
 const MODAL_OVERLAY_ID = "abgm_modal_overlay";
+let _abgmViewportHandler = null;
 
 function fitModalToViewport(overlay) {
   const modal = overlay?.querySelector?.(".autobgm-modal");
@@ -412,9 +413,6 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", _abgmViewportHandler);
   window.visualViewport.addEventListener("scroll", _abgmViewportHandler); // ✅ 중요: 키보드 올라오면 scroll도 같이 변함
 }
-
-window.addEventListener("resize", () => fitModalToHost(overlay, host));
-window.visualViewport?.addEventListener("resize", () => fitModalToHost(overlay, host));
 
   document.body.classList.add("autobgm-modal-open");
   window.addEventListener("keydown", onEscClose);
