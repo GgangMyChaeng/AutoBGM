@@ -368,24 +368,13 @@ async function openModal() {
   });
 
    // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
-  const setO = (k, v) => overlay.style.setProperty(k, v, "important");
-setO("position", "fixed");
-setO("inset", "0");
-setO("transform", "none");
-setO("display", "block");
-setO("overflow", "auto");
-setO("-webkit-overflow-scrolling", "touch");
-setO("background", "rgba(0,0,0,.55)");
-setO("z-index", "2147483647");
-setO("padding", "12px");
-
 const host = getModalHost();
 
 // host가 static이면 absolute overlay가 제대로 안 잡힘
 const cs = getComputedStyle(host);
 if (cs.position === "static") host.style.position = "relative";
 
-// overlay는 fixed 말고 absolute로 (컨테이너 기준)
+// overlay는 컨테이너 기준 absolute로
 const setO = (k, v) => overlay.style.setProperty(k, v, "important");
 setO("position", "absolute");
 setO("inset", "0");
