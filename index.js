@@ -1,14 +1,16 @@
-// index.js
-import { extension_settings, renderExtensionTemplateAsync } from "../../extensions.js";
+import { extension_settings, renderExtensionTemplateAsync } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
-const EXTENSION_NAME = "AutoBGM";   // 폴더명(대소문자 포함) == third-party/AutoBGM
-const SETTINGS_KEY  = "autobgm";    // extension_settings에 저장될 키
+// ✅ 설치 폴더명 자동 추출 (AutoBGM / AutoBGM-main 등)
+const EXTENSION_NAME = new URL(".", import.meta.url).pathname
+  .split("/")
+  .filter(Boolean)
+  .pop();
+
+const SETTINGS_KEY = "autobgm";
 
 function ensureSettings() {
-  extension_settings[SETTINGS_KEY] ??= {
-    enabled: true,
-  };
+  extension_settings[SETTINGS_KEY] ??= { enabled: true };
   return extension_settings[SETTINGS_KEY];
 }
 
@@ -16,17 +18,15 @@ async function mount() {
   const host = document.querySelector("#extensions_settings");
   if (!host) return;
 
-  // 중복 방지
   if (document.getElementById("autobgm-root")) return;
 
   const settings = ensureSettings();
 
   let html = "";
   try {
-    // templates/window.html 로드
     html = await renderExtensionTemplateAsync(EXTENSION_NAME, "window");
   } catch (e) {
-    console.error("[AutoBGM] template load failed:", e);
+    console.error("[AutoBGM] template load failed:", e, "EXTENSION_NAME=", EXTENSION_NAME);
     return;
   }
 
@@ -35,7 +35,6 @@ async function mount() {
   root.innerHTML = html;
   host.appendChild(root);
 
-  // ✅ window.html id에 맞춰서 바인딩
   const enable = root.querySelector("#autobgm_enabled");
   const openBtn = root.querySelector("#autobgm_open");
 
@@ -44,25 +43,30 @@ async function mount() {
     enable.addEventListener("change", (e) => {
       settings.enabled = !!e.target.checked;
       saveSettingsDebounced();
-      console.log("[AutoBGM] enabled =", settings.enabled);
     });
-  } else {
-    console.warn("[AutoBGM] #autobgm_enabled not found (window.html id 확인)");
   }
 
   if (openBtn) {
     openBtn.addEventListener("click", () => {
-      // TODO: 여기서 settings 모달 띄우면 됨
-      // (일단 동작 확인용)
       console.log("[AutoBGM] open settings clicked");
       alert("Settings modal (TODO)");
     });
-  } else {
-    console.warn("[AutoBGM] #autobgm_open not found (window.html id 확인)");
   }
 
-  console.log("[AutoBGM] mounted (extensions menu)");
+  console.log("[AutoBGM] mounted");
 }
 
-// ST는 보통 jQuery ready에서 확장 마운트
-jQuery(() => mount());
+function init() {
+  // 1) 즉시 한 번 시도
+  mount();
+
+  // 2) 나중에 Extensions 패널 열리면서 DOM 생기면 그때 붙이기
+  const obs = new MutationObserver(() => {
+    if (document.querySelector("#extensions_settings") && !document.getElementById("autobgm-root")) {
+      mount();
+    }
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
+jQuery(() => init());
