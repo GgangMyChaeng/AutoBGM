@@ -326,19 +326,17 @@ async function openModal() {
 
    // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
   const setO = (k, v) => overlay.style.setProperty(k, v, "important");
-  setO("position", "fixed");
-  setO("top", "0");
-  setO("left", "0");
-  setO("right", "0");
-  setO("bottom", "0");
-  setO("display", "block");
-  setO("overflow", "auto");
-  setO("-webkit-overflow-scrolling", "touch");
-  setO("background", "rgba(0,0,0,.55)");
-  setO("z-index", "2147483647");
-  setO("padding", "12px");
+setO("position", "fixed");
+setO("inset", "0");
+setO("transform", "none");
+setO("display", "block");
+setO("overflow", "auto");
+setO("-webkit-overflow-scrolling", "touch");
+setO("background", "rgba(0,0,0,.55)");
+setO("z-index", "2147483647");
+setO("padding", "12px");
 
-  document.body.appendChild(overlay);
+document.documentElement.appendChild(overlay);
 
 // ✅ 즉시 + 다음 프레임 + 약간 후에 한번 더
 fitModalToViewport(overlay);
