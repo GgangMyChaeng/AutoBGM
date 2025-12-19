@@ -1193,7 +1193,10 @@ if (!ok) return;
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `autobgm_preset_${(preset.name || preset.id).replace(/[^\w\-]+/g, "_")}.json`;
+    a.download = `${(String(preset.name || preset.id || "Preset").trim() || "Preset")
+  .replace(/[\\\/:*?"<>|]+/g, "_")
+  .replace(/\s+/g, "_")
+  .replace(/[._-]+$/g, "")}_AutoBGM.json`;
     a.click();
 
     setTimeout(() => URL.revokeObjectURL(url), 1000);
