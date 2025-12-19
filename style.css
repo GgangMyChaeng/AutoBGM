@@ -737,7 +737,7 @@ body.autobgm-modal-open{
   /* slider 더 길게(우선도 폭 이상 확보) */
   .abgm-volcell .abgm_vol{
     width: 100% !important;
-    min-width: 160px !important;
+    min-width: 130px !important;
   }
 
   /* num/lock 정렬 */
