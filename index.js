@@ -513,7 +513,6 @@ function renderBgmTable(root, settings) {
   root.__abgmExpanded = expanded;
 
   const list = getSortedBgms(preset, getBgmSort(settings));
-
   tbody.innerHTML = "";
 
   list.forEach((b) => {
@@ -527,7 +526,7 @@ function renderBgmTable(root, settings) {
       <td class="abgm-col-check">
         <input type="checkbox" class="abgm_sel" ${selected.has(b.id) ? "checked" : ""}>
       </td>
-      <td>
+      <td class="abgm-filecell">
         <input type="text" class="abgm_name" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3">
       </td>
       <td>
@@ -549,27 +548,37 @@ function renderBgmTable(root, settings) {
     if (!isOpen) tr2.style.display = "none";
 
     const vol100 = Math.round((b.volume ?? 1) * 100);
+    const locked = !!b.volLocked;
+
     tr2.innerHTML = `
       <td colspan="4">
-        <div class="abgm-detail-wrap">
-          <div class="abgm-field">
+        <div class="abgm-detail-grid">
+          <!-- Keywords (left, taller) -->
+          <div class="abgm-keywords">
             <small>Keywords</small>
-            <input type="text" class="abgm_keywords" value="${escapeHtml(b.keywords ?? "")}" placeholder="rain, storm...">
+            <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
           </div>
 
-          <div class="abgm-field" style="max-width:140px;">
-            <small>Priority</small>
-            <input type="number" class="abgm_priority" value="${Number(b.priority ?? 0)}" step="1">
-          </div>
+          <!-- Right stack: Priority (top) / Volume (bottom) -->
+          <div class="abgm-side">
+            <div class="abgm-field-tight">
+              <small>Priority</small>
+              <input type="number" class="abgm_priority abgm_narrow" value="${Number(b.priority ?? 0)}" step="1">
+            </div>
 
-          <div class="abgm-field">
-            <small>Volume</small>
-            <div class="abgm-volcell">
-              <input type="range" class="abgm_vol" min="0" max="100" value="${vol100}">
-              <input type="number" class="abgm_volnum" min="0" max="100" step="1" value="${vol100}">
+            <div class="abgm-field-tight">
+              <small>Volume</small>
+              <div class="abgm-volcell">
+                <input type="range" class="abgm_vol" min="0" max="100" value="${vol100}" ${locked ? "disabled" : ""}>
+                <input type="number" class="abgm_volnum" min="0" max="100" step="1" value="${vol100}">
+                <div class="menu_button abgm-iconbtn abgm_vol_lock" title="Lock slider">
+                  <i class="fa-solid ${locked ? "fa-lock" : "fa-lock-open"}"></i>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Delete (right) -->
           <div class="abgm-detail-actions">
             <div class="menu_button abgm_del" title="Delete">
               <i class="fa-solid fa-trash"></i> Delete
