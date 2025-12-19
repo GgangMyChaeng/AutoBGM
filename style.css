@@ -366,11 +366,6 @@ body.autobgm-modal-open{
   -webkit-overflow-scrolling: touch;
 }
 
-/* 테이블은 최소폭 유지하고, 좁은 화면에선 가로 스크롤로 처리 */
-.abgm-table{
-  min-width: 720px;
-}
-
 /* 좁은 화면에선 select 최소폭 강제 해제 */
 @media (max-width: 520px){
   .abgm-select-slim{
@@ -509,4 +504,18 @@ body.autobgm-modal-open{
 
   /* 파일칸 “체감 1/3”로 확 줄이기 */
   .abgm-filecell{ width: 46%; } /* 여기 숫자 줄일수록 더 짧아짐(예: 40%) */
+}
+
+/* ✅ 모바일에서 Play/More 안 보이는 원인 제거 */
+.abgm-table{
+  min-width: 0 !important;
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+/* 모바일에서 버튼 칸이 더 확실히 보이게(좀 더 타이트) */
+@media (max-width: 520px){
+  .abgm-table th, .abgm-table td{ padding: 6px 6px; }
+  .abgm-iconbtn{ width: 30px; height: 28px; }
+  .abgm-filecell{ width: 40% !important; } /* 더 줄이고 싶으면 35% */
 }
