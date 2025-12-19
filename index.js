@@ -724,20 +724,21 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", (e) => {
 
 // bulk delete
 root.querySelector("#abgm_delete_selected")?.addEventListener("click", async () => {
-
-  const names = [];
-for (const id of selected) {
-  const bgm = preset.bgms.find((x) => x.id === id);
-  if (bgm?.fileKey) names.push(bgm.fileKey);
-}
-const preview = names.slice(0, 6).map((x) => `- ${x}`).join("\n");
-const more = names.length > 6 ? `\n...외 ${names.length - 6}개` : "";
-if (!confirm(`선택한 ${names.length}개 BGM 삭제?\n${preview}${more}`)) return;
-
   const selected = root.__abgmSelected;
   if (!selected.size) return;
 
   const preset = getActivePreset(settings);
+
+  const names = [];
+  for (const id of selected) {
+    const bgm = preset.bgms.find((x) => x.id === id);
+    if (bgm?.fileKey) names.push(bgm.fileKey);
+  }
+
+  const preview = names.slice(0, 6).map((x) => `- ${x}`).join("\n");
+  const more = names.length > 6 ? `\n...외 ${names.length - 6}개` : "";
+  if (!confirm(`선택한 ${names.length}개 BGM 삭제?\n${preview}${more}`)) return;
+  
   const idsToDelete = new Set(selected);
   const removedKeys = [];
 
