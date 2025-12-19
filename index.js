@@ -102,23 +102,30 @@ function getActivePreset(settings) {
 }
 
 /** ========= 삭제 확인 및 취소 ========= */
-function abgmConfirm(rootOrDoc, message, {
+function abgmConfirm(containerOrDoc, message, {
   title = "Confirm",
   okText = "확인",
   cancelText = "취소",
 } = {}) {
-  const doc = rootOrDoc?.ownerDocument || document;
+  const doc = containerOrDoc?.ownerDocument || document;
+
+  // ✅ overlay(=root) 같은 엘리먼트가 들어오면 거기에 붙임
+  const container =
+    containerOrDoc && containerOrDoc.nodeType === 1 ? containerOrDoc : doc.body;
 
   return new Promise((resolve) => {
     const wrap = doc.createElement("div");
     wrap.className = "abgm-confirm-wrap";
+
+    // ✅ overlay 안에 붙일 때는 absolute 센터링 모드
+    if (container !== doc.body) wrap.classList.add("abgm-confirm-in-modal");
+
     wrap.innerHTML = `
       <div class="abgm-confirm-backdrop"></div>
-      <div class="abgm-confirm">
+      <div class="abgm-confirm" role="dialog" aria-modal="true">
         <div class="abgm-confirm-title">${escapeHtml(title)}</div>
         <div class="abgm-confirm-msg">${escapeHtml(message)}</div>
         <div class="abgm-confirm-actions">
-          <!-- ✅ 니가 원하는 순서: 확인(좌) / 취소(우) -->
           <button class="menu_button abgm-confirm-ok" type="button">${escapeHtml(okText)}</button>
           <button class="menu_button abgm-confirm-cancel" type="button">${escapeHtml(cancelText)}</button>
         </div>
@@ -126,6 +133,7 @@ function abgmConfirm(rootOrDoc, message, {
     `;
 
     const done = (v) => {
+      doc.removeEventListener("keydown", onKey);
       wrap.remove();
       resolve(v);
     };
@@ -134,11 +142,10 @@ function abgmConfirm(rootOrDoc, message, {
     wrap.querySelector(".abgm-confirm-cancel")?.addEventListener("click", () => done(false));
     wrap.querySelector(".abgm-confirm-ok")?.addEventListener("click", () => done(true));
 
-    // ESC 닫기
     const onKey = (e) => { if (e.key === "Escape") done(false); };
-    doc.addEventListener("keydown", onKey, { once: true });
+    doc.addEventListener("keydown", onKey);
 
-    doc.body.appendChild(wrap);
+    container.appendChild(wrap);
   });
 }
 
