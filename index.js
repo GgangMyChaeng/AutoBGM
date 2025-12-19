@@ -347,17 +347,21 @@ async function playAsset(fileKey, volume01) {
 async function ensureJSZipLoaded() {
   if (window.JSZip) return window.JSZip;
 
-  // ✅ 너가 vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드됨
-  const s = document.createElement("script");
-  s.src = new URL("vendor/jszip.min.js", import.meta.url);
-  document.head.appendChild(s);
+  // ✅ 로딩 중 중복 append 방지
+  if (window.__ABGM_JSZIP_PROMISE__) return window.__ABGM_JSZIP_PROMISE__;
 
-  await new Promise((resolve, reject) => {
-    s.onload = resolve;
-    s.onerror = reject;
+  window.__ABGM_JSZIP_PROMISE__ = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = new URL("vendor/jszip.min.js", import.meta.url).toString();
+    s.async = true;
+
+    s.onload = () => resolve(window.JSZip);
+    s.onerror = (e) => reject(e);
+
+    document.head.appendChild(s);
   });
 
-  return window.JSZip;
+  return window.__ABGM_JSZIP_PROMISE__;
 }
 
 async function importZip(file, settings) {
@@ -393,9 +397,34 @@ function isFileKeyReferenced(settings, fileKey) {
   return false;
 }
 
+// ✅ fileKey를 바꾸면, (가능하면) IndexedDB의 blob도 같이 이름 이동
+// - oldKey blob이 없으면 그냥 패스
+// - oldKey가 다른 프리셋/기본값에서 참조 중이면 oldKey blob은 유지
+async function renameAssetKey(settings, oldKey, newKey) {
+  if (!oldKey || !newKey || oldKey === newKey) return;
+
+  const blob = await idbGet(oldKey);
+  if (!blob) return;
+
+  await idbPut(newKey, blob);
+
+  const assets = ensureAssetList(settings);
+  if (!assets[newKey]) assets[newKey] = { fileKey: newKey, label: newKey.replace(/\.mp3$/i, "") };
+
+  if (!isFileKeyReferenced(settings, oldKey)) {
+    await idbDel(oldKey);
+    delete assets[oldKey];
+  }
+}
+
 /** ========= Modal open/close ========= */
 function closeModal() {
   const overlay = document.getElementById(MODAL_OVERLAY_ID);
+  try { _testAudio?.pause?.(); } catch {}
+if (_testUrl) {
+  try { URL.revokeObjectURL(_testUrl); } catch {}
+  _testUrl = "";
+}
   if (overlay) overlay.remove();
   document.body.classList.remove("autobgm-modal-open");
   window.removeEventListener("keydown", onEscClose);
@@ -432,6 +461,9 @@ async function openModal() {
 
    // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
 const host = getModalHost();
+  // overlay 내부에서도 같은 host 재사용
+overlay.__abgmHost = host;
+
 
 // host가 static이면 absolute overlay가 제대로 안 잡힘
 const cs = getComputedStyle(host);
@@ -1022,14 +1054,14 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
   // fileKey
   if (e.target.classList.contains("abgm_name")) {
     const oldKey = bgm.fileKey;
-    const newKey = String(e.target.value || "").trim();
+    const newKey = e.target.value.trim();
     bgm.fileKey = newKey;
-    if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
-    saveSettingsDebounced();
-    renderDefaultSelect(root, settings);
-    return;
-  }
-
+    if (oldKey && newKey && oldKey !== newKey) {
+  // IDB blob 이름도 이동 (비동기, 실패해도 UI는 안 죽게)
+  renameAssetKey(settings, oldKey, newKey).catch((err) =>
+    console.warn("[AutoBGM] renameAssetKey failed", err)
+  );
+}
   // keywords/priority
   if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
   if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
@@ -1199,12 +1231,10 @@ if (!ok) return;
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
   
-  overlay.addEventListener("focusin", () => {
-  // 키보드 뜨기 직전에 한번, 뜬 뒤에 한번
-  requestAnimationFrame(() => fitModalToHost(overlay, getModalHost()));
-  setTimeout(() => fitModalToHost(overlay, getModalHost()), 120);
+  root.addEventListener("focusin", () => {
+  const host = root.__abgmHost || getModalHost();
+  fitModalToHost(root, host);
 });
-
 
   rerenderAll(root, settings);
 }
