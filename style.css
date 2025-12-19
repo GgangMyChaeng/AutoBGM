@@ -392,3 +392,66 @@ body.autobgm-modal-open{
   opacity: .45;
   cursor: not-allowed;
 }
+
+/* =========================
+   Compact widths (mobile-friendly)
+   ========================= */
+
+/* 테이블이 칸 폭을 고정해서 파일명 칸이 뚱뚱해지는 거 방지 */
+.abgm-table{
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* 파일명 칸: 기본은 “확 줄이기(대충 1/3 체감)” */
+.abgm-filecell{
+  width: 220px;          /* PC에서도 덜 뚱뚱하게 */
+  max-width: 220px;
+}
+
+/* 아주 좁은 화면에선 더 줄임 */
+@media (max-width: 520px){
+  .abgm-filecell{
+    width: 150px;        /* 1/3 느낌 거의 여기서 남 */
+    max-width: 150px;
+  }
+}
+
+/* 파일명 input 자체도 칸을 꽉 채우되, 말줄임 */
+.abgm_name{
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================
+   Detail(펼쳤을 때) 키워드 폭 “반토막” + 레이아웃 유지
+   ========================= */
+
+/* 기본(PC/태블릿): 키워드 컬럼을 0.5fr로 줄여서 체감 반토막 */
+.abgm-detail-grid{
+  grid-template-columns: minmax(180px, 0.5fr) 170px 130px;
+}
+
+/* 모바일(520px 이하): 이미 너가 좁게 잡아놨던 값보다 키워드 더 작게 */
+@media (max-width: 520px){
+  .abgm-detail-grid{
+    grid-template-columns: minmax(140px, 0.5fr) 130px 100px;
+  }
+}
+
+/* 키워드 textarea는 폭 100% 유지(컬럼 자체가 줄었으니 자연히 줄어듦) + 세로 조절 가능 */
+.abgm-keywords textarea.abgm_keywords{
+  width: 100%;
+  resize: vertical;
+}
+
+/* 우선도/볼륨 숫자칸도 살짝 줄여서 모바일에서 덜 답답하게 */
+.abgm_priority.abgm_narrow{
+  max-width: 92px;
+}
+.abgm_volnum{
+  width: 58px;
+}
