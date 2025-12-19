@@ -632,3 +632,37 @@ body.autobgm-modal-open{
     padding-bottom: 6px !important;
   }
 }
+
+.abgm-confirm-wrap{
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+}
+
+.abgm-confirm-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+}
+
+.abgm-confirm{
+  position: relative;
+  width: min(420px, calc(100vw - 24px));
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  background: rgba(20,20,20,.96);
+  box-shadow: 0 10px 40px rgba(0,0,0,.55);
+  padding: 12px 14px;
+}
+
+.abgm-confirm-title{ font-weight: 700; margin-bottom: 8px; }
+.abgm-confirm-msg{ opacity: .9; white-space: pre-wrap; line-height: 1.35; }
+
+.abgm-confirm-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
