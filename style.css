@@ -509,3 +509,21 @@ body.autobgm-modal-open{ overflow:hidden; }
   display: grid;
   place-items: center;
 }
+
+/* =========================
+   PC slider hard cap (final override)
+   ========================= */
+@media (min-width: 700px){
+  /* 슬라이더 길이 고정(원하는 값으로 숫자만 바꾸면 됨) */
+  .abgm-volcell{
+    grid-template-columns: 160px 72px 34px !important; /* <- 160이 슬라이더 길이 */
+    justify-content: end !important;
+  }
+
+  input[type="range"].abgm_vol{
+    width: 160px !important;
+    max-width: 160px !important;
+    min-width: 0 !important;
+    flex: 0 0 160px !important;
+  }
+}
