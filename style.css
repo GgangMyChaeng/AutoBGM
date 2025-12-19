@@ -271,7 +271,7 @@ body.autobgm-modal-open{
 @media (min-width: 900px){
   .abgm-detail-actions{
     justify-content: center;   /* 우측 끝 박힘 줄임 */
-    padding-right: 6px;
+    padding-right: 14px;
   }
 }
 
