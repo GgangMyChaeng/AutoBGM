@@ -96,4 +96,4 @@
 
 ## License
 This project is licensed under CC BY-NC-ND 4.0.
-Third-party libraries are licensed separately (see NOTICE).
+Third-party libraries are licensed separately (see LICENSE's NOTICE).
