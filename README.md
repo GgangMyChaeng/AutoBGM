@@ -24,7 +24,7 @@
 7) 키워드 모드(Keyword Mode)*가 켜져있는 상태로 모달 화면을 닫고 채팅
   * 키워드 모드(Keyword Mode): 해당 기능을 활성화할 시, Ai의 마지막 메시지에서 키워드가 인식되면 자동으로 해당 BGM이 조건에(키워드 인식, 우선도 등) 따라 자동 재생됨
 
-#### For preset’s import · export
+#### For presets’ import · export
 - Import 시 해당 프리셋의 명칭·파일명·키워드·우선도·볼륨 설정만 불러와짐. BGM을 위한 mp3 파일은 따로 또 삽입해 줘야 함.
 - Export 시 바로 위에 언급된 설정들이 저장된 파일이 생성됨. BGM을 위한 mp3 파일까지 저장·공유를 하고 싶다면 개인이 따로 세팅해야 함.
 
@@ -55,20 +55,23 @@
 - 화면폭이 줄어들거나 넓어짐에 따라 모달 창 크기가 최적화되는가? (O)
 - 프리셋 ui가 정상적으로 세팅됐는가? (O)
 - BGM list의 ui가 정상적으로 세팅됐는가? (o)
+- BGM list의 각 항목의 설정 전체를 접거나 펼칠 수 있는가? (O)
+- 프리셋이나 BGM 파일 삭제 전 쿠션(확인 메시지)이 뜨는가? (O)
 ### @프리셋에서...@
 - 프리셋 기능인
   * 저장, 삭제가 작동하는가? (o)
   * 불러오기, 내보내기가 작동하는가? (o)
   * 불러오기 시, 유저의 기존 프리셋이 초기화되지 않고 해당 프리셋만 추가로 불러와지는가? (o)
-  * 내보내기 시, 해당 프리셋 명칭 그대로 저장되는가? (X)
+  * 내보내기 시, 해당 프리셋 명칭 그대로 저장되는가? (O)
 ### @BGM list에서...@
 - BGM list의 기능인
   * BGM 개별 삽입, 삭제가 작동하는가? (O)
-  * BGM 파일 삭제 전 쿠션(확인 메시지)이 뜨는가? (X)
   * mp3 파일이 담긴 zip 폴더를 삽입했을 시 BGM 파일을 인식하는가? (o)
   * 키워드 저장이 작동하는가? (O)
   * 개별 볼륨 조절 설정이 저장되는가? (O)
+  * 볼륨 설정 스크롤 바와 입력창의 값이 호환되는가? (O)
   * BGM이 이름 알파벳 순, 알파벳 역순 혹은 추가한 순, 추가한 역순으로 정렬되는가? (O)
+  * Default BGM이 설정되는가? (X)
 - AutoBGM의 기능인
   * BGM 재생, 일시정지가 작동하는가? (O)
   * 개별 볼륨 조절 설정이 작동하는가? (O)
@@ -96,4 +99,4 @@
 
 ## License
 This project is licensed under CC BY-NC-ND 4.0.
-Third-party libraries are licensed separately (see LICENSE's NOTICE).
+Third-party libraries are licensed separately (see NOTICE).
