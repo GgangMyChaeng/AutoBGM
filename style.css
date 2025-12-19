@@ -519,3 +519,49 @@ body.autobgm-modal-open{
   .abgm-iconbtn{ width: 30px; height: 28px; }
   .abgm-filecell{ width: 40% !important; } /* 더 줄이고 싶으면 35% */
 }
+
+/* ===== Mobile: File 조금 넓혀서 Play가 너무 중앙으로 안 오게 ===== */
+@media (max-width: 520px){
+  .abgm-table{
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    width: 100% !important;
+  }
+
+  /* 체크/Play/More는 고정폭 */
+  .abgm-table th:nth-child(1),
+  .abgm-table td:nth-child(1){ width: 38px !important; }
+
+  .abgm-table th:nth-child(3),
+  .abgm-table td:nth-child(3){ width: 58px !important; }  /* Play 조금 줄임 */
+
+  .abgm-table th:nth-child(4),
+  .abgm-table td:nth-child(4){ width: 58px !important; }  /* More도 */
+
+  /* File 칸은 더 넓게 */
+  .abgm-filecell{ width: 60% !important; } /* 60~68 사이로 취향껏 */
+}
+
+/* ===== Detail layout: mobile에선 2col + 2row로 바꾸기 ===== */
+@media (max-width: 520px){
+  .abgm-detail-grid{
+    grid-template-columns: minmax(0, 1fr) 150px !important;
+    grid-template-areas:
+      "kw side"
+      "kw act" !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .abgm-keywords{ grid-area: kw; }
+  .abgm-side{ grid-area: side; }
+  .abgm-detail-actions{
+    grid-area: act;
+    align-self: center;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 520px){
+  .abgm-del-label{ display:none; } /* 모바일은 아이콘만 */
+}
