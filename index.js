@@ -245,6 +245,7 @@ function ensureSettings() {
   };
 
   const s = extension_settings[SETTINGS_KEY];
+  ensureEngineFields(s);
 
   s.ui ??= { bgmSort: "added_asc" };
   s.ui.bgmSort ??= "added_asc";
@@ -286,12 +287,6 @@ function ensureSettings() {
     
       b.volLocked ??= false;
 });
-
-    // default 비었으면 첫 곡 fileKey로
-    if (!p.defaultBgmKey && p.bgms.length && p.bgms[0].fileKey) {
-      p.defaultBgmKey = p.bgms[0].fileKey;
-    }
-  });
 
   // 구버전: settings.defaultBgmId 같은 전역 값 남아있으면 제거 (있어도 안 쓰게)
   if (s.defaultBgmId) delete s.defaultBgmId;
@@ -345,6 +340,123 @@ async function playAsset(fileKey, volume01) {
   _testAudio.src = _testUrl;
   _testAudio.volume = Math.max(0, Math.min(1, volume01));
   _testAudio.play().catch(() => {});
+}
+
+  /** ========= Runtime Audio Engine ========= */
+const _bgmAudio = new Audio();
+let _bgmUrl = "";
+let _engineTimer = null;
+let _engineLastChatKey = "";
+let _engineCurrentFileKey = "";
+let _engineCurrentPresetId = "";
+
+// playmode: manual | random | loop_one | loop_list
+function ensureEngineFields(settings) {
+  settings.playMode ??= "manual";
+  settings.chatStates ??= {};     // { [chatKey]: { currentKey, listIndex } }
+  settings.presetBindings ??= {}; // (나중에 캐릭-프리셋 매칭용)
+}
+
+function clamp01(x) {
+  x = Number(x);
+  if (!Number.isFinite(x)) return 0;
+  return Math.max(0, Math.min(1, x));
+}
+
+function stopRuntime() {
+  try { _bgmAudio.pause(); } catch {}
+  _bgmAudio.currentTime = 0;
+  if (_bgmUrl) URL.revokeObjectURL(_bgmUrl);
+  _bgmUrl = "";
+  _bgmAudio.src = "";
+  _engineCurrentFileKey = "";
+  _engineCurrentPresetId = "";
+}
+
+function getChatKeyFromContext(ctx) {
+  // ST 버전차 대비 (대충이라도 안정적으로)
+  const chatId = ctx?.chatId ?? ctx?.chat_id ?? ctx?.chat?.id ?? "global";
+  const char = ctx?.characterId ?? ctx?.character_id ?? ctx?.character?.id ?? ctx?.name2 ?? "";
+  return `${chatId}::${char}`;
+}
+
+function getLastAssistantText(ctx) {
+  const arr = ctx?.chat ?? ctx?.messages ?? [];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const m = arr[i];
+    // ST 메시지 구조 버전차 대응
+    const isUser = m?.is_user ?? (m?.role === "user");
+    if (isUser) continue;
+    const txt = m?.mes ?? m?.content ?? "";
+    return String(txt || "");
+  }
+  return "";
+}
+
+function parseKeywords(s) {
+  return String(s ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function pickByKeyword(preset, text) {
+  const t = String(text ?? "").toLowerCase();
+  if (!t) return null;
+
+  let best = null;
+  let bestPri = -Infinity;
+
+  for (const b of preset.bgms ?? []) {
+    const fk = String(b.fileKey ?? "");
+    if (!fk) continue;
+
+    const kws = parseKeywords(b.keywords);
+    if (!kws.length) continue;
+
+    const hit = kws.some((kw) => t.includes(kw.toLowerCase()));
+    if (!hit) continue;
+
+    const pri = Number(b.priority ?? 0);
+    if (pri > bestPri) {
+      bestPri = pri;
+      best = b;
+    }
+  }
+
+  return best; // bgm obj or null
+}
+
+function getSortedKeys(preset, sort) {
+  return getSortedBgms(preset, sort)
+    .map((b) => String(b.fileKey ?? ""))
+    .filter(Boolean);
+}
+
+function findBgmByKey(preset, fileKey) {
+  return (preset.bgms ?? []).find((b) => String(b.fileKey ?? "") === String(fileKey ?? ""));
+}
+
+async function ensurePlayFile(fileKey, vol01, loop) {
+  const fk = String(fileKey ?? "");
+  if (!fk) return false;
+
+  const blob = await idbGet(fk);
+  if (!blob) return false;
+
+  if (_bgmUrl) URL.revokeObjectURL(_bgmUrl);
+  _bgmUrl = URL.createObjectURL(blob);
+
+  _bgmAudio.loop = !!loop;
+  _bgmAudio.src = _bgmUrl;
+  _bgmAudio.volume = clamp01(vol01);
+
+  try {
+    await _bgmAudio.play();
+  } catch {}
+
+  _engineCurrentFileKey = fk;
+  return true;
 }
 
 /** ========= Runtime BGM Engine =========
@@ -857,21 +969,36 @@ function renderDefaultSelect(root, settings) {
   const sel = root.querySelector("#abgm_default_select");
   if (!sel) return;
 
+  const cur = String(preset.defaultBgmKey ?? "");
+  const list = getSortedBgms(preset, getBgmSort(settings));
+  const keys = list.map((b) => String(b.fileKey ?? "")).filter(Boolean);
+
   sel.innerHTML = "";
 
+  // (none)
   const none = document.createElement("option");
   none.value = "";
   none.textContent = "(none)";
   sel.appendChild(none);
 
-  const list = getSortedBgms(preset, getBgmSort(settings));
-  list.forEach((b) => {
+  // ✅ 현재 default가 룰 목록에 없으면(=missing) 옵션을 하나 만들어서 고정 유지
+  if (cur && !keys.includes(cur)) {
+    const miss = document.createElement("option");
+    miss.value = cur;
+    miss.textContent = `${cur} (missing rule)`;
+    sel.appendChild(miss);
+  }
+
+  // rules
+  for (const fk of keys) {
     const opt = document.createElement("option");
-    opt.value = b.fileKey || "";
-    opt.textContent = b.fileKey || "(missing fileKey)";
-    if (opt.value && opt.value === (preset.defaultBgmKey ?? "")) opt.selected = true;
+    opt.value = fk;
+    opt.textContent = fk;
     sel.appendChild(opt);
-  });
+  }
+
+  // ✅ value로 고정 (selected 속성보다 이게 안전)
+  sel.value = cur;
 }
 
 function renderBgmTable(root, settings) {
@@ -1047,6 +1174,25 @@ function pickPresetFromImportData(data) {
 
 /** ========= Modal logic ========= */
 function initModal(overlay) {
+  const pm = root.querySelector("#abgm_playMode");
+if (pm) {
+  pm.value = settings.playMode ?? "manual";
+  pm.disabled = !!settings.keywordMode;
+
+  pm.addEventListener("change", (e) => {
+    settings.playMode = e.target.value;
+    saveSettingsDebounced();
+    // 엔진이 다음 틱에서 반영
+  });
+}
+
+// keyword mode toggle에서 playmode disable도 같이
+kw?.addEventListener("change", (e) => {
+  settings.keywordMode = !!e.target.checked;
+  if (pm) pm.disabled = !!settings.keywordMode;
+  saveSettingsDebounced();
+});
+
   const settings = ensureSettings();
   const root = overlay;
   root.__abgmSelected = new Set();
@@ -1480,11 +1626,27 @@ if (!ok) return;
 
   // 재생
   if (e.target.closest(".abgm_test")) {
+  // KeywordMode ON: 프리뷰(테스트)
+  if (settings.keywordMode) {
     const vol = (settings.globalVolume ?? 0.7) * (bgm.volume ?? 1);
     await playAsset(bgm.fileKey, vol);
     return;
   }
-});
+
+  // KeywordMode OFF: 런타임 재생(Manual로 전환)
+  settings.playMode = "manual";
+  const pm = root.querySelector("#abgm_playMode");
+  if (pm) { pm.value = "manual"; pm.disabled = false; }
+
+  const ctx = (typeof getContext === "function") ? getContext() : null;
+  const chatKey = getChatKeyFromContext(ctx);
+  settings.chatStates ??= {};
+  settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
+  settings.chatStates[chatKey].currentKey = bgm.fileKey;
+
+  saveSettingsDebounced();
+  return;
+}
 
   // Import/Export (preset 1개: 룰만)
   const importFile = root.querySelector("#abgm_import_file");
@@ -1602,9 +1764,195 @@ function init() {
   window.__AUTOBGM_BOOTED__ = true;
 
   mount();
+  startEngine();
   const obs = new MutationObserver(() => mount());
   obs.observe(document.body, { childList: true, subtree: true });
   initRuntimeEngineOnce();
 }
 
+  function engineTick() {
+  const settings = ensureSettings();
+  ensureEngineFields(settings);
+
+  if (!settings.enabled) {
+    stopRuntime();
+    return;
+  }
+
+  // ST 컨텍스트 (없어도 global로 굴러가게)
+  const ctx = (typeof getContext === "function") ? getContext() : null;
+  const chatKey = getChatKeyFromContext(ctx);
+
+  settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
+  const st = settings.chatStates[chatKey];
+
+  // 채팅 바뀌면: 이전 곡은 끄고, 새 채팅 규칙으로 다시 판단
+  if (_engineLastChatKey && _engineLastChatKey !== chatKey) {
+    stopRuntime();
+  }
+  _engineLastChatKey = chatKey;
+
+  // preset 선택(지금은 activePresetId 기준. 나중에 캐릭 매칭 끼우면 여기서 바꾸면 됨)
+  let preset = settings.presets?.[settings.activePresetId];
+  if (!preset) preset = Object.values(settings.presets ?? {})[0];
+  if (!preset) return;
+
+  _engineCurrentPresetId = preset.id;
+
+  const sort = getBgmSort(settings);
+  const keys = getSortedKeys(preset, sort);
+  const lastAsst = getLastAssistantText(ctx);
+
+  const useDefault = !!settings.useDefault;
+  const defKey = String(preset.defaultBgmKey ?? "");
+
+  // 현재 곡 볼륨 계산용
+  const getVol = (fk) => {
+    const b = findBgmByKey(preset, fk);
+    return clamp01((settings.globalVolume ?? 0.7) * (b?.volume ?? 1));
+  };
+
+  // ====== Keyword Mode ON ======
+  if (settings.keywordMode) {
+    const hit = pickByKeyword(preset, lastAsst);
+    const desired = hit?.fileKey
+      ? String(hit.fileKey)
+      : (useDefault && defKey ? defKey : "");
+
+    // 1) 키워드 히트 or default 있으면 그걸 무한 유지
+    if (desired) {
+      if (_engineCurrentFileKey !== desired) {
+        ensurePlayFile(desired, getVol(desired), true);
+        st.currentKey = desired;
+      } else {
+        _bgmAudio.loop = true;
+        _bgmAudio.volume = getVol(desired);
+      }
+      return;
+    }
+
+    // 2) default도 없고 키워드도 없으면: 이전곡 유지(무한)
+    if (st.currentKey) {
+      if (_engineCurrentFileKey !== st.currentKey) {
+        ensurePlayFile(st.currentKey, getVol(st.currentKey), true);
+      } else {
+        _bgmAudio.loop = true;
+        _bgmAudio.volume = getVol(st.currentKey);
+      }
+    }
+    return;
+  }
+
+  // ====== Keyword Mode OFF ======
+  const mode = settings.playMode ?? "manual";
+
+  // manual: 자동재생 안 함 (유저가 누른 곡만)
+  if (mode === "manual") {
+    if (st.currentKey) {
+      // manual은 루프 안 함 (원하면 loop_one으로 바꾸면 됨)
+      if (_engineCurrentFileKey !== st.currentKey) {
+        ensurePlayFile(st.currentKey, getVol(st.currentKey), false);
+      } else {
+        _bgmAudio.loop = false;
+        _bgmAudio.volume = getVol(st.currentKey);
+      }
+    }
+    return;
+  }
+
+  // loop_one: currentKey 없으면 default -> 첫곡
+  if (mode === "loop_one") {
+    const fk = st.currentKey || defKey || keys[0] || "";
+    if (!fk) return;
+
+    if (_engineCurrentFileKey !== fk) {
+      ensurePlayFile(fk, getVol(fk), true);
+      st.currentKey = fk;
+    } else {
+      _bgmAudio.loop = true;
+      _bgmAudio.volume = getVol(fk);
+    }
+    return;
+  }
+
+  // loop_list / random 은 ended 이벤트에서 다음곡 넘김(여기선 “시작 보장”만)
+  if (!_engineCurrentFileKey) {
+    if (mode === "loop_list") {
+      const idx = Math.max(0, Math.min(st.listIndex ?? 0, keys.length - 1));
+      const fk = keys[idx] || defKey || "";
+      if (fk) {
+        ensurePlayFile(fk, getVol(fk), false);
+        st.currentKey = fk;
+        st.listIndex = idx;
+      }
+      return;
+    }
+
+    if (mode === "random") {
+      const fk = defKey || keys[0] || "";
+      if (fk) {
+        ensurePlayFile(fk, getVol(fk), false);
+        st.currentKey = fk;
+      }
+      return;
+    }
+  }
+}
+
+// ended: loop_list/random 다음곡 처리
+_bgmAudio.addEventListener("ended", () => {
+  const settings = ensureSettings();
+  ensureEngineFields(settings);
+  if (!settings.enabled) return;
+  if (settings.keywordMode) return; // keyword는 loop=true라 보통 안 옴
+
+  const ctx = (typeof getContext === "function") ? getContext() : null;
+  const chatKey = getChatKeyFromContext(ctx);
+  settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
+  const st = settings.chatStates[chatKey];
+
+  let preset = settings.presets?.[settings.activePresetId];
+  if (!preset) preset = Object.values(settings.presets ?? {})[0];
+  if (!preset) return;
+
+  const sort = getBgmSort(settings);
+  const keys = getSortedKeys(preset, sort);
+  const defKey = String(preset.defaultBgmKey ?? "");
+  const getVol = (fk) => {
+    const b = findBgmByKey(preset, fk);
+    return clamp01((settings.globalVolume ?? 0.7) * (b?.volume ?? 1));
+  };
+
+  const mode = settings.playMode ?? "manual";
+
+  if (mode === "loop_list") {
+    if (!keys.length) return;
+    let idx = Number(st.listIndex ?? 0);
+    idx = (idx + 1) % keys.length;
+    st.listIndex = idx;
+    const fk = keys[idx];
+    st.currentKey = fk;
+    ensurePlayFile(fk, getVol(fk), false);
+    saveSettingsDebounced();
+    return;
+  }
+
+  if (mode === "random") {
+    if (!keys.length) return;
+    const cur = String(st.currentKey ?? "");
+    const pool = keys.filter((k) => k !== cur);
+    const next = (pool.length ? pool : keys)[Math.floor(Math.random() * (pool.length ? pool.length : keys.length))];
+    st.currentKey = next;
+    ensurePlayFile(next, getVol(next), false);
+    saveSettingsDebounced();
+    return;
+  }
+});
+
+function startEngine() {
+  if (_engineTimer) clearInterval(_engineTimer);
+  _engineTimer = setInterval(engineTick, 900);
+  engineTick();
+}
+  
 jQuery(() => init());
