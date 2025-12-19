@@ -961,70 +961,75 @@ if (e.target.classList.contains("abgm_volnum")) {
     renderDefaultSelect(root, settings);
   });
 
-  // 테스트/삭제
-  root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
-    // 접기/펼치기
-if (e.target.closest(".abgm_toggle")) {
-  const id = tr.dataset.id;
-  const open = !root.__abgmExpanded.has(id);
+// 테스트/삭제 + 접기/펼치기
+root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
+  const tr = e.target.closest("tr");
+  if (!tr) return;
 
-  if (open) root.__abgmExpanded.add(id);
-  else root.__abgmExpanded.delete(id);
+  // ✅ 접기/펼치기 (tr 선언 이후에 해야 함)
+  if (e.target.closest(".abgm_toggle")) {
+    // toggle은 summary row에만 있으니까 summary를 정확히 잡자
+    const summary = tr.classList.contains("abgm-bgm-summary") ? tr : tr.closest("tr.abgm-bgm-summary");
+    if (!summary) return;
 
-  const summary = tr.classList.contains("abgm-bgm-summary") ? tr : tr.previousElementSibling;
-  const detail = summary?.nextElementSibling;
+    const id = summary.dataset.id;
+    const open = !root.__abgmExpanded.has(id);
 
-  if (summary) summary.classList.toggle("abgm-expanded", open);
-  if (detail?.classList?.contains("abgm-bgm-detail")) {
-    detail.style.display = open ? "" : "none";
-  } else {
-    rerenderAll(root, settings);
-  }
-  return;
-}
+    if (open) root.__abgmExpanded.add(id);
+    else root.__abgmExpanded.delete(id);
 
-    const tr = e.target.closest("tr");
-    if (!tr) return;
+    const detail = summary.nextElementSibling;
 
-    const id = tr.dataset.id;
-    const preset = getActivePreset(settings);
-    const bgm = preset.bgms.find((x) => x.id === id);
-    if (!bgm) return;
+    summary.classList.toggle("abgm-expanded", open);
 
-    if (e.target.closest(".abgm_del")) {
-      const fk = bgm.fileKey || "(unknown)";
-      if (!confirm(`"${fk}" 삭제?`)) return;
-
-      root.__abgmSelected?.delete(id);
-      const fileKey = bgm.fileKey;
-
-      // 룰 row 삭제
-      preset.bgms = preset.bgms.filter((x) => x.id !== id);
-
-      // default가 이거였으면 첫 곡으로
-      if (preset.defaultBgmKey === fileKey) {
-        preset.defaultBgmKey = preset.bgms[0]?.fileKey ?? "";
-      }
-
-      // asset도 같이 지울지? → "어디에서도 안 쓰면"만 삭제
-      if (fileKey && !isFileKeyReferenced(settings, fileKey)) {
-        try {
-          await idbDel(fileKey);
-          delete settings.assets[fileKey];
-        } catch {}
-      }
-
-      saveSettingsDebounced();
+    if (detail?.classList?.contains("abgm-bgm-detail")) {
+      detail.style.display = open ? "" : "none";
+    } else {
+      // 혹시 DOM이 꼬였으면 안전하게 리렌더
       rerenderAll(root, settings);
-      return;
+    }
+    return;
+  }
+
+  // 여기부터는 공통 처리 (id/bgm 찾기)
+  const id = tr.dataset.id;
+  const preset = getActivePreset(settings);
+  const bgm = preset.bgms.find((x) => x.id === id);
+  if (!bgm) return;
+
+  // 삭제
+  if (e.target.closest(".abgm_del")) {
+    const fk = bgm.fileKey || "(unknown)";
+    if (!confirm(`"${fk}" 삭제?`)) return;
+
+    root.__abgmSelected?.delete(id);
+    const fileKey = bgm.fileKey;
+
+    preset.bgms = preset.bgms.filter((x) => x.id !== id);
+
+    if (preset.defaultBgmKey === fileKey) {
+      preset.defaultBgmKey = preset.bgms[0]?.fileKey ?? "";
     }
 
-    if (e.target.closest(".abgm_test")) {
-      const vol = (settings.globalVolume ?? 0.7) * (bgm.volume ?? 1);
-      await playAsset(bgm.fileKey, vol);
-      return;
+    if (fileKey && !isFileKeyReferenced(settings, fileKey)) {
+      try {
+        await idbDel(fileKey);
+        delete settings.assets[fileKey];
+      } catch {}
     }
-  });
+
+    saveSettingsDebounced();
+    rerenderAll(root, settings);
+    return;
+  }
+
+  // 재생
+  if (e.target.closest(".abgm_test")) {
+    const vol = (settings.globalVolume ?? 0.7) * (bgm.volume ?? 1);
+    await playAsset(bgm.fileKey, vol);
+    return;
+  }
+});
 
   // Import/Export (preset 1개: 룰만)
   const importFile = root.querySelector("#abgm_import_file");
