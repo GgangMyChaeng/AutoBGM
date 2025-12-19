@@ -276,6 +276,74 @@ body.autobgm-modal-open{
 /* 접힘 UI로 컬럼 줄었으니 최소폭도 줄여도 됨 */
 .abgm-table{ min-width: 480px; }
 
+/* summary row: 파일명 칸 너무 길어보이는 거 줄이기 */
+.abgm_name{
+  display:block;
+  max-width: 420px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.abgm_name:focus{
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* detail: 키워드/우선도/볼륨/삭제를 “키워드 왼쪽 + (우선도 위/볼륨 아래) 오른쪽 + 삭제 우측” */
+.abgm-detail-grid{
+  display:grid;
+  grid-template-columns: 1fr 170px 130px;
+  gap:10px;
+  align-items:start;
+}
+.abgm-keywords textarea.abgm_keywords{
+  width:100%;
+  min-height: 74px;
+  resize: vertical; /* 원하면 늘림 */
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: inherit;
+}
+.abgm-side{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.abgm-field-tight small{ opacity:.8; }
+.abgm_narrow{
+  max-width: 120px;
+}
+.abgm-volcell{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.abgm_volnum{
+  width: 72px;
+  text-align:right;
+}
+
+/* 모바일용 더 타이트 */
+@media (max-width: 520px){
+  .abgm_name{ max-width: 230px; }
+  .abgm-detail-grid{
+    grid-template-columns: 1fr 130px 100px;
+  }
+  .abgm_narrow{ max-width: 100px; }
+  .abgm_volnum{ width: 64px; }
+}
+@media (max-width: 380px){
+  /* 너무 좁으면 1열로 내려서라도 다 보이게 */
+  .abgm-detail-grid{
+    grid-template-columns: 1fr;
+  }
+  .abgm-detail-actions{
+    justify-content:flex-start;
+  }
+}
+
 /* ✅ 좁은 화면에서 flex/grid 애들이 안 줄어드는 문제 방지 */
 .autobgm-modal,
 .abgm-card,
