@@ -380,3 +380,15 @@ body.autobgm-modal-open{
     width: 100%;
   }
 }
+
+/* 볼륨 설정 lock button */
+.abgm_vol_lock{
+  padding: 6px 8px;
+}
+.abgm_vol_lock i{
+  opacity: .85;
+}
+.abgm_vol:disabled{
+  opacity: .45;
+  cursor: not-allowed;
+}
