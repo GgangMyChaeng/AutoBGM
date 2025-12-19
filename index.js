@@ -101,6 +101,47 @@ function getActivePreset(settings) {
   return settings.presets[settings.activePresetId];
 }
 
+/** ========= 삭제 확인 및 취소 ========= */
+function abgmConfirm(rootOrDoc, message, {
+  title = "Confirm",
+  okText = "확인",
+  cancelText = "취소",
+} = {}) {
+  const doc = rootOrDoc?.ownerDocument || document;
+
+  return new Promise((resolve) => {
+    const wrap = doc.createElement("div");
+    wrap.className = "abgm-confirm-wrap";
+    wrap.innerHTML = `
+      <div class="abgm-confirm-backdrop"></div>
+      <div class="abgm-confirm">
+        <div class="abgm-confirm-title">${escapeHtml(title)}</div>
+        <div class="abgm-confirm-msg">${escapeHtml(message)}</div>
+        <div class="abgm-confirm-actions">
+          <!-- ✅ 니가 원하는 순서: 확인(좌) / 취소(우) -->
+          <button class="menu_button abgm-confirm-ok" type="button">${escapeHtml(okText)}</button>
+          <button class="menu_button abgm-confirm-cancel" type="button">${escapeHtml(cancelText)}</button>
+        </div>
+      </div>
+    `;
+
+    const done = (v) => {
+      wrap.remove();
+      resolve(v);
+    };
+
+    wrap.querySelector(".abgm-confirm-backdrop")?.addEventListener("click", () => done(false));
+    wrap.querySelector(".abgm-confirm-cancel")?.addEventListener("click", () => done(false));
+    wrap.querySelector(".abgm-confirm-ok")?.addEventListener("click", () => done(true));
+
+    // ESC 닫기
+    const onKey = (e) => { if (e.key === "Escape") done(false); };
+    doc.addEventListener("keydown", onKey, { once: true });
+
+    doc.body.appendChild(wrap);
+  });
+}
+
 /** ========= IndexedDB Assets =========
  * key: fileKey (예: "neutral_01.mp3")
  * value: Blob(File)
