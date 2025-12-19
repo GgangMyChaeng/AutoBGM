@@ -787,7 +787,12 @@ root.querySelector("#abgm_delete_selected")?.addEventListener("click", async () 
 
   const preview = names.slice(0, 6).map((x) => `- ${x}`).join("\n");
   const more = names.length > 6 ? `\n...외 ${names.length - 6}개` : "";
-  if (!confirm(`선택한 ${names.length}개 BGM 삭제?\n${preview}${more}`)) return;
+  const ok = await abgmConfirm(root, `선택한 ${names.length}개 BGM 삭제?\n${preview}${more}`, {
+  title: "Delete selected",
+  okText: "확인",
+  cancelText: "취소",
+});
+if (!ok) return;
   
   const idsToDelete = new Set(selected);
   const removedKeys = [];
@@ -1078,10 +1083,15 @@ if (e.target.closest(".abgm_vol_lock")) {
   return;
 }
 
-  // 삭제
+  // 개별 삭제
   if (e.target.closest(".abgm_del")) {
     const fk = bgm.fileKey || "(unknown)";
-    if (!confirm(`"${fk}" 삭제?`)) return;
+    const ok = await abgmConfirm(root, `"${fk}" 삭제?`, {
+  title: "Delete",
+  okText: "확인",
+  cancelText: "취소",
+});
+if (!ok) return;
 
     root.__abgmSelected?.delete(id);
     const fileKey = bgm.fileKey;
