@@ -692,7 +692,7 @@ body.autobgm-modal-open{
 
   /* detail 전체를 2행 그리드로 재배치 */
   .abgm-detail-grid{
-    grid-template-columns: minmax(260px, 1fr) 180px 160px !important;
+    grid-template-columns: minmax(260px, 1fr) 180px 200px !important;
     grid-template-areas:
       "kw pr del"
       "kw vol vol" !important;
