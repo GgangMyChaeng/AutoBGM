@@ -683,27 +683,22 @@ body.autobgm-modal-open{
 }
 
 /* =========================
-   PC detail layout tweak
-   - Delete: Priority보다 우측 + 위쪽(상단 정렬)
-   - Volume slider: 더 길게
-   - Volume number/lock: Delete 아래 + slider 우측, 같은 높이 라인
+   PC detail layout FINAL
+   - slider 길이 고정(짧게)
    ========================= */
 @media (min-width: 900px){
 
-  /* detail 전체를 2행 그리드로 재배치 */
   .abgm-detail-grid{
-    grid-template-columns: minmax(260px, 1fr) 180px 200px !important;
+    grid-template-columns: minmax(260px, 1fr) 180px 180px !important;
     grid-template-areas:
       "kw pr del"
       "kw vol vol" !important;
     align-items: start !important;
   }
 
-  /* 키워드 */
   .abgm-keywords{ grid-area: kw; }
 
-  /* side 안의 1번째(우선도), 2번째(볼륨) 필드를 그리드에 배치 */
-  .abgm-side{ display: contents !important; } /* 내부 요소를 상위 grid item처럼 취급 */
+  .abgm-side{ display: contents !important; }
 
   .abgm-side > .abgm-field-tight:nth-child(1){
     grid-area: pr;
@@ -713,18 +708,37 @@ body.autobgm-modal-open{
   .abgm-side > .abgm-field-tight:nth-child(2){
     grid-area: vol;
     align-self: start;
+    justify-self: end;              /* 볼륨 블록을 오른쪽으로 붙임 */
+    max-width: 340px;               /* 볼륨 전체 폭도 제약 */
   }
 
-  /* Delete를 Priority보다 우측 + 상단(살짝 안쪽) */
   .abgm-detail-actions{
     grid-area: del !important;
     height: auto !important;
     justify-self: end !important;
     align-self: start !important;
     justify-content: flex-end !important;
-    padding-right: 10px !important;  /* 너무 구석 방지 */
-    padding-top: 6px !important;     /* 살짝 위로 */
+    padding-right: 10px !important;
+    padding-top: 6px !important;
   }
+
+  /* ✅ 슬라이더 길이 “고정” (여기서 확실히 짧아짐) */
+  .abgm-volcell{
+    display: grid !important;
+    grid-template-columns: 180px 72px 34px !important; /* slider 고정 180px */
+    gap: 8px !important;
+    align-items: center !important;
+    justify-content: end !important;
+  }
+
+  .abgm-volcell .abgm_vol{
+    width: 180px !important;  /* 혹시 몰라 한 번 더 박음 */
+    min-width: 0 !important;
+  }
+
+  .abgm-volcell .abgm_volnum{ width: 72px !important; }
+  .abgm-volcell .abgm_vol_lock{ width: 34px !important; height: 30px !important; }
+}
 
   /* ===== Volume row: slider 길게 + (num/lock) 우측 정렬 ===== */
   .abgm-volcell{
