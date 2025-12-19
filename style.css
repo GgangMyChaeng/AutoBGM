@@ -527,3 +527,64 @@ body.autobgm-modal-open{ overflow:hidden; }
     flex: 0 0 160px !important;
   }
 }
+
+/* =========================
+   Narrow-PC(창 좁아질 때) 레이아웃
+   - slider 너무 짧아지는 거 방지
+   - volnum/lock/delete를 slider 아래로
+   ========================= */
+@media (min-width: 700px) and (max-width: 1100px){
+
+  /* detail grid를 2컬럼으로 단순화: kw | side(+actions 아래) */
+  .abgm-detail-grid{
+    grid-template-columns: minmax(240px, 1fr) minmax(280px, 320px) !important;
+    grid-template-areas:
+      "kw side"
+      "kw act" !important;
+    align-items: stretch !important;
+  }
+
+  .abgm-keywords{ grid-area: kw; }
+  .abgm-side{ grid-area: side; }
+  .abgm-detail-actions{
+    grid-area: act;
+    align-self: start;
+    justify-self: end;
+    padding-right: 10px;
+    padding-top: 8px;
+    height: auto !important;
+  }
+
+  /* 우측 스택은 위부터 차곡차곡 */
+  .abgm-side{
+    justify-content: flex-start !important;
+    padding-top: 10px !important;
+    padding-bottom: 8px !important;
+    gap: 10px !important;
+  }
+
+  /* 볼륨: slider는 한 줄로 길게, num+lock은 아래로 */
+  .abgm-volcell{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    align-items:center !important;
+    gap:8px !important;
+  }
+
+  input[type="range"].abgm_vol{
+    flex: 1 0 100% !important;
+    width: 100% !important;
+    max-width: 320px !important;   /* 너무 길어지는 것도 방지 */
+    min-width: 260px !important;   /* 너무 짧아지는 것도 방지 */
+  }
+
+  .abgm-volcell .abgm_volnum{
+    width: 72px !important;
+    margin-left: auto !important;  /* 아래줄 오른쪽 정렬 */
+  }
+
+  .abgm-volcell .abgm_vol_lock{
+    width: 34px !important;
+    height: 30px !important;
+  }
+}
