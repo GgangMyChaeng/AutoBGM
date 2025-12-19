@@ -226,6 +226,56 @@ body.autobgm-modal-open{
   height:30px;
 }
 
+/* ===== BGM row: collapsed / expanded ===== */
+.abgm-bgm-summary.abgm-expanded td{
+  background: rgba(255,255,255,.02);
+}
+
+.abgm_toggle i{
+  transition: transform .15s ease;
+}
+.abgm-bgm-summary.abgm-expanded .abgm_toggle i{
+  transform: rotate(180deg);
+}
+
+.abgm-bgm-detail td{
+  padding: 10px 10px 12px;
+  background: rgba(255,255,255,.03);
+}
+
+.abgm-detail-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.abgm-field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex:1 1 220px;
+  min-width: 180px;
+}
+.abgm-field small{ opacity:.8; }
+
+.abgm-detail-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+
+.abgm-volcell .abgm_volnum{
+  width: 64px;
+  text-align: right;
+}
+
+/* 접힘 UI로 컬럼 줄었으니 최소폭도 줄여도 됨 */
+.abgm-table{ min-width: 480px; }
+
 /* ✅ 좁은 화면에서 flex/grid 애들이 안 줄어드는 문제 방지 */
 .autobgm-modal,
 .abgm-card,
