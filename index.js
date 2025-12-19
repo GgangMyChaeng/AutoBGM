@@ -507,40 +507,80 @@ function renderBgmTable(root, settings) {
   if (!tbody) return;
 
   const selected = root?.__abgmSelected instanceof Set ? root.__abgmSelected : new Set();
+  root.__abgmSelected = selected;
+
+  const expanded = root?.__abgmExpanded instanceof Set ? root.__abgmExpanded : new Set();
+  root.__abgmExpanded = expanded;
+
   const list = getSortedBgms(preset, getBgmSort(settings));
 
   tbody.innerHTML = "";
 
   list.forEach((b) => {
+    const isOpen = expanded.has(b.id);
+
+    // ===== summary row (collapsed) =====
     const tr = document.createElement("tr");
     tr.dataset.id = b.id;
-
+    tr.className = `abgm-bgm-summary${isOpen ? " abgm-expanded" : ""}`;
     tr.innerHTML = `
       <td class="abgm-col-check">
         <input type="checkbox" class="abgm_sel" ${selected.has(b.id) ? "checked" : ""}>
       </td>
-      <td><input type="text" class="abgm_name" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3"></td>
-      <td><input type="text" class="abgm_keywords" value="${escapeHtml(b.keywords ?? "")}" placeholder="rain, storm..."></td>
-      <td><input type="number" class="abgm_priority" value="${Number(b.priority ?? 0)}" step="1"></td>
       <td>
-        <div class="abgm-volcell">
-          <input type="range" class="abgm_vol" min="0" max="100" value="${Math.round((b.volume ?? 1) * 100)}">
-          <small class="abgm_voltxt" style="opacity:.8; width:34px; text-align:right;">${Math.round((b.volume ?? 1) * 100)}</small>
-        </div>
+        <input type="text" class="abgm_name" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3">
       </td>
       <td>
-        <div class="menu_button abgm-iconbtn abgm_test" title="Test">
+        <div class="menu_button abgm-iconbtn abgm_test" title="Play">
           <i class="fa-solid fa-play"></i>
         </div>
       </td>
       <td>
-        <div class="menu_button abgm-iconbtn abgm_del" title="Delete">
-          <i class="fa-solid fa-trash"></i>
+        <div class="menu_button abgm-iconbtn abgm_toggle" title="More">
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+      </td>
+    `;
+
+    // ===== detail row (expanded) =====
+    const tr2 = document.createElement("tr");
+    tr2.dataset.id = b.id;
+    tr2.className = "abgm-bgm-detail";
+    if (!isOpen) tr2.style.display = "none";
+
+    const vol100 = Math.round((b.volume ?? 1) * 100);
+    tr2.innerHTML = `
+      <td colspan="4">
+        <div class="abgm-detail-wrap">
+          <div class="abgm-field">
+            <small>Keywords</small>
+            <input type="text" class="abgm_keywords" value="${escapeHtml(b.keywords ?? "")}" placeholder="rain, storm...">
+          </div>
+
+          <div class="abgm-field" style="max-width:140px;">
+            <small>Priority</small>
+            <input type="number" class="abgm_priority" value="${Number(b.priority ?? 0)}" step="1">
+          </div>
+
+          <div class="abgm-field">
+            <small>Volume</small>
+            <div class="abgm-volcell">
+              <input type="range" class="abgm_vol" min="0" max="100" value="${vol100}">
+              <input type="number" class="abgm_volnum" min="0" max="100" step="1" value="${vol100}">
+            </div>
+          </div>
+
+          <div class="abgm-detail-actions">
+            <div class="menu_button abgm_del" title="Delete">
+              <i class="fa-solid fa-trash"></i> Delete
+            </div>
+          </div>
         </div>
       </td>
     `;
 
     tbody.appendChild(tr);
+    tbody.appendChild(tr2);
   });
 }
 
@@ -626,6 +666,7 @@ function initModal(overlay) {
   const settings = ensureSettings();
   const root = overlay;
   root.__abgmSelected = new Set();
+  root.__abgmExpanded = new Set();
 
 const updateSelectionUI = () => {
   const preset = getActivePreset(settings);
@@ -683,6 +724,16 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", (e) => {
 
 // bulk delete
 root.querySelector("#abgm_delete_selected")?.addEventListener("click", async () => {
+
+  const names = [];
+for (const id of selected) {
+  const bgm = preset.bgms.find((x) => x.id === id);
+  if (bgm?.fileKey) names.push(bgm.fileKey);
+}
+const preview = names.slice(0, 6).map((x) => `- ${x}`).join("\n");
+const more = names.length > 6 ? `\n...외 ${names.length - 6}개` : "";
+if (!confirm(`선택한 ${names.length}개 BGM 삭제?\n${preview}${more}`)) return;
+
   const selected = root.__abgmSelected;
   if (!selected.size) return;
 
@@ -811,6 +862,22 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
     e.target.value = "";
     saveSettingsDebounced();
     rerenderAll(root, settings);
+
+    if (e.target.classList.contains("abgm_vol")) {
+  const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
+  bgm.volume = v / 100;
+
+  const n = tr.querySelector(".abgm_volnum");
+  if (n) n.value = String(v);
+}
+
+if (e.target.classList.contains("abgm_volnum")) {
+  const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
+  bgm.volume = v / 100;
+
+  const r = tr.querySelector(".abgm_vol");
+  if (r) r.value = String(v);
+}
   });
 
   // ===== ZIP 추가 (Assets 저장 + 현재 프리셋에 row 자동 생성) =====
@@ -896,6 +963,26 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
 
   // 테스트/삭제
   root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
+    // 접기/펼치기
+if (e.target.closest(".abgm_toggle")) {
+  const id = tr.dataset.id;
+  const open = !root.__abgmExpanded.has(id);
+
+  if (open) root.__abgmExpanded.add(id);
+  else root.__abgmExpanded.delete(id);
+
+  const summary = tr.classList.contains("abgm-bgm-summary") ? tr : tr.previousElementSibling;
+  const detail = summary?.nextElementSibling;
+
+  if (summary) summary.classList.toggle("abgm-expanded", open);
+  if (detail?.classList?.contains("abgm-bgm-detail")) {
+    detail.style.display = open ? "" : "none";
+  } else {
+    rerenderAll(root, settings);
+  }
+  return;
+}
+
     const tr = e.target.closest("tr");
     if (!tr) return;
 
@@ -905,6 +992,9 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
     if (!bgm) return;
 
     if (e.target.closest(".abgm_del")) {
+      const fk = bgm.fileKey || "(unknown)";
+      if (!confirm(`"${fk}" 삭제?`)) return;
+
       root.__abgmSelected?.delete(id);
       const fileKey = bgm.fileKey;
 
