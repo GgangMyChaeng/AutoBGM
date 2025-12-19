@@ -764,6 +764,19 @@ root.querySelector("#abgm_delete_selected")?.addEventListener("click", async () 
   saveSettingsDebounced();
   rerenderAll(root, settings);
 });
+
+  // Expand all / Collapse all 버튼 이벤트
+  root.querySelector("#abgm_expand_all")?.addEventListener("click", () => {
+  const preset = getActivePreset(settings);
+  const list = getSortedBgms(preset, getBgmSort(settings));
+  list.forEach((b) => root.__abgmExpanded.add(b.id));
+  rerenderAll(root, settings);
+});
+
+root.querySelector("#abgm_collapse_all")?.addEventListener("click", () => {
+  root.__abgmExpanded.clear();
+  rerenderAll(root, settings);
+});
   
   // 구버전 dataUrl 있으면 IndexedDB로 옮김 (있어도 한번만)
   migrateLegacyDataUrlsToIDB(settings);
@@ -863,22 +876,6 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
     e.target.value = "";
     saveSettingsDebounced();
     rerenderAll(root, settings);
-
-    if (e.target.classList.contains("abgm_vol")) {
-  const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
-  bgm.volume = v / 100;
-
-  const n = tr.querySelector(".abgm_volnum");
-  if (n) n.value = String(v);
-}
-
-if (e.target.classList.contains("abgm_volnum")) {
-  const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
-  bgm.volume = v / 100;
-
-  const r = tr.querySelector(".abgm_vol");
-  if (r) r.value = String(v);
-}
   });
 
   // ===== ZIP 추가 (Assets 저장 + 현재 프리셋에 row 자동 생성) =====
@@ -927,40 +924,57 @@ if (e.target.classList.contains("abgm_volnum")) {
     saveSettingsDebounced();
   });
 
-  // 테이블 input 이벤트 (fileKey/keywords/priority/volume)
-  root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
-    const tr = e.target.closest("tr");
-    if (!tr) return;
+// 테이블 input 이벤트 (fileKey/keywords/priority/volume)
+root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
+  const tr = e.target.closest("tr");
+  if (!tr) return;
 
-    const id = tr.dataset.id;
-    const preset = getActivePreset(settings);
-    const bgm = preset.bgms.find((x) => x.id === id);
-    if (!bgm) return;
+  const id = tr.dataset.id;
+  const preset = getActivePreset(settings);
+  const bgm = preset.bgms.find((x) => x.id === id);
+  if (!bgm) return;
 
-    // 첫 컬럼(abgm_name)을 fileKey로 씀
-    if (e.target.classList.contains("abgm_name")) {
-      const oldKey = bgm.fileKey;
-      const newKey = String(e.target.value || "").trim();
-
-      bgm.fileKey = newKey;
-
-      // default가 이 곡이었다면 같이 따라가게
-      if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
-    }
-
-    if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
-    if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
-
-    if (e.target.classList.contains("abgm_vol")) {
-      const v = Number(e.target.value || 100);
-      bgm.volume = Math.max(0, Math.min(1, v / 100));
-      const t = tr.querySelector(".abgm_voltxt");
-      if (t) t.textContent = String(v);
-    }
-
+  // fileKey
+  if (e.target.classList.contains("abgm_name")) {
+    const oldKey = bgm.fileKey;
+    const newKey = String(e.target.value || "").trim();
+    bgm.fileKey = newKey;
+    if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
     saveSettingsDebounced();
     renderDefaultSelect(root, settings);
-  });
+    return;
+  }
+
+  // keywords/priority
+  if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
+  if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
+
+  // detail row 안에서만
+  const detailRow = tr.classList.contains("abgm-bgm-detail") ? tr : tr.closest("tr.abgm-bgm-detail") || tr;
+
+  // volume slider -> number 즉시 반영
+  if (e.target.classList.contains("abgm_vol")) {
+    if (bgm.volLocked) return; // 잠금이면 무시(보통 disabled라 여기 안 옴)
+    const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
+    bgm.volume = v / 100;
+
+    const n = detailRow.querySelector(".abgm_volnum");
+    if (n) n.value = String(v);
+  }
+
+  // volume number -> slider 반영(잠금이면 slider는 안 움직이고 숫자만)
+  if (e.target.classList.contains("abgm_volnum")) {
+    const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
+    bgm.volume = v / 100;
+
+    if (!bgm.volLocked) {
+      const r = detailRow.querySelector(".abgm_vol");
+      if (r) r.value = String(v);
+    }
+  }
+
+  saveSettingsDebounced();
+});
 
 // 테스트/삭제 + 접기/펼치기
 root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
@@ -997,6 +1011,22 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
   const preset = getActivePreset(settings);
   const bgm = preset.bgms.find((x) => x.id === id);
   if (!bgm) return;
+
+  // 볼륨 슬라이더 잠금/해제
+if (e.target.closest(".abgm_vol_lock")) {
+  bgm.volLocked = !bgm.volLocked;
+
+  // UI 즉시 반영(리렌더 없이)
+  const detailRow = tr.classList.contains("abgm-bgm-detail") ? tr : tr.closest("tr.abgm-bgm-detail") || tr;
+  const range = detailRow.querySelector(".abgm_vol");
+  const icon = detailRow.querySelector(".abgm_vol_lock i");
+
+  if (range) range.disabled = !!bgm.volLocked;
+  if (icon) icon.className = `fa-solid ${bgm.volLocked ? "fa-lock" : "fa-lock-open"}`;
+
+  saveSettingsDebounced();
+  return;
+}
 
   // 삭제
   if (e.target.closest(".abgm_del")) {
