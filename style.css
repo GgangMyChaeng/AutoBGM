@@ -273,8 +273,9 @@ body.autobgm-modal-open{
   text-align: right;
 }
 
-/* 접힘 UI로 컬럼 줄었으니 최소폭도 줄여도 됨 */
-.abgm-table{ min-width: 480px; }
+@media (max-width: 520px){
+  .abgm-table{ min-width: 0; }
+}
 
 /* summary row: 파일명 칸 너무 길어보이는 거 줄이기 */
 .abgm_name{
