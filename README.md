@@ -56,6 +56,7 @@
 - 프리셋 ui가 정상적으로 세팅됐는가? (O)
 - BGM list의 ui가 정상적으로 세팅됐는가? (o)
 - BGM list의 각 항목의 설정 전체를 접거나 펼칠 수 있는가? (O)
+- BGM 개별 항목 볼륨 설정 전체 락버튼이 기능하는가? (O)
 - 프리셋이나 BGM 파일 삭제 전 쿠션(확인 메시지)이 뜨는가? (O)
 ### @프리셋에서...@
 - 프리셋 기능인
@@ -76,9 +77,11 @@
   * BGM 재생, 일시정지가 작동하는가? (O)
   * 개별 볼륨 조절 설정이 작동하는가? (O)
   * 재생해둔 BGM이 유지된 상태로 무한 자동 재생 되는가? (X)
-  * 인식된 키워드가 없을 시 Default로 설정해둔 BGM이 상시 재생되는가? (X)
+  * 키워드 모드 활성화 중에 인식된 키워드가 없을 시 Default로 설정해둔 BGM이 상시 재생되는가? (X)
   * Default BGM도 없고, 키워드 변동도 없을 시 이전에 재생 중이었던 BGM이 유지되는가? (X)
+  * 키워드 모드 비활성화 상태에서 랜덤 BGM 재생 기능이 정상 작동하는가? (X)
   * 키워드 모드 버튼을 통해 키워드 인식 기반 자동 재생 기능이 활성화·비활성화 돠는가? (X)
+  * 특정 프리셋을 특정 캐릭터(들)에게 매칭하는 설정이 작동하는가? (X)
   * BGM이 채팅마다 키워드를 인식해 각각 정상 작동하는가? (X)
   * BGM이 채팅에서 나왔을 시 정상적으로 꺼지는가? (X)
   * 키워드 모드 활성화 시, Ai의 마지막 메시지에만 반응하는가? (X)
@@ -99,4 +102,4 @@
 
 ## License
 This project is licensed under CC BY-NC-ND 4.0.
-Third-party libraries are licensed separately (see NOTICE).
+Third-party libraries are licensed separately (see LICENSE’S NOTICE).
