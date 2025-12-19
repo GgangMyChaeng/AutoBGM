@@ -1056,6 +1056,7 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
     const oldKey = bgm.fileKey;
     const newKey = e.target.value.trim();
     bgm.fileKey = newKey;
+    if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
     if (oldKey && newKey && oldKey !== newKey) {
   // IDB blob 이름도 이동 (비동기, 실패해도 UI는 안 죽게)
   renameAssetKey(settings, oldKey, newKey).catch((err) =>
@@ -1217,19 +1218,26 @@ if (!ok) return;
   });
 
   root.querySelector("#abgm_export")?.addEventListener("click", () => {
-    const preset = getActivePreset(settings);
-    const out = exportPresetFile(preset);
+  const preset = getActivePreset(settings);
+  const out = exportPresetFile(preset);
 
-    const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `autobgm_preset_${(preset.name || preset.id).replace(/[^\w\-]+/g, "_")}.json`;
-    a.click();
+  const a = document.createElement("a");
+  a.href = url;
 
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+  // ✅ 파일명: {{프리셋이름}}_AutoBGM.json (한글 유지 + 윈도우 금지문자만 제거)
+  const base = String(preset.name || preset.id || "Preset").trim() || "Preset";
+  const safe = base
+    .replace(/[\\\/:*?"<>|]+/g, "_")   // OS 금지문자 제거
+    .replace(/\s+/g, "_")             // 공백은 _
+    .replace(/[._-]+$/g, "");         // 끝에 ., _, - 같은 거 정리
+  a.download = `${safe || "Preset"}_AutoBGM.json`;
+
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
   
   root.addEventListener("focusin", () => {
   const host = root.__abgmHost || getModalHost();
