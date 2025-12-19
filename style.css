@@ -565,3 +565,70 @@ body.autobgm-modal-open{
 @media (max-width: 520px){
   .abgm-del-label{ display:none; } /* 모바일은 아이콘만 */
 }
+
+/* =========================
+   Mobile detail compact patch
+   ========================= */
+@media (max-width: 520px){
+
+  /* detail row 자체 높이 좀 줄이기 */
+  .abgm-bgm-detail td{
+    padding: 8px 8px 10px !important;
+  }
+
+  /* detail grid 간격도 약간 타이트 */
+  .abgm-detail-grid{
+    gap: 8px !important;
+  }
+
+  /* 키워드: 높이 줄이기 */
+  .abgm-keywords textarea.abgm_keywords{
+    min-height: 74px !important;   /* 여기 더 줄이고 싶으면 66~72 */
+    max-height: 130px !important;  /* 너무 커지는거 방지 */
+  }
+
+  /* Priority/Volume 블록이 키워드 높이 안에서 깔끔하게 */
+  .abgm-side{
+    padding-top: 10px !important;
+    padding-bottom: 8px !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+
+  /* ✅ 핵심: Volume 줄 정리
+     - 슬라이더는 1줄(100% 폭)로
+     - 숫자+락은 자동으로 아래줄로 내려가게 */
+  .abgm-volcell{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* 슬라이더를 한 줄 다 먹게 => 오른쪽으로 길게 뻗음 */
+  .abgm-volcell .abgm_vol{
+    flex: 1 0 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-top: 2px;
+  }
+
+  /* 숫자 입력 + 락 버튼은 아래줄 우측 정렬 */
+  .abgm-volcell .abgm_volnum{
+    width: 72px !important;
+    margin-left: auto !important;  /* 아래줄에서 오른쪽으로 밀기 */
+  }
+
+  .abgm-volcell .abgm_vol_lock{
+    width: 34px !important;
+    height: 30px !important;
+  }
+
+  /* Delete: 너무 구석으로 안 붙게 살짝 안쪽으로 */
+  .abgm-detail-actions{
+    justify-self: end !important;
+    align-self: center !important;
+    padding-right: 10px !important;
+    padding-bottom: 6px !important;
+  }
+}
