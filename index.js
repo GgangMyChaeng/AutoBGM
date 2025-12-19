@@ -54,11 +54,18 @@ function fitModalToHost(overlay, host) {
   const modal = overlay?.querySelector?.(".autobgm-modal");
   if (!modal) return;
 
-  const pad = 12;
   const vv = window.visualViewport;
   const vw = vv?.width || window.innerWidth;
   const vh = vv?.height || window.innerHeight;
-  const w = Math.max(280, Math.floor(vw - pad * 2));
+
+  // ✅ PC만 여백/최대폭 제한
+  const isPc = vw >= 900;
+  const pad = isPc ? 18 : 12;          // PC는 살짝 더 여유
+  const maxWDesktop = 860;              // <-- 여기 숫자 줄이면 더 콤팩트
+
+  const wRaw = Math.max(280, Math.floor(vw - pad * 2));
+  const w = isPc ? Math.min(maxWDesktop, wRaw) : wRaw;
+
   const h = Math.max(240, Math.floor(vh - pad * 2));
 
   const setI = (k, v) => modal.style.setProperty(k, v, "important");
@@ -888,14 +895,30 @@ root.querySelector("#abgm_preset_select")?.addEventListener("change", (e) => {
     rerenderAll(root, settings);
   });
 
-  root.querySelector("#abgm_preset_del")?.addEventListener("click", () => {
-    const keys = Object.keys(settings.presets);
-    if (keys.length <= 1) return;
-    delete settings.presets[settings.activePresetId];
-    settings.activePresetId = Object.keys(settings.presets)[0];
-    saveSettingsDebounced();
-    rerenderAll(root, settings);
+  root.querySelector("#abgm_preset_del")?.addEventListener("click", async () => {
+  const keys = Object.keys(settings.presets);
+  if (keys.length <= 1) return;
+
+  const cur = getActivePreset(settings);
+  const name = cur?.name || cur?.id || "Preset";
+
+  const ok = await abgmConfirm(root, `"${name}" 프리셋 삭제?`, {
+    title: "Delete preset",
+    okText: "삭제",
+    cancelText: "취소",
   });
+  if (!ok) return;
+
+  delete settings.presets[settings.activePresetId];
+  settings.activePresetId = Object.keys(settings.presets)[0];
+
+  // 선택/펼침 상태도 같이 리셋(안 그러면 UI 꼬일 때 있음)
+  root.__abgmSelected?.clear?.();
+  root.__abgmExpanded?.clear?.();
+
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+});
 
   root.querySelector("#abgm_preset_rename")?.addEventListener("click", () => {
     const name = root.querySelector("#abgm_preset_name")?.value?.trim();
