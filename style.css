@@ -1,3 +1,8 @@
+/* =========================================================
+   AutoBGM — CLEAN style.css (dedup + stable responsive)
+   ========================================================= */
+
+/* ===== extension drawer wrapper ===== */
 .abgm-wrap{
   padding:12px;
   border:1px solid rgba(255,255,255,.08);
@@ -33,10 +38,8 @@
   opacity:.8;
 }
 
-/* ===== AutoBGM Modal ===== */
-body.autobgm-modal-open{
-  overflow:hidden;
-}
+/* ===== modal base ===== */
+body.autobgm-modal-open{ overflow:hidden; }
 
 .autobgm-overlay{
   position:fixed;
@@ -48,12 +51,9 @@ body.autobgm-modal-open{
   -webkit-overflow-scrolling: touch;
   background:rgba(0,0,0,.55);
   z-index:99999;
-
-  /* ✅ 기본값(구형/웹뷰 안전) */
   padding:12px;
 }
 
-/* ✅ safe-area 지원하는 애들만 오버라이드 */
 @supports (padding: max(0px, env(safe-area-inset-top))){
   .autobgm-overlay{
     padding-top: max(12px, env(safe-area-inset-top));
@@ -63,16 +63,13 @@ body.autobgm-modal-open{
   }
 }
 
+/* JS가 width/height를 !important로 박아주지만, fallback로 남겨둠 */
 .autobgm-modal{
   width:min(900px, 96vw);
-
-  /* ✅ 모바일 웹뷰에서 svh/dvh 뻘짓 방지 */
   max-height: calc(100vh - 24px);
   min-height: 240px;
-
   overflow:auto;
-  box-sizing: border-box;
-
+  box-sizing:border-box;
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;
   background:rgba(20,20,20,.96);
@@ -88,11 +85,9 @@ body.autobgm-modal-open{
   border-bottom:1px solid rgba(255,255,255,.10);
 }
 
-.autobgm-modal-b{
-  padding:12px 14px 14px;
-}
+.autobgm-modal-b{ padding:12px 14px 14px; }
 
-/* ===== AutoBGM Modal UI ===== */
+/* ===== modal ui ===== */
 .abgm-topbar{
   display:flex;
   align-items:center;
@@ -103,7 +98,7 @@ body.autobgm-modal-open{
 
 .abgm-grid{
   display:grid;
-  grid-template-columns: 1fr;      /* ✅ 무조건 1컬럼 */
+  grid-template-columns: 1fr;
   gap:12px;
 }
 
@@ -112,6 +107,7 @@ body.autobgm-modal-open{
   border-radius:14px;
   background:rgba(255,255,255,.03);
   padding:12px;
+  min-width:0;
 }
 
 .abgm-card-h{
@@ -122,17 +118,12 @@ body.autobgm-modal-open{
   margin-bottom:10px;
 }
 
-.abgm-row{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:8px;
-}
-
+.abgm-row,
 .abgm-inline{
   display:flex;
   align-items:center;
   gap:8px;
+  min-width:0;
 }
 
 .abgm-select{
@@ -142,6 +133,7 @@ body.autobgm-modal-open{
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.06);
   color:inherit;
+  min-width:0;
 }
 
 .abgm-select-slim{
@@ -149,19 +141,7 @@ body.autobgm-modal-open{
   min-width:200px;
 }
 
-.abgm-col-check{
-  width:38px;
-  text-align:center;
-  padding:8px 6px !important;
-}
-
-.abgm-table input.abgm_sel{
-  transform:scale(1.05);
-}
-
-.abgm-range{
-  width:180px;
-}
+.abgm-range{ width:180px; }
 
 .abgm-hr{
   margin:12px 0;
@@ -175,28 +155,46 @@ body.autobgm-modal-open{
   line-height:1.35;
 }
 
+/* inputs in modal should not overflow */
+.autobgm-modal input,
+.autobgm-modal select,
+.autobgm-modal .text_pole{
+  min-width:0;
+  max-width:100%;
+}
+
+/* ===== table ===== */
 .abgm-tablewrap{
   margin-top:10px;
   border:1px solid rgba(255,255,255,.10);
   border-radius:12px;
-  overflow:hidden;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .abgm-table{
   width:100%;
   border-collapse:collapse;
   font-size:13px;
+  table-layout: fixed; /* 핵심: 모바일에서 우측 버튼 밀림 방지 */
+  min-width:0;
 }
 
-.abgm-table thead{
-  background:rgba(255,255,255,.05);
-}
+.abgm-table thead{ background:rgba(255,255,255,.05); }
 
 .abgm-table th, .abgm-table td{
   padding:8px 10px;
   border-bottom:1px solid rgba(255,255,255,.08);
   vertical-align:middle;
 }
+
+.abgm-col-check{
+  width:38px;
+  text-align:center;
+  padding:8px 6px !important;
+}
+
+.abgm-table input.abgm_sel{ transform:scale(1.05); }
 
 .abgm-table input[type="text"],
 .abgm-table input[type="number"]{
@@ -208,16 +206,6 @@ body.autobgm-modal-open{
   color:inherit;
 }
 
-.abgm-volcell{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.abgm-volcell input[type="range"]{
-  width:100%;
-}
-
 .abgm-iconbtn{
   display:inline-flex;
   align-items:center;
@@ -226,338 +214,141 @@ body.autobgm-modal-open{
   height:30px;
 }
 
-/* ===== BGM row: collapsed / expanded ===== */
+/* column widths: (1)check / (2)file / (3)play / (4)more */
+.abgm-table th:nth-child(1),
+.abgm-table td:nth-child(1){ width:44px; }
+
+.abgm-table th:nth-child(3),
+.abgm-table td:nth-child(3){ width:72px; }
+
+.abgm-table th:nth-child(4),
+.abgm-table td:nth-child(4){ width:64px; }
+
+.abgm-filecell{
+  min-width:0;
+  overflow:hidden;
+}
+
+.abgm_name{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* ===== row: collapsed / expanded ===== */
 .abgm-bgm-summary.abgm-expanded td{
   background: rgba(255,255,255,.02);
 }
 
-.abgm_toggle i{
-  transition: transform .15s ease;
-}
-.abgm-bgm-summary.abgm-expanded .abgm_toggle i{
-  transform: rotate(180deg);
-}
+.abgm_toggle i{ transition: transform .15s ease; }
+.abgm-bgm-summary.abgm-expanded .abgm_toggle i{ transform: rotate(180deg); }
 
+/* ===== detail row ===== */
 .abgm-bgm-detail td{
   padding: 10px 10px 12px;
   background: rgba(255,255,255,.03);
 }
 
-.abgm-detail-wrap{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  align-items:flex-start;
-}
-
-.abgm-field{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  flex:1 1 220px;
-  min-width: 180px;
-}
-.abgm-field small{ opacity:.8; }
-
-.abgm-detail-actions{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  justify-content:flex-end;
-  flex: 1 1 140px;
-  min-width: 140px;
-}
-
-@media (min-width: 900px){
-  .abgm-detail-actions{
-    justify-content: center;   /* 우측 끝 박힘 줄임 */
-    padding-right: 14px;
-  }
-}
-
-.abgm-volcell .abgm_volnum{
-  width: 64px;
-  text-align: right;
-}
-
-@media (max-width: 520px){
-  .abgm-table{ min-width: 0; }
-}
-
-/* summary row: 파일명 칸 너무 길어보이는 거 줄이기 */
-.abgm_name{
-  display:block;
-  max-width: 420px;
-  overflow:hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.abgm_name:focus{
-  max-width: 100%;
-  white-space: normal;
-}
-
-/* detail: 키워드/우선도/볼륨/삭제를 “키워드 왼쪽 + (우선도 위/볼륨 아래) 오른쪽 + 삭제 우측” */
+/* detail layout (base) */
 .abgm-detail-grid{
   display:grid;
   grid-template-columns: 1fr 170px 130px;
   gap:10px;
-  align-items:start;
+  align-items: stretch;
 }
+
+.abgm-keywords{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+
 .abgm-keywords textarea.abgm_keywords{
   width:100%;
-  min-height: 74px;
-  resize: vertical; /* 원하면 늘림 */
+  min-height: 74px;      /* 기본 높이(모바일에서 더 줄일거면 media에서) */
+  max-height: 180px;
+  resize: vertical;
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.06);
   color: inherit;
 }
+
 .abgm-side{
   display:flex;
   flex-direction:column;
   gap:10px;
+  height:100%;
+  justify-content: space-between;
+  padding-top: 14px;
+  padding-bottom: 10px;
 }
+
 .abgm-field-tight small{ opacity:.8; }
-.abgm_narrow{
-  max-width: 120px;
-}
+
+.abgm_narrow{ max-width: 120px; }
+
 .abgm-volcell{
   display:flex;
   align-items:center;
   gap:8px;
-}
-.abgm_volnum{
-  width: 72px;
-  text-align:right;
+  min-width:0;
 }
 
-/* 모바일용 더 타이트 */
-@media (max-width: 520px){
-  .abgm_name{ max-width: 230px; }
-  .abgm-detail-grid{
-    grid-template-columns: 1fr 130px 100px;
-  }
-  .abgm_narrow{ max-width: 100px; }
-  .abgm_volnum{ width: 64px; }
-}
-@media (max-width: 380px){
-  /* 너무 좁으면 1열로 내려서라도 다 보이게 */
-  .abgm-detail-grid{
-    grid-template-columns: 1fr;
-  }
-  .abgm-detail-actions{
-    justify-content:flex-start;
-  }
-}
+.abgm-volcell .abgm_vol{ width:100%; min-width:0; }
+.abgm-volcell .abgm_volnum{ width:72px; text-align:right; }
 
-/* ✅ 좁은 화면에서 flex/grid 애들이 안 줄어드는 문제 방지 */
-.autobgm-modal,
-.abgm-card,
-.abgm-row,
-.abgm-inline {
-  min-width: 0;
-}
+.abgm_vol_lock{ padding:6px 8px; }
+.abgm_vol_lock i{ opacity:.85; }
+.abgm_vol:disabled{ opacity:.45; cursor:not-allowed; }
 
-.autobgm-modal input,
-.autobgm-modal select,
-.autobgm-modal .text_pole {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* ✅ 지금 tablewrap이 overflow:hidden이라 좁으면 내용이 잘려서 개판남 */
-.abgm-tablewrap{
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 좁은 화면에선 select 최소폭 강제 해제 */
-@media (max-width: 520px){
-  .abgm-select-slim{
-    min-width: 0;
-    width: 100%;
-  }
-  .abgm-range{
-    width: 100%;
-  }
-}
-
-/* 볼륨 설정 lock button */
-.abgm_vol_lock{
-  padding: 6px 8px;
-}
-.abgm_vol_lock i{
-  opacity: .85;
-}
-.abgm_vol:disabled{
-  opacity: .45;
-  cursor: not-allowed;
-}
-
-/* =========================
-   Compact widths (mobile-friendly)
-   ========================= */
-
-/* 테이블이 칸 폭을 고정해서 파일명 칸이 뚱뚱해지는 거 방지 */
-.abgm-table{
-  table-layout: fixed;
-  width: 100%;
-}
-
-/* 파일명 칸: 기본은 “확 줄이기(대충 1/3 체감)” */
-.abgm-filecell{
-  width: 220px;          /* PC에서도 덜 뚱뚱하게 */
-  max-width: 220px;
-}
-
-/* 아주 좁은 화면에선 더 줄임 */
-@media (max-width: 520px){
-  .abgm-filecell{
-    width: 150px;        /* 1/3 느낌 거의 여기서 남 */
-    max-width: 150px;
-  }
-}
-
-/* 파일명 input 자체도 칸을 꽉 채우되, 말줄임 */
-.abgm_name{
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* =========================
-   Detail(펼쳤을 때) 키워드 폭 “반토막” + 레이아웃 유지
-   ========================= */
-
-/* ===== detail 정렬 보정 ===== */
-.abgm-detail-grid{
-  align-items: stretch; /* 키워드/사이드/액션 높이 맞추기 */
-}
-
-.abgm-keywords{
-  display:flex;
-  flex-direction:column;
-  min-width: 0;
-}
-
-/* 키워드 textarea가 "기본 높이"를 좀 더 확보해서 우측이 안 붕 뜸 */
-.abgm-keywords textarea.abgm_keywords{
-  min-height: 92px;  /* 기존 74px였다면 이걸로 올려 */
-  flex: 1 1 auto;
-}
-
-/* 우측(우선도/볼륨) 박스: 키워드 높이 안에서 위/아래로 자연스럽게 배치 */
-.abgm-side{
-  height: 100%;
-  justify-content: space-between; /* 위=Priority / 아래=Volume */
-  padding-top: 18px;
-  padding-bottom: 10px;
-}
-
-/* Delete 버튼: 우측 컬럼 세로 중앙 */
 .abgm-detail-actions{
-  height: 100%;
+  height:100%;
   display:flex;
-  align-items: center;        /* 세로 중앙 */
-  justify-content: flex-end;  /* 우측 고정 */
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end; /* 기본은 우측 */
+  min-width:140px;
 }
 
-/* ===== table: Play/More 안 밀리게 컬럼 폭 고정 ===== */
-.abgm-table{
-  table-layout: fixed;
-  width: 100%;
-}
-
-/* 체크/Play/More 폭 고정 */
-.abgm-table th:nth-child(1),
-.abgm-table td:nth-child(1){ width: 44px; }
-
-.abgm-table th:nth-child(3),
-.abgm-table td:nth-child(3){ width: 72px; }
-
-.abgm-table th:nth-child(4),
-.abgm-table td:nth-child(4){ width: 64px; }
-
-/* File 칸은 남는 공간만 쓰고, 절대 넘치지 않게 */
-.abgm-filecell{
-  width: auto;      /* 220px 같은 고정값 쓰지 말고 auto로 */
-  min-width: 0;
-  overflow: hidden;
-}
-
-.abgm_name{
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 모바일에선 파일칸을 더 강하게 줄여서 아이콘이 항상 보이게 */
+/* mobile: delete label 숨김(있을 경우) */
 @media (max-width: 520px){
+  .abgm-del-label{ display:none; }
+}
+
+/* ===== responsive: mobile table widths (play/more 항상 보이게) ===== */
+@media (max-width: 520px){
+  .abgm-table th, .abgm-table td{ padding:6px 6px; }
+  .abgm-iconbtn{ width:30px; height:28px; }
+
   .abgm-table th:nth-child(1),
-  .abgm-table td:nth-child(1){ width: 38px; }
+  .abgm-table td:nth-child(1){ width:38px; }
 
   .abgm-table th:nth-child(3),
-  .abgm-table td:nth-child(3){ width: 64px; }
+  .abgm-table td:nth-child(3){ width:58px; }
 
   .abgm-table th:nth-child(4),
-  .abgm-table td:nth-child(4){ width: 56px; }
+  .abgm-table td:nth-child(4){ width:58px; }
 
-  /* 파일칸 “체감 1/3”로 확 줄이기 */
-  .abgm-filecell{ width: 46%; } /* 여기 숫자 줄일수록 더 짧아짐(예: 40%) */
+  /* filecell은 “너무 길어서 버튼 밀기” 방지: 60% 기준 */
+  .abgm-filecell{ width:60%; }
 }
 
-/* ✅ 모바일에서 Play/More 안 보이는 원인 제거 */
-.abgm-table{
-  min-width: 0 !important;
-  table-layout: fixed !important;
-  width: 100% !important;
-}
-
-/* 모바일에서 버튼 칸이 더 확실히 보이게(좀 더 타이트) */
+/* ===== responsive: mobile detail (2col + 2row) + compact volume wrap ===== */
 @media (max-width: 520px){
-  .abgm-table th, .abgm-table td{ padding: 6px 6px; }
-  .abgm-iconbtn{ width: 30px; height: 28px; }
-  .abgm-filecell{ width: 40% !important; } /* 더 줄이고 싶으면 35% */
-}
+  .abgm-bgm-detail td{ padding: 8px 8px 10px; }
 
-/* ===== Mobile: File 조금 넓혀서 Play가 너무 중앙으로 안 오게 ===== */
-@media (max-width: 520px){
-  .abgm-table{
-    min-width: 0 !important;
-    table-layout: fixed !important;
-    width: 100% !important;
-  }
-
-  /* 체크/Play/More는 고정폭 */
-  .abgm-table th:nth-child(1),
-  .abgm-table td:nth-child(1){ width: 38px !important; }
-
-  .abgm-table th:nth-child(3),
-  .abgm-table td:nth-child(3){ width: 58px !important; }  /* Play 조금 줄임 */
-
-  .abgm-table th:nth-child(4),
-  .abgm-table td:nth-child(4){ width: 58px !important; }  /* More도 */
-
-  /* File 칸은 더 넓게 */
-  .abgm-filecell{ width: 60% !important; } /* 60~68 사이로 취향껏 */
-}
-
-/* ===== Detail layout: mobile에선 2col + 2row로 바꾸기 ===== */
-@media (max-width: 520px){
   .abgm-detail-grid{
-    grid-template-columns: minmax(0, 1fr) 150px !important;
+    grid-template-columns: minmax(0, 1fr) 150px;
     grid-template-areas:
       "kw side"
-      "kw act" !important;
-    gap: 10px !important;
-    align-items: stretch !important;
+      "kw act";
+    gap:8px;
+    align-items: stretch;
   }
 
   .abgm-keywords{ grid-area: kw; }
@@ -566,80 +357,117 @@ body.autobgm-modal-open{
     grid-area: act;
     align-self: center;
     justify-self: end;
-  }
-}
-
-@media (max-width: 520px){
-  .abgm-del-label{ display:none; } /* 모바일은 아이콘만 */
-}
-
-/* =========================
-   Mobile detail compact patch
-   ========================= */
-@media (max-width: 520px){
-
-  /* detail row 자체 높이 좀 줄이기 */
-  .abgm-bgm-detail td{
-    padding: 8px 8px 10px !important;
+    padding-right: 10px;
+    padding-bottom: 6px;
   }
 
-  /* detail grid 간격도 약간 타이트 */
-  .abgm-detail-grid{
-    gap: 8px !important;
-  }
-
-  /* 키워드: 높이 줄이기 */
+  /* 키워드 높이 조금만(너가 OK라 했던 값) */
   .abgm-keywords textarea.abgm_keywords{
-    min-height: 74px !important;   /* 여기 더 줄이고 싶으면 66~72 */
-    max-height: 130px !important;  /* 너무 커지는거 방지 */
+    min-height: 74px;
+    max-height: 130px;
   }
 
-  /* Priority/Volume 블록이 키워드 높이 안에서 깔끔하게 */
+  /* 우측 스택 */
   .abgm-side{
-    padding-top: 10px !important;
-    padding-bottom: 8px !important;
-    justify-content: flex-start !important;
-    gap: 10px !important;
+    padding-top: 10px;
+    padding-bottom: 8px;
+    justify-content: flex-start;
+    gap:10px;
   }
 
-  /* ✅ 핵심: Volume 줄 정리
-     - 슬라이더는 1줄(100% 폭)로
-     - 숫자+락은 자동으로 아래줄로 내려가게 */
+  /* 볼륨: 슬라이더는 한 줄로 길게, 숫자/락은 아래 우측 */
   .abgm-volcell{
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    gap: 8px !important;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
   }
 
-  /* 슬라이더를 한 줄 다 먹게 => 오른쪽으로 길게 뻗음 */
   .abgm-volcell .abgm_vol{
-    flex: 1 0 100% !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    margin-top: 2px;
+    flex: 1 0 100%;
+    width: 100%;
+    min-width:0;
+    margin-top:2px;
   }
 
-  /* 숫자 입력 + 락 버튼은 아래줄 우측 정렬 */
   .abgm-volcell .abgm_volnum{
-    width: 72px !important;
-    margin-left: auto !important;  /* 아래줄에서 오른쪽으로 밀기 */
+    width:72px;
+    margin-left:auto;
   }
 
   .abgm-volcell .abgm_vol_lock{
-    width: 34px !important;
-    height: 30px !important;
-  }
-
-  /* Delete: 너무 구석으로 안 붙게 살짝 안쪽으로 */
-  .abgm-detail-actions{
-    justify-self: end !important;
-    align-self: center !important;
-    padding-right: 10px !important;
-    padding-bottom: 6px !important;
+    width:34px;
+    height:30px;
   }
 }
 
+/* super narrow: detail 1col */
+@media (max-width: 380px){
+  .abgm-detail-grid{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "kw"
+      "side"
+      "act";
+  }
+  .abgm-detail-actions{
+    justify-self: start;
+    padding-right: 0;
+  }
+}
+
+/* ===== desktop: detail layout FINAL (fixed slider width) ===== */
+@media (min-width: 900px){
+  .abgm-detail-grid{
+    grid-template-columns: minmax(260px, 1fr) 180px 180px;
+    grid-template-areas:
+      "kw pr del"
+      "kw vol vol";
+    align-items: start;
+  }
+
+  .abgm-keywords{ grid-area: kw; }
+
+  .abgm-side{ display: contents; }
+
+  .abgm-side > .abgm-field-tight:nth-child(1){
+    grid-area: pr;
+    align-self: start;
+  }
+
+  .abgm-side > .abgm-field-tight:nth-child(2){
+    grid-area: vol;
+    align-self: start;
+    justify-self: end;
+    max-width: 340px; /* vol block limit */
+  }
+
+  .abgm-detail-actions{
+    grid-area: del;
+    height:auto;
+    align-self:start;
+    justify-self:end;
+    justify-content:flex-end;
+    padding-right: 14px; /* PC에서 너무 끝으로 안 붙게 */
+    padding-top: 6px;
+  }
+
+  /* slider length fixed */
+  .abgm-volcell{
+    display:grid;
+    grid-template-columns: 180px 72px 34px;
+    gap:8px;
+    align-items:center;
+    justify-content:end;
+  }
+
+  .abgm-volcell .abgm_vol{
+    width:180px;
+    min-width:0;
+  }
+}
+
+/* ===== confirm modal ===== */
 .abgm-confirm-wrap{
   position: fixed;
   inset: 0;
@@ -668,98 +496,16 @@ body.autobgm-modal-open{
 .abgm-confirm-msg{ opacity: .9; white-space: pre-wrap; line-height: 1.35; }
 
 .abgm-confirm-actions{
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:12px;
 }
 
-/* confirm이 overlay(모달) 안에 붙을 때: viewport 말고 overlay 기준으로 중앙 */
+/* confirm이 overlay(모달) 안에 붙을 때: overlay 기준 중앙 */
 .abgm-confirm-wrap.abgm-confirm-in-modal{
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-}
-
-/* =========================
-   PC detail layout FINAL
-   - slider 길이 고정(짧게)
-   ========================= */
-@media (min-width: 900px){
-
-  .abgm-detail-grid{
-    grid-template-columns: minmax(260px, 1fr) 180px 180px !important;
-    grid-template-areas:
-      "kw pr del"
-      "kw vol vol" !important;
-    align-items: start !important;
-  }
-
-  .abgm-keywords{ grid-area: kw; }
-
-  .abgm-side{ display: contents !important; }
-
-  .abgm-side > .abgm-field-tight:nth-child(1){
-    grid-area: pr;
-    align-self: start;
-  }
-
-  .abgm-side > .abgm-field-tight:nth-child(2){
-    grid-area: vol;
-    align-self: start;
-    justify-self: end;              /* 볼륨 블록을 오른쪽으로 붙임 */
-    max-width: 340px;               /* 볼륨 전체 폭도 제약 */
-  }
-
-  .abgm-detail-actions{
-    grid-area: del !important;
-    height: auto !important;
-    justify-self: end !important;
-    align-self: start !important;
-    justify-content: flex-end !important;
-    padding-right: 10px !important;
-    padding-top: 6px !important;
-  }
-
-  /* ✅ 슬라이더 길이 “고정” (여기서 확실히 짧아짐) */
-  .abgm-volcell{
-    display: grid !important;
-    grid-template-columns: 180px 72px 34px !important; /* slider 고정 180px */
-    gap: 8px !important;
-    align-items: center !important;
-    justify-content: end !important;
-  }
-
-  .abgm-volcell .abgm_vol{
-    width: 180px !important;  /* 혹시 몰라 한 번 더 박음 */
-    min-width: 0 !important;
-  }
-
-  .abgm-volcell .abgm_volnum{ width: 72px !important; }
-  .abgm-volcell .abgm_vol_lock{ width: 34px !important; height: 30px !important; }
-}
-
-  /* ===== Volume row: slider 길게 + (num/lock) 우측 정렬 ===== */
-  .abgm-volcell{
-    display: grid !important;
-    grid-template-columns: 1fr 72px 34px !important; /* slider / num / lock */
-    gap: 8px !important;
-    align-items: center !important;
-  }
-
-  /* slider 더 길게(우선도 폭 이상 확보) */
-  .abgm-volcell .abgm_vol{
-    width: 100% !important;
-    min-width: 130px !important;
-  }
-
-  /* num/lock 정렬 */
-  .abgm-volcell .abgm_volnum{
-    width: 72px !important;
-  }
-  .abgm-volcell .abgm_vol_lock{
-    width: 34px !important;
-    height: 30px !important;
-  }
 }
