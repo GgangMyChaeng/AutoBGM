@@ -581,7 +581,7 @@ function renderBgmTable(root, settings) {
           <!-- Delete (right) -->
           <div class="abgm-detail-actions">
             <div class="menu_button abgm_del" title="Delete">
-              <i class="fa-solid fa-trash"></i> Delete
+            <i class="fa-solid fa-trash"></i> <span class="abgm-del-label">Delete</span>
             </div>
           </div>
         </div>
