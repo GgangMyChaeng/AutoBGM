@@ -212,21 +212,12 @@ function ensureAssetList(settings) {
   return settings.assets;
 }
 
-// ✅ template loader (경로 후보 여러개 시도 + 실패 원인 로그)
-async function loadHtmlAny(paths, label = "template") {
-  const tried = [];
-  for (const rel of paths) {
-    const url = new URL(rel, import.meta.url);
-    tried.push(url.href);
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      return await res.text();
-    } catch (err) {
-      console.warn(`[AutoBGM] ${label} try failed:`, rel, url.href, err);
-    }
-  }
-  throw new Error(`[AutoBGM] ${label} load failed. Tried:\n- ${tried.join("\n- ")}`);
+/** ========= Template loader ========= */
+async function loadHtml(relPath) {
+  const url = new URL(relPath, import.meta.url);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Template fetch failed: ${res.status} ${url}`);
+  return await res.text();
 }
 
 /** ========= Settings schema + migration =========
@@ -356,21 +347,17 @@ async function playAsset(fileKey, volume01) {
 async function ensureJSZipLoaded() {
   if (window.JSZip) return window.JSZip;
 
-  // ✅ 로딩 중 중복 append 방지
-  if (window.__ABGM_JSZIP_PROMISE__) return window.__ABGM_JSZIP_PROMISE__;
+  // ✅ 너가 vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드됨
+  const s = document.createElement("script");
+  s.src = new URL("vendor/jszip.min.js", import.meta.url);
+  document.head.appendChild(s);
 
-  window.__ABGM_JSZIP_PROMISE__ = new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = new URL("vendor/jszip.min.js", import.meta.url).toString();
-    s.async = true;
-
-    s.onload = () => resolve(window.JSZip);
-    s.onerror = (e) => reject(e);
-
-    document.head.appendChild(s);
+  await new Promise((resolve, reject) => {
+    s.onload = resolve;
+    s.onerror = reject;
   });
 
-  return window.__ABGM_JSZIP_PROMISE__;
+  return window.JSZip;
 }
 
 async function importZip(file, settings) {
@@ -406,34 +393,9 @@ function isFileKeyReferenced(settings, fileKey) {
   return false;
 }
 
-// ✅ fileKey를 바꾸면, (가능하면) IndexedDB의 blob도 같이 이름 이동
-// - oldKey blob이 없으면 그냥 패스
-// - oldKey가 다른 프리셋/기본값에서 참조 중이면 oldKey blob은 유지
-async function renameAssetKey(settings, oldKey, newKey) {
-  if (!oldKey || !newKey || oldKey === newKey) return;
-
-  const blob = await idbGet(oldKey);
-  if (!blob) return;
-
-  await idbPut(newKey, blob);
-
-  const assets = ensureAssetList(settings);
-  if (!assets[newKey]) assets[newKey] = { fileKey: newKey, label: newKey.replace(/\.mp3$/i, "") };
-
-  if (!isFileKeyReferenced(settings, oldKey)) {
-    await idbDel(oldKey);
-    delete assets[oldKey];
-  }
-}
-
 /** ========= Modal open/close ========= */
 function closeModal() {
   const overlay = document.getElementById(MODAL_OVERLAY_ID);
-  try { _testAudio?.pause?.(); } catch {}
-if (_testUrl) {
-  try { URL.revokeObjectURL(_testUrl); } catch {}
-  _testUrl = "";
-}
   if (overlay) overlay.remove();
   document.body.classList.remove("autobgm-modal-open");
   window.removeEventListener("keydown", onEscClose);
@@ -451,15 +413,13 @@ function onEscClose(e) {
 async function openModal() {
   if (document.getElementById(MODAL_OVERLAY_ID)) return;
 
-  const modalHtml = await loadHtmlAny(
-    [
-      "templates/popup.html",
-      "./templates/popup.html",
-      "popup.html",
-      "./popup.html",
-    ],
-    "popup.html"
-  );
+  let html = "";
+  try {
+    html = await loadHtml("templates/popup.html");
+  } catch (e) {
+    console.error("[AutoBGM] popup.html load failed", e);
+    return;
+  }
 
   const overlay = document.createElement("div");
   overlay.id = MODAL_OVERLAY_ID;
@@ -472,9 +432,6 @@ async function openModal() {
 
    // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
 const host = getModalHost();
-  // overlay 내부에서도 같은 host 재사용
-overlay.__abgmHost = host;
-
 
 // host가 static이면 absolute overlay가 제대로 안 잡힘
 const cs = getComputedStyle(host);
@@ -1065,15 +1022,14 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("input", (e) => {
   // fileKey
   if (e.target.classList.contains("abgm_name")) {
     const oldKey = bgm.fileKey;
-    const newKey = e.target.value.trim();
+    const newKey = String(e.target.value || "").trim();
     bgm.fileKey = newKey;
     if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
-    if (oldKey && newKey && oldKey !== newKey) {
-  // IDB blob 이름도 이동 (비동기, 실패해도 UI는 안 죽게)
-  renameAssetKey(settings, oldKey, newKey).catch((err) =>
-    console.warn("[AutoBGM] renameAssetKey failed", err)
-  );
-}
+    saveSettingsDebounced();
+    renderDefaultSelect(root, settings);
+    return;
+  }
+
   // keywords/priority
   if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
   if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
@@ -1229,68 +1185,61 @@ if (!ok) return;
   });
 
   root.querySelector("#abgm_export")?.addEventListener("click", () => {
-  const preset = getActivePreset(settings);
-  const out = exportPresetFile(preset);
+    const preset = getActivePreset(settings);
+    const out = exportPresetFile(preset);
 
-  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `autobgm_preset_${(preset.name || preset.id).replace(/[^\w\-]+/g, "_")}.json`;
+    a.click();
 
-  // ✅ 파일명: {{프리셋이름}}_AutoBGM.json (한글 유지 + 윈도우 금지문자만 제거)
-  const base = String(preset.name || preset.id || "Preset").trim() || "Preset";
-  const safe = base
-    .replace(/[\\\/:*?"<>|]+/g, "_")   // OS 금지문자 제거
-    .replace(/\s+/g, "_")             // 공백은 _
-    .replace(/[._-]+$/g, "");         // 끝에 ., _, - 같은 거 정리
-  a.download = `${safe || "Preset"}_AutoBGM.json`;
-
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-});
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
   
-  root.addEventListener("focusin", () => {
-  const host = root.__abgmHost || getModalHost();
-  fitModalToHost(root, host);
+  overlay.addEventListener("focusin", () => {
+  // 키보드 뜨기 직전에 한번, 뜬 뒤에 한번
+  requestAnimationFrame(() => fitModalToHost(overlay, getModalHost()));
+  setTimeout(() => fitModalToHost(overlay, getModalHost()), 120);
 });
+
 
   rerenderAll(root, settings);
 }
 
 /** ========= Side menu mount ========= */
 async function mount() {
-  const host =
-    document.querySelector("#extensions_settings") ||
-    document.querySelector("#extensions_settings2") ||
-    document.querySelector("#extensions") ||
-    document.body;
-
+  const host = document.querySelector("#extensions_settings");
   if (!host) return;
+
+  // ✅ 이미 붙었으면 끝
   if (document.getElementById("autobgm-root")) return;
+
+  // ✅ mount 레이스 방지 (핵심)
   if (window.__AUTOBGM_MOUNTING__) return;
   window.__AUTOBGM_MOUNTING__ = true;
 
   try {
-    const html = await loadHtmlAny(
-      [
-        "templates/window.html",
-        "./templates/window.html",
-        "window.html",
-        "./window.html",
-      ],
-      "window.html"
-    );
+    const settings = ensureSettings();
+
+    let html;
+    try {
+      html = await loadHtml("templates/window.html");
+    } catch (e) {
+      console.error("[AutoBGM] window.html load failed", e);
+      return;
+    }
+
+    // 혹시 레이스로 여기 도달 전에 다른 mount가 붙였으면 종료
+    if (document.getElementById("autobgm-root")) return;
 
     const root = document.createElement("div");
     root.id = "autobgm-root";
     root.innerHTML = html;
     host.appendChild(root);
 
-    // 혹시 레이스로 여기 도달 전에 다른 mount가 붙였으면 종료
-    if (document.getElementById("autobgm-root")) return;
-
-    // SillyTavern 확장 메뉴 버튼
     const enable = root.querySelector("#autobgm_enabled");
     const openBtn = root.querySelector("#autobgm_open");
     if (!enable || !openBtn) return;
@@ -1304,26 +1253,19 @@ async function mount() {
     openBtn.addEventListener("click", () => openModal());
 
     console.log("[AutoBGM] mounted OK");
-  } catch (err) {
-    console.error("[AutoBGM] mount failed:", err);
   } finally {
     window.__AUTOBGM_MOUNTING__ = false;
   }
 }
 
 function init() {
-  try {
-    // mount를 “두 번” 불러서 ST가 UI 늦게 만들 때도 잡음
-    mount();
-    setTimeout(mount, 400);
+  // ✅ 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
+  if (window.__AUTOBGM_BOOTED__) return;
+  window.__AUTOBGM_BOOTED__ = true;
 
-    // DOM 변동 감시도 유지
-    const obs = new MutationObserver(() => mount());
-    obs.observe(document.body, { childList: true, subtree: true });
-  } catch (e) {
-    console.error("[AutoBGM] init failed:", e);
-  }
+  mount();
+  const obs = new MutationObserver(() => mount());
+  obs.observe(document.body, { childList: true, subtree: true });
 }
 
 jQuery(() => init());
-
