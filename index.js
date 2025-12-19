@@ -212,12 +212,21 @@ function ensureAssetList(settings) {
   return settings.assets;
 }
 
-/** ========= Template loader ========= */
-async function loadHtml(relPath) {
-  const url = new URL(relPath, import.meta.url);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Template fetch failed: ${res.status} ${url}`);
-  return await res.text();
+// ✅ template loader (경로 후보 여러개 시도 + 실패 원인 로그)
+async function loadHtmlAny(paths, label = "template") {
+  const tried = [];
+  for (const rel of paths) {
+    const url = new URL(rel, import.meta.url);
+    tried.push(url.href);
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return await res.text();
+    } catch (err) {
+      console.warn(`[AutoBGM] ${label} try failed:`, rel, url.href, err);
+    }
+  }
+  throw new Error(`[AutoBGM] ${label} load failed. Tried:\n- ${tried.join("\n- ")}`);
 }
 
 /** ========= Settings schema + migration =========
@@ -442,13 +451,15 @@ function onEscClose(e) {
 async function openModal() {
   if (document.getElementById(MODAL_OVERLAY_ID)) return;
 
-  let html = "";
-  try {
-    html = await loadHtml("templates/popup.html");
-  } catch (e) {
-    console.error("[AutoBGM] popup.html load failed", e);
-    return;
-  }
+  const modalHtml = await loadHtmlAny(
+    [
+      "templates/popup.html",
+      "./templates/popup.html",
+      "popup.html",
+      "./popup.html",
+    ],
+    "popup.html"
+  );
 
   const overlay = document.createElement("div");
   overlay.id = MODAL_OVERLAY_ID;
@@ -1249,35 +1260,37 @@ if (!ok) return;
 
 /** ========= Side menu mount ========= */
 async function mount() {
-  const host = document.querySelector("#extensions_settings");
+  const host =
+    document.querySelector("#extensions_settings") ||
+    document.querySelector("#extensions_settings2") ||
+    document.querySelector("#extensions") ||
+    document.body;
+
   if (!host) return;
-
-  // ✅ 이미 붙었으면 끝
   if (document.getElementById("autobgm-root")) return;
-
-  // ✅ mount 레이스 방지 (핵심)
   if (window.__AUTOBGM_MOUNTING__) return;
   window.__AUTOBGM_MOUNTING__ = true;
 
   try {
-    const settings = ensureSettings();
-
-    let html;
-    try {
-      html = await loadHtml("templates/window.html");
-    } catch (e) {
-      console.error("[AutoBGM] window.html load failed", e);
-      return;
-    }
-
-    // 혹시 레이스로 여기 도달 전에 다른 mount가 붙였으면 종료
-    if (document.getElementById("autobgm-root")) return;
+    const html = await loadHtmlAny(
+      [
+        "templates/window.html",
+        "./templates/window.html",
+        "window.html",
+        "./window.html",
+      ],
+      "window.html"
+    );
 
     const root = document.createElement("div");
     root.id = "autobgm-root";
     root.innerHTML = html;
     host.appendChild(root);
 
+    // 혹시 레이스로 여기 도달 전에 다른 mount가 붙였으면 종료
+    if (document.getElementById("autobgm-root")) return;
+
+    // SillyTavern 확장 메뉴 버튼
     const enable = root.querySelector("#autobgm_enabled");
     const openBtn = root.querySelector("#autobgm_open");
     if (!enable || !openBtn) return;
@@ -1291,19 +1304,26 @@ async function mount() {
     openBtn.addEventListener("click", () => openModal());
 
     console.log("[AutoBGM] mounted OK");
+  } catch (err) {
+    console.error("[AutoBGM] mount failed:", err);
   } finally {
     window.__AUTOBGM_MOUNTING__ = false;
   }
 }
 
 function init() {
-  // ✅ 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
-  if (window.__AUTOBGM_BOOTED__) return;
-  window.__AUTOBGM_BOOTED__ = true;
+  try {
+    // mount를 “두 번” 불러서 ST가 UI 늦게 만들 때도 잡음
+    mount();
+    setTimeout(mount, 400);
 
-  mount();
-  const obs = new MutationObserver(() => mount());
-  obs.observe(document.body, { childList: true, subtree: true });
+    // DOM 변동 감시도 유지
+    const obs = new MutationObserver(() => mount());
+    obs.observe(document.body, { childList: true, subtree: true });
+  } catch (e) {
+    console.error("[AutoBGM] init failed:", e);
+  }
 }
 
 jQuery(() => init());
+
