@@ -967,6 +967,7 @@ function initModal(overlay) {
     settings.globalVolume = Math.max(0, Math.min(1, v / 100));
     if (gvText) gvText.textContent = String(v);
     saveSettingsDebounced();
+    engineTick();
   });
 
   if (useDef) useDef.checked = !!settings.useDefault;
@@ -1238,7 +1239,7 @@ function initModal(overlay) {
       if (bgm.volLocked) return;
       const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
       bgm.volume = v / 100;
-
+      engineTick();
       const n = detailRow.querySelector(".abgm_volnum");
       if (n) n.value = String(v);
     }
@@ -1246,7 +1247,7 @@ function initModal(overlay) {
     if (e.target.classList.contains("abgm_volnum")) {
       const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
       bgm.volume = v / 100;
-
+      engineTick();
       if (!bgm.volLocked) {
         const r = detailRow.querySelector(".abgm_vol");
         if (r) r.value = String(v);
@@ -1477,6 +1478,7 @@ function init() {
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
+/** ========= Audio ========= */
   function engineTick() {
   const settings = ensureSettings();
   ensureEngineFields(settings);
@@ -1582,28 +1584,39 @@ function init() {
     return;
   }
 
-  // loop_list / random 은 ended 이벤트에서 다음곡 넘김(여기선 “시작 보장”만)
-  if (!_engineCurrentFileKey) {
-    if (mode === "loop_list") {
-      const idx = Math.max(0, Math.min(st.listIndex ?? 0, keys.length - 1));
-      const fk = keys[idx] || "";
-      if (fk) {
-        ensurePlayFile(fk, getVol(fk), false);
-        st.currentKey = fk;
-        st.listIndex = idx;
-      }
-      return;
-    }
+// loop_list / random 은 ended 이벤트에서 다음곡 넘김(여기선 “시작 보장” + 재생중 볼륨 갱신)
+if (mode === "loop_list" || mode === "random") {
 
-    if (mode === "random") {
-      const fk = pickRandomKey(keys, st.currentKey || "");
-      if (fk) {
-        ensurePlayFile(fk, getVol(fk), false);
-        st.currentKey = fk;
-      }
-      return;
-    }
+  // ✅ 이미 재생 중이면: 볼륨만 갱신(글로벌/개별 모두 반영)
+  if (_engineCurrentFileKey) {
+    const fk = _engineCurrentFileKey;
+    _bgmAudio.loop = false;
+    _bgmAudio.volume = getVol(fk);
+    st.currentKey = fk;
+    return;
   }
+
+  // ✅ 아직 아무것도 안 틀었으면: 모드에 맞게 시작
+  if (mode === "loop_list") {
+    const idx = Math.max(0, Math.min(st.listIndex ?? 0, keys.length - 1));
+    const fk = keys[idx] || "";
+    if (fk) {
+      ensurePlayFile(fk, getVol(fk), false);
+      st.currentKey = fk;
+      st.listIndex = idx;
+    }
+    return;
+  }
+
+  if (mode === "random") {
+    const fk = pickRandomKey(keys, st.currentKey || "");
+    if (fk) {
+      ensurePlayFile(fk, getVol(fk), false);
+      st.currentKey = fk;
+    }
+    return;
+  }
+}
 }
 
 // ended: loop_list/random 다음곡 처리
