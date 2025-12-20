@@ -176,8 +176,6 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
   * ai의({{char}}) 마지막 메시지에만 반응해야 함
   * 키워드 모드 활성화 중, 새로운 Ai 마지막 메시지를 인식했는데 인식된 키워드가 없고, Default로 설정해둔 BGM도 없다면, 이전에 재생하던 BGM이 상시 유지(무한 재생)되어야 함
   * 키워드 모드 활성화 중에 채팅에서 나왔을 때는 자동으로 OFF되어야 함
-  * 키워드 모드 활성화 중에 채팅에 다시 들어갔을 때는 ai 마지막 메시지를 인식하여 자동으로 ON되어야 함(확장 enabled일 때만)
- 
-  * 개선 요망: 키워드 모드 로직 개선, Use Default when no keyword 버튼 삭제 필요 (Default 세팅으로만 알아서 로직 돌아가게 > 있으면 Default 브금 상시 재생, 없으면 이전 bgm 유지 어쩌고)
+  * 키워드 모드 활성화 중에 채팅에 다시 들어갔을 때는 ai 마지막 메시지를 인식하여 자동으로 해당 곡이 재생되어야 함(확장 enabled일 때만)
 
 </NOTE>
