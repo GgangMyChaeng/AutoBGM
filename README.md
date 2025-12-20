@@ -7,6 +7,10 @@
 - **해당 확장에 대한 설명과 기능들은 "### 튜토리얼" 챕터와 "###디테일" 챕터 내에 포함되어 있으니 참고 바람**
 - 설명이나 기능과 관련하여 궁금해 할만한 사안은 해당 항목들 밑에도 미리 Q, A 형식에 맞춰 자체적으로 풀어두긴 했는데, 그래도 설명이 부족할 수도 있으니 양해 바람
 
+## License
+This project is licensed under CC BY-NC-ND 4.0.
+Third-party libraries are licensed separately (see LICENSE’S NOTICE).
+
 ### 해당 확장에 대한 이해를 도울 Q&A
 - Q: 왜 만듦?
   * A: 프리셋에 추가한 BGM들에 키워드를 매칭, Ai의 마지막 메시지에 해당 키워드가 있을 시 우선도에 따라 mp3 파일을 웹으로 자동 재생하는 확장을 만들고 싶었음.
@@ -171,7 +175,3 @@
   * 키워드 모드 활성화 중에 채팅에 다시 들어갔을 때는 ai 마지막 메시지를 인식하여 자동으로 ON되어야 함(확장 enabled일 때만)
 
 </project_description>
-
-## License
-This project is licensed under CC BY-NC-ND 4.0.
-Third-party libraries are licensed separately (see LICENSE’S NOTICE).
