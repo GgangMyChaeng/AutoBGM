@@ -51,7 +51,7 @@ function fitModalToViewport(overlay) {
 
   const setI = (k, v) => modal.style.setProperty(k, v, "important");
 
-  // 좁은 폭에서도 무조건 화면 안
+  // ✅ 좁은 폭에서도 무조건 화면 안
   setI("box-sizing", "border-box");
   setI("display", "block");
   setI("position", "relative");
@@ -60,7 +60,7 @@ function fitModalToViewport(overlay) {
   setI("min-width", "0");
   setI("margin", "12px");
 
-  // 높이 강제 (CSS !important도 뚫음)
+  // ✅ 높이 강제 (CSS !important도 뚫음)
   setI("min-height", "240px");
   setI("height", `${maxH}px`);
   setI("max-height", `${maxH}px`);
@@ -92,7 +92,7 @@ function fitModalToHost(overlay, host) {
   const vw = vv?.width || window.innerWidth;
   const vh = vv?.height || window.innerHeight;
 
-  // PC만 여백/최대폭 제한
+  // ✅ PC만 여백/최대폭 제한
   const isPc = vw >= 900;
   const pad = isPc ? 18 : 12;          // PC는 살짝 더 여유
   const maxWDesktop = 860;              // <-- 여기 숫자 줄이면 더 콤팩트
@@ -150,7 +150,7 @@ function abgmConfirm(containerOrDoc, message, {
 } = {}) {
   const doc = containerOrDoc?.ownerDocument || document;
 
-  // overlay(=root) 같은 엘리먼트가 들어오면 거기에 붙임
+  // ✅ overlay(=root) 같은 엘리먼트가 들어오면 거기에 붙임
   const container =
     containerOrDoc && containerOrDoc.nodeType === 1 ? containerOrDoc : doc.body;
 
@@ -158,7 +158,7 @@ function abgmConfirm(containerOrDoc, message, {
     const wrap = doc.createElement("div");
     wrap.className = "abgm-confirm-wrap";
 
-    // overlay 안에 붙일 때는 absolute 센터링 모드
+    // ✅ overlay 안에 붙일 때는 absolute 센터링 모드
     if (container !== doc.body) wrap.classList.add("abgm-confirm-in-modal");
 
     wrap.innerHTML = `
@@ -569,11 +569,11 @@ async function ensurePlayFile(fileKey, vol01, loop) {
   return true;
 }
 
-/** ========= ZIP (JSZip) ========= */
+/** ========= ZIP (JSZip 필요) ========= */
 async function ensureJSZipLoaded() {
   if (window.JSZip) return window.JSZip;
 
-  // vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드
+  // ✅ 너가 vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드됨
   const s = document.createElement("script");
   s.src = new URL("vendor/jszip.min.js", import.meta.url).toString();
   document.head.appendChild(s);
@@ -619,14 +619,6 @@ function isFileKeyReferenced(settings, fileKey) {
   return false;
 }
 
-// 키워드 모드 활성화 시 Play 버튼 락
-function setPlayButtonsLocked(root, locked) {
-  root?.querySelectorAll?.(".abgm_test")?.forEach((btn) => {
-    btn.classList.toggle("abgm-test-locked", !!locked);
-    btn.setAttribute("aria-disabled", locked ? "true" : "false");
-  });
-}
-
 /** ========= Modal open/close ========= */
 function closeModal() {
   const overlay = document.getElementById(MODAL_OVERLAY_ID);
@@ -666,7 +658,7 @@ async function openModal() {
     if (e.target === overlay) closeModal();
   });
 
-   // 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
+   // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
 const host = getModalHost();
 
 // host가 static이면 absolute overlay가 제대로 안 잡힘
@@ -686,18 +678,18 @@ setO("padding", "0"); // modal이 margin/pad 갖고 있으니 overlay는 0
 
 host.appendChild(overlay);
 
-// 컨테이너 기준으로 사이징
+// ✅ 컨테이너 기준으로 사이징
 fitModalToHost(overlay, host);
 requestAnimationFrame(() => fitModalToHost(overlay, host));
 setTimeout(() => fitModalToHost(overlay, host), 120);
 
-// 키보드/주소창 변화 대응 (visualViewport)
+// ✅ 키보드/주소창 변화 대응 (visualViewport)
 _abgmViewportHandler = () => {
   // 키보드 올라왔다 내려올 때 width/height가 바뀜
   fitModalToHost(overlay, host);
 };
 
-// 키보드 내려갈 때 resize 이벤트가 안 오기도 해서, 포커스 빠질 때 강제 재계산
+// ✅ 키보드 내려갈 때 resize 이벤트가 안 오기도 해서, 포커스 빠질 때 강제 재계산
 const kickFit = () => {
   _abgmViewportHandler?.();
   setTimeout(() => _abgmViewportHandler?.(), 60);
@@ -714,7 +706,7 @@ window.addEventListener("resize", _abgmViewportHandler);
 // visualViewport가 있으면 더 정확히
 if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", _abgmViewportHandler);
-  window.visualViewport.addEventListener("scroll", _abgmViewportHandler); // 중요: 키보드 올라오면 scroll도 같이 변함
+  window.visualViewport.addEventListener("scroll", _abgmViewportHandler); // ✅ 중요: 키보드 올라오면 scroll도 같이 변함
 }
 
   document.body.classList.add("autobgm-modal-open");
@@ -789,7 +781,7 @@ function renderDefaultSelect(root, settings) {
   none.textContent = "(none)";
   sel.appendChild(none);
 
-  // 현재 default가 룰 목록에 없으면(=missing) 옵션을 하나 만들어서 고정 유지
+  // ✅ 현재 default가 룰 목록에 없으면(=missing) 옵션을 하나 만들어서 고정 유지
   if (cur && !keys.includes(cur)) {
     const miss = document.createElement("option");
     miss.value = cur;
@@ -805,7 +797,7 @@ function renderDefaultSelect(root, settings) {
     sel.appendChild(opt);
   }
 
-  // value로 고정 (selected 속성보다 이게 안전)
+  // ✅ value로 고정 (selected 속성보다 이게 안전)
   sel.value = cur;
 }
 
@@ -898,6 +890,14 @@ function renderBgmTable(root, settings) {
 
     tbody.appendChild(tr);
     tbody.appendChild(tr2);
+  });
+}
+
+// 키워드 모드 활성화 시 Play 버튼 락
+function setPlayButtonsLocked(root, locked) {
+  root?.querySelectorAll?.(".abgm_test")?.forEach((btn) => {
+    btn.classList.toggle("abgm-test-locked", !!locked);
+    btn.setAttribute("aria-disabled", locked ? "true" : "false");
   });
 }
 
@@ -1559,12 +1559,16 @@ async function mount() {
 }
 
 function init() {
-  // ✅ 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
-  if (window.__AUTOBGM_BOOTED__) return;
+  // 업뎃/리로드(핫리로드) 대비: 이미 booted여도 UI는 다시 mount 해준다
+  if (window.__AUTOBGM_BOOTED__) {
+    try { mount(); } catch {}
+    return;
+  }
   window.__AUTOBGM_BOOTED__ = true;
 
   mount();
   startEngine();
+
   const obs = new MutationObserver(() => mount());
   obs.observe(document.body, { childList: true, subtree: true });
 }
