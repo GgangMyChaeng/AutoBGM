@@ -485,12 +485,13 @@ function parseKeywords(s) {
     .filter(Boolean);
 }
 
-function pickByKeyword(preset, text) {
+// 우선도에 따른 곡 선정 로직
+function pickByKeyword(preset, text, preferKey = "") {
   const t = String(text ?? "").toLowerCase();
   if (!t) return null;
 
-  let best = null;
   let bestPri = -Infinity;
+  let candidates = [];
 
   for (const b of preset.bgms ?? []) {
     const fk = String(b.fileKey ?? "");
@@ -503,13 +504,26 @@ function pickByKeyword(preset, text) {
     if (!hit) continue;
 
     const pri = Number(b.priority ?? 0);
+
     if (pri > bestPri) {
       bestPri = pri;
-      best = b;
+      candidates = [b];
+    } else if (pri === bestPri) {
+      candidates.push(b);
     }
   }
 
-  return best; // bgm obj or null
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  // 현재 곡이 동률 후보 중 하나면 그 곡 유지(틱마다 바뀌는거 방지)
+  if (preferKey) {
+    const keep = candidates.find((x) => String(x.fileKey ?? "") === String(preferKey));
+    if (keep) return keep;
+  }
+
+  // 그 외엔 랜덤
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function getSortedKeys(preset, sort) {
@@ -1581,7 +1595,7 @@ function init() {
 
   // ====== Keyword Mode ON ======
   if (settings.keywordMode) {
-    const hit = pickByKeyword(preset, lastAsst);
+    const hit = pickByKeyword(preset, lastAsst, st.currentKey || _engineCurrentFileKey || "");
     const desired = hit?.fileKey
       ? String(hit.fileKey)
       : (useDefault && defKey ? defKey : "");
