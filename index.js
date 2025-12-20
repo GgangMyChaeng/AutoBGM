@@ -1478,7 +1478,7 @@ function init() {
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
-/** ========= Audio ========= */
+/** ========= Audio Logic ========= */
   function engineTick() {
   const settings = ensureSettings();
   ensureEngineFields(settings);
