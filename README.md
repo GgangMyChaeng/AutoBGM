@@ -1,13 +1,12 @@
 # Autobgm (For SillyTavern)
+## License
+This project is licensed under CC BY-NC-ND 4.0.
+Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 
 ## 설명
 - 깃허브 내에서 SillyTavern 전용 확장 제작 중임
 - **해당 확장에 대한 설명과 기능들은 "### 튜토리얼" 챕터와 "###디테일" 챕터 내에 포함되어 있으니 참고 바람**
 - 설명이나 기능과 관련하여 궁금해 할만한 사안은 해당 항목들 밑에도 미리 Q, A 형식에 맞춰 자체적으로 풀어두긴 했는데, 그래도 설명이 부족할 수도 있으니 양해 바람
-
-## License
-This project is licensed under CC BY-NC-ND 4.0.
-Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 
 ### 해당 확장에 대한 이해를 도울 Q&A
 - Q: 왜 만듦?
