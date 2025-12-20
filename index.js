@@ -893,15 +893,23 @@ function renderBgmTable(root, settings) {
   });
 }
 
+// 키워드 모드 활성화 시 Play 버튼 락
+function setPlayButtonsLocked(root, locked) {
+  root?.querySelectorAll?.(".abgm_test")?.forEach((btn) => {
+    btn.classList.toggle("abgm-test-locked", !!locked);
+    btn.setAttribute("aria-disabled", locked ? "true" : "false");
+  });
+}
+
 function rerenderAll(root, settings) {
   renderPresetSelect(root, settings);
   renderDefaultSelect(root, settings);
   renderBgmTable(root, settings);
 
-  // ✅ 이건 “함수 안”에 있어야 함
   if (typeof root?.__abgmUpdateSelectionUI === "function") {
     root.__abgmUpdateSelectionUI();
   }
+  setPlayButtonsLocked(root, !!settings.keywordMode);
 }
 
 /** ========= Preset Import/Export (preset 단위 / 파일은 포함 안 함) ========= */
@@ -1009,6 +1017,7 @@ function initModal(overlay) {
   const useDef = root.querySelector("#abgm_useDefault");
 
   if (kw) kw.checked = !!settings.keywordMode;
+  setPlayButtonsLocked(root, !!settings.keywordMode); // 키워드 모드에서 Play 락 최초 1회 적용
 
   if (pm) {
     pm.value = settings.playMode ?? "manual";
@@ -1024,6 +1033,7 @@ function initModal(overlay) {
     kw.addEventListener("change", (e) => {
       settings.keywordMode = !!e.target.checked;
       if (pm) pm.disabled = !!settings.keywordMode;
+      setPlayButtonsLocked(root, !!settings.keywordMode); // 키워드 모드 On에서 Play 락
       saveSettingsDebounced();
     });
   }
@@ -1406,12 +1416,21 @@ function initModal(overlay) {
     }
 
     // test / runtime play
-    if (e.target.closest(".abgm_test")) {
-      if (settings.keywordMode) {
-        const vol = (settings.globalVolume ?? 0.7) * (bgm.volume ?? 1);
-        await playAsset(bgm.fileKey, vol);
-        return;
-      }
+if (e.target.closest(".abgm_test")) {
+  if (settings.keywordMode) return; // 키워드 모드면 재생 금지
+
+  settings.playMode = "manual";
+  if (pm) { pm.value = "manual"; pm.disabled = false; }
+
+  const ctx = (typeof getContext === "function") ? getContext() : null;
+  const chatKey = getChatKeyFromContext(ctx);
+  settings.chatStates ??= {};
+  settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
+  settings.chatStates[chatKey].currentKey = bgm.fileKey;
+
+  saveSettingsDebounced();
+  return;
+}
 
       settings.playMode = "manual";
       if (pm) { pm.value = "manual"; pm.disabled = false; }
