@@ -468,6 +468,16 @@ function getSortedKeys(preset, sort) {
     .filter(Boolean);
 }
 
+function pickRandomKey(keys, avoid = "") {
+  const arr = (keys ?? []).filter(Boolean);
+  if (!arr.length) return "";
+  if (arr.length === 1) return arr[0];
+
+  const pool = arr.filter((k) => k !== avoid);
+  const pickFrom = pool.length ? pool : arr;
+  return pickFrom[Math.floor(Math.random() * pickFrom.length)];
+}
+
 function findBgmByKey(preset, fileKey) {
   return (preset.bgms ?? []).find((b) => String(b.fileKey ?? "") === String(fileKey ?? ""));
 }
@@ -1576,7 +1586,7 @@ function init() {
   if (!_engineCurrentFileKey) {
     if (mode === "loop_list") {
       const idx = Math.max(0, Math.min(st.listIndex ?? 0, keys.length - 1));
-      const fk = keys[idx] || defKey || "";
+      const fk = keys[idx] || "";
       if (fk) {
         ensurePlayFile(fk, getVol(fk), false);
         st.currentKey = fk;
@@ -1586,7 +1596,7 @@ function init() {
     }
 
     if (mode === "random") {
-      const fk = defKey || keys[0] || "";
+      const fk = pickRandomKey(keys, st.currentKey || "");
       if (fk) {
         ensurePlayFile(fk, getVol(fk), false);
         st.currentKey = fk;
