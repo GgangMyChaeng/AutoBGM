@@ -63,8 +63,8 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 - 톱니바퀴(Settings) 버튼: 해당 확장의 모달을 오픈, 상세 설정이 가능함
 
 #### Modal (AutoBGM Settings)
-- 키워드 모드(Keyword Mode)란 다음과 같음: 해당 기능을 활성화할 시, Ai의 마지막 메시지에서 키워드가 인식되면 자동으로 해당 BGM이 조건에(키워드 인식, 우선도 등) 따라 자동 재생됨
-- 재생 모드(Play Mode)란 다음과 같음: 키워드 모드 비활성화 시 사용할 수 있는 모드인데, 모드는 Manual(일반 재생), Loop One(단일 무한 재생), Loop List(리스트 무한 재생), Random(랜덤 재생)이 있음
+- 키워드 모드(Keyword Mode): 해당 기능을 활성화할 시, Ai의 마지막 메시지에서 키워드가 인식되면 자동으로 해당 BGM이 조건에(키워드 인식, 우선도 등) 따라 자동 재생됨. 키워드 트리거 방식 기반이므로 개별 재생(Play) 버튼은 자동으로 비활성화 됨.
+- 재생 모드(Play Mode): 키워드 모드 비활성화 시 사용할 수 있는 모드인데, 모드는 Manual(일반 재생), Loop One(단일 무한 재생), Loop List(리스트 무한 재생), Random(랜덤 재생)이 있음
   * Manual(일반 재생): 한 곡을 재생시켜두면 해당 곡 종료 시 다른 곡으로 넘어가거나 하는 이벤트는 발생하지 않음
   * Loop One(단일 무한 재생): 한 곡을 재생해두면 해당 곡만 무한 자동 재생됨
   * Loop List(리스트 무한 재생): 해당 프리셋의 BGM 리스트에 들어있는 BGM 순서대로(Sort로 순서 조정 가능) 무한 재생
@@ -88,6 +88,8 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 #### BGM list
 - MP3 파일 추가(음표): 해당 버튼을 누르면 특정 경로에 있는 MP3 파일을 인식시켜줄 수 있음
 - ZIP 파일 추가(ZIP): 해당 버튼을 누르면 특정 경로에 있는 ZIP 파일을(MP3 파일이 들어가있는 ZIP) 인식시켜줄 수 있음
+  * Q: 파일 경로 바뀌면 BGM 재생 안 됨?
+    * A: 아님. 먹여둔 파일은 해당 파일들 경로 바뀌어도 잘만 작동하니 걱정할 필요 없음.
 - Default: 키워드 모드 활성화 중에, AI의 마지막 지문에 인식 된 키워드가 없을 때 원래 재생되던 이전 BGM이 아니라 Default BGM이 재생되도록 하는 기능임. 설정해둔 Default BGM이 없으면 이전 곡 재생이 유지됨.
 - Use Default when no keyword: 키워드 모드 활성화 중에, AI의 마지막 지문에 인식 된 키워드가 없을 때 원래 재생되던 이전 BGM이 아니라 Default BGM이 재생되도록 하는 기능임. 반대로 Default BGM이 설정되어 있지만, 이전 곡 재생을 유지하고 싶다면 해당 기능을 끄면 됨.
   * Q: "Default" 설정에 몰빵하면 되는 거 아님? "Use Default when no keyword" 버튼이 왜 필요함?
@@ -158,6 +160,7 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
   * 불러오기, 내보내기가 작동하는가? (o)
   * 불러오기 시, 유저의 기존 프리셋이 초기화되지 않고 해당 프리셋만 추가로 불러와지는가? (o)
   * 내보내기 시, 해당 프리셋 명칭 그대로 저장되는가? (O)
+  * 키워드 모드 활성화 시, BGM List의 개별 재생 버튼은 비활성화 되는가? (O)
   * 프리셋을 변경했을 때, 기존에 재생되던 mp3는 자동으로 꺼지는가? (X)
   * 특정 프리셋을 특정 캐릭터(들)에게 매칭(종속; 쉽게 말해 사용자가 해당 캐릭터 카드를 눌렀을 시 자동 연결해주는 기능)하는 스크립트 버튼이 있는가? (X)
 ### @BGM list에서...@
