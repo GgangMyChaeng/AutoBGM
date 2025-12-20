@@ -86,8 +86,7 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 #### BGM list
 - MP3 파일 추가(음표): 해당 버튼을 누르면 특정 경로에 있는 MP3 파일을 인식시켜줄 수 있음
 - ZIP 파일 추가(ZIP): 해당 버튼을 누르면 특정 경로에 있는 ZIP 파일을(MP3 파일이 들어가있는 ZIP) 인식시켜줄 수 있음
-- Use Default when no keyword: 키워드 모드 활성화 중에, AI의 마지막 지문에 인식 된 키워드가 없을 때 원래 재생되던 이전 BGM이 아니라 Default BGM이 재생되도록 하는 기능임
-- Default: 단어 그대로 뭘 기본 bgm으로 설정해두느냐임 비워두고 싶으면 (none) 상태로 두면 됨
+- Default: 키워드 모드 활성화 중에, AI의 마지막 지문에 인식 된 키워드가 없을 때 원래 재생되던 이전 BGM이 아니라 Default BGM이 재생되도록 하는 기능임. 설정해둔 Default BGM이 없으면 이전 곡 재생이 유지됨.
 - Sort: BGM List의 파일 정렬 순서 설정 기능임
 - 선택 삭제(쓰레기통): 선택한 BGM들을 삭제해주는 기능임 > 실수로 삭제하지 말라고 쿠션 창 뜰 거임
 - Expand all rows(하단): BGM 설정 창을 전부 펼쳐주는 기능임
@@ -104,7 +103,7 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 - 삭제(쓰레기통): 해당 항목 BGM 파일을 리스트에서 삭제해주는 기능 > 실수로 삭제할 경우를 방지하고자 쿠션 창이 하나 뜸
 
 ***
-<project_description>
+<NOTE>
 
 # 개발자 노트
 
@@ -159,17 +158,16 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 - 키워드 모드 활성화 중에...
   * 키워드 인식 기반 자동 재생 기능이 작동하여 Ai의({{char}}) 마지막 메시지에서만 키워드를 인식하는가? (X)
   * 해당 확장이 채팅마다 Ai의 마지막 메시지의 키워드를 인식해 각각 정상 작동하는가? (X)
-  * Use Default when no keyword 설정 활성화 중에, 마지막 AI 메시지에 인식된 키워드가 없고, Default로 설정해둔 BGM이 있을 시 해당 BGM이 상시 재생되는가? (O)
-  * Use Default when no keyword 설정 활성화 중에, 마지막 AI 메시지에 인식된 키워드가 없고, Default BGM도 없을 시, 재생되던 BGM이 종료되면 다른 BGM으로 넘어가는 이벤트가 방지되는가? (O)
-  * Use Default when no keyword 설정은 비활성화 중이고, 마지막 AI 메시지에 인식된 키워드가 없을 시, 이전에 재생 중이었던 BGM이 유지(자동 무한 재생)되는가? (X)
+  * 마지막 AI 메시지에 인식된 키워드가 없고, Default로 설정해둔 BGM이 있을 시 해당 BGM이 상시 재생되는가? (O)
+  * 마지막 AI 메시지에 인식된 키워드가 없고, Default BGM도 없을 시, 이전에 재생 중이었던 BGM이 유지(자동 무한 재생)되는가? (X)
   * 채팅에서 나왔을 시 BGM이 정상적으로 꺼지는가? (X)
 
 ## 원하는 기능
 - 키워드 매칭 (wi처럼 쉼표로 키워드 다수 매칭 가능하게)
 - 키워드 인식 후 자동 재생:
   * ai의({{char}}) 마지막 메시지에만 반응해야 함
-  * 키워드 모드 활성화 중, 새로운 Ai 마지막 메시지를 인식했는데 인식된 키워드가 없고, Use Default when no keyword 설정은 비활성화 중이면 이전에 재생하던 BGM이 상시 유지(무한 재생)되어야 함
+  * 키워드 모드 활성화 중, 새로운 Ai 마지막 메시지를 인식했는데 인식된 키워드가 없고, Default로 설정해둔 BGM도 없다면, 이전에 재생하던 BGM이 상시 유지(무한 재생)되어야 함
   * 키워드 모드 활성화 중에 채팅에서 나왔을 때는 자동으로 OFF되어야 함
   * 키워드 모드 활성화 중에 채팅에 다시 들어갔을 때는 ai 마지막 메시지를 인식하여 자동으로 ON되어야 함(확장 enabled일 때만)
 
-</project_description>
+</NOTE>
