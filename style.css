@@ -320,6 +320,14 @@ body.autobgm-modal-open{ overflow:hidden; }
   .abgm-del-label{ display:none; }
 }
 
+/* Keyword Mode ON: disable Play buttons */
+.abgm-test-locked {
+  opacity: 0.35;
+  pointer-events: none;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
 /* ===== responsive: mobile table widths (play/more 항상 보이게) ===== */
 @media (max-width: 520px){
   .abgm-table th, .abgm-table td{ padding:6px 6px; }
@@ -361,7 +369,7 @@ body.autobgm-modal-open{ overflow:hidden; }
     padding-bottom: 6px;
   }
 
-  /* 키워드 높이 조금만(너가 OK라 했던 값) */
+  /* 키워드 높이 조금만 */
   .abgm-keywords textarea.abgm_keywords{
     min-height: 74px;
     max-height: 130px;
