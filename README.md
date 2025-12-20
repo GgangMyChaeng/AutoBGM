@@ -87,6 +87,9 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 - MP3 파일 추가(음표): 해당 버튼을 누르면 특정 경로에 있는 MP3 파일을 인식시켜줄 수 있음
 - ZIP 파일 추가(ZIP): 해당 버튼을 누르면 특정 경로에 있는 ZIP 파일을(MP3 파일이 들어가있는 ZIP) 인식시켜줄 수 있음
 - Default: 키워드 모드 활성화 중에, AI의 마지막 지문에 인식 된 키워드가 없을 때 원래 재생되던 이전 BGM이 아니라 Default BGM이 재생되도록 하는 기능임. 설정해둔 Default BGM이 없으면 이전 곡 재생이 유지됨.
+- Use Default when no keyword: 키워드 모드 활성화 중에, AI의 마지막 지문에 인식 된 키워드가 없을 때 원래 재생되던 이전 BGM이 아니라 Default BGM이 재생되도록 하는 기능임. 반대로 Default BGM이 설정되어 있지만, 이전 곡 재생을 유지하고 싶다면 해당 기능을 끄면 됨.
+  * Q: "Default" 설정에 몰빵하면 되는 거 아님? "Use Default when no keyword" 버튼이 왜 필요함?
+    * A: 해당 프리셋의 타이틀(Default) 곡은 유지하되, 이전 곡 재생 유지 여부를 조정하기 위해 있는 편의성 기능임. 타이틀 곡을 Default 설정으로 매번 다시 세팅했다가 풀었다가 반복하기 귀찮으니 있는 버튼이라고 보면 됨.
 - Sort: BGM List의 파일 정렬 순서 설정 기능임
 - 선택 삭제(쓰레기통): 선택한 BGM들을 삭제해주는 기능임 > 실수로 삭제하지 말라고 쿠션 창 뜰 거임
 - Expand all rows(하단): BGM 설정 창을 전부 펼쳐주는 기능임
@@ -140,6 +143,7 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
   * 불러오기, 내보내기가 작동하는가? (o)
   * 불러오기 시, 유저의 기존 프리셋이 초기화되지 않고 해당 프리셋만 추가로 불러와지는가? (o)
   * 내보내기 시, 해당 프리셋 명칭 그대로 저장되는가? (O)
+  * 프리셋을 변경했을 때, 기존에 재생되던 mp3는 자동으로 꺼지는가? (X)
   * 특정 프리셋을 특정 캐릭터(들)에게 매칭(종속; 쉽게 말해 사용자가 해당 캐릭터 카드를 눌렀을 시 자동 연결해주는 기능)하는 스크립트 버튼이 있는가? (X)
 ### @BGM list에서...@
 - BGM list의 기능인
