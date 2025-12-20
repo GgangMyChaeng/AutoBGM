@@ -1,5 +1,3 @@
-<project_description>
- 
 # Autobgm (For SillyTavern)
 
 ## 설명
@@ -107,6 +105,7 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 - 삭제(쓰레기통): 해당 항목 BGM 파일을 리스트에서 삭제해주는 기능 > 실수로 삭제할 경우를 방지하고자 쿠션 창이 하나 뜸
 
 ***
+<project_description>
 
 # 개발자 노트
 
