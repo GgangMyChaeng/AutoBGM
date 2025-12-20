@@ -1,0 +1,39 @@
+<div id="autobgm_settings">
+  <div class="inline-drawer">
+    <div class="inline-drawer-toggle inline-drawer-header">
+      <b>AutoBGM</b>
+      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+
+    <div class="inline-drawer-content">
+
+      <!-- Enabled + Settings 버튼 한 줄 -->
+      <div class="autobgm-toprow">
+        <label class="checkbox_label" for="autobgm_enabled" style="margin:0;">
+          <input type="checkbox" id="autobgm_enabled" />
+          <small>Enabled</small>
+        </label>
+
+        <div class="autobgm-gearwrap" title="Settings">
+          <div id="autobgm_open" class="menu_button">
+            <i class="fa-solid fa-gear fa-lg"></i>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px; opacity:.85; font-size:12px;">
+        사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
+      </div>
+
+      <div class="autobgm-nowplaying" style="margin-top:10px; padding:8px 10px; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(0,0,0,.18);">
+        <small style="opacity:.75;">Now Playing</small>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+          <b id="autobgm_now_title" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">(none)</b>
+          <small id="autobgm_now_state" style="opacity:.7; white-space:nowrap;">Stopped</small>
+        </div>
+        <small id="autobgm_now_meta" style="opacity:.65; display:block; margin-top:2px;">—</small>
+      </div>
+
+    </div>
+  </div>
+</div>
