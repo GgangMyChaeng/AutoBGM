@@ -1680,25 +1680,37 @@ function init() {
   // ====== Keyword Mode ON ======
   if (settings.keywordMode) {
     const hit = pickByKeyword(preset, lastAsst, st.currentKey || _engineCurrentFileKey || "");
+
+    // 디버그 모드 hit 반영
     if (__abgmDebugMode) {
-      __abgmDebugLine += ` hit:${hit?.fileKey ? String(hit.fileKey) : "none"}`;
-      try { updateNowPlayingUI(); } catch {}
-    }
+  const hitKey = hit?.fileKey ? String(hit.fileKey) : "none";
+  const desiredKey = desired ? String(desired) : "none";
+  __abgmDebugLine =
+    `asstLen:${as.length} ` +
+    `hit:${hitKey} desired:${desiredKey}`;
+  try { updateNowPlayingUI(); } catch {}
+}
+
     const desired = hit?.fileKey
       ? String(hit.fileKey)
       : (useDefault && defKey ? defKey : "");
 
     // 1) 키워드 히트 or default 있으면 그걸 무한 유지
     if (desired) {
-      if (_engineCurrentFileKey !== desired) {
-        ensurePlayFile(desired, getVol(desired), true);
-        st.currentKey = desired;
-      } else {
-        _bgmAudio.loop = true;
-        _bgmAudio.volume = getVol(desired);
-      }
-      return;
-    }
+  // 디폴트든 키워드든 "지금 틀어야 하는 곡"은 여기서 확정
+  st.currentKey = desired;
+
+  if (_engineCurrentFileKey !== desired) {
+    // UI가 즉시 따라오게, 재생 호출 전에 현재키를 먼저 갱신
+    _engineCurrentFileKey = desired;
+    ensurePlayFile(desired, getVol(desired), true);
+    try { updateNowPlayingUI(); } catch {}
+  } else {
+    _bgmAudio.loop = true;
+    _bgmAudio.volume = getVol(desired);
+  }
+  return;
+}
 
     // 2) default도 없고 키워드도 없으면: 이전곡 유지(무한)
     if (st.currentKey) {
