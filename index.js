@@ -1660,11 +1660,20 @@ function init() {
   if (!preset) return;
 
   _engineCurrentPresetId = preset.id;
-    if (_engineLastPresetId && _engineLastPresetId !== String(preset.id)) {
-  stopRuntime(); // 프리셋 바뀌면 기존 곡 끊고
+    
+ // 프리셋이 바뀌면: 이전곡 유지값/런타임 키 전부 초기화
+if (_engineLastPresetId && _engineLastPresetId !== String(preset.id)) {
+  // 재생 멈추기
+  stopRuntime();
+
+  // "이전곡 유지" 방지용: 채팅 상태 초기화
+  st.currentKey = "";
+  st.listIndex = 0;
+
+  // Now Playing/엔진 상태도 초기화
+  _engineCurrentFileKey = "";
 }
 _engineLastPresetId = String(preset.id);
-
 
   const sort = getBgmSort(settings);
   const keys = getSortedKeys(preset, sort);
