@@ -10,6 +10,8 @@ let __abgmDebugLine = ""; // 키워드 모드 디버깅
 let __abgmDebugMode = false;
 let _engineLastPresetId = "";
 
+const AUTOBGM_BIND_KEY = "autobgm_binding"; // 종속 제발
+
 async function __abgmResolveDeps() {
   const base = import.meta.url;
 
@@ -255,6 +257,31 @@ async function loadHtml(relPath) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Template fetch failed: ${res.status} ${url}`);
   return await res.text();
+}
+
+/** ========= 종속; getContext 안전 헬퍼 ========= */
+function getStContextSafe() {
+  try {
+    if (window.SillyTavern && typeof window.SillyTavern.getContext === "function") {
+      return window.SillyTavern.getContext();
+    }
+  } catch {}
+  try {
+    if (typeof getContext === "function") return getContext();
+  } catch {}
+  return null;
+}
+
+function getBoundPresetIdFromCharacter(ctx) {
+  try {
+    const cid = ctx?.characterId;
+    if (cid === undefined || cid === null) return "";
+    const ch = ctx?.characters?.[cid];
+    const bound = ch?.data?.extensions?.[AUTOBGM_BIND_KEY]?.presetId;
+    return bound ? String(bound) : "";
+  } catch {
+    return "";
+  }
 }
 
 /** ========= Settings schema + migration =========
@@ -1071,7 +1098,7 @@ function initModal(overlay) {
   // 구버전 dataUrl 있으면 IndexedDB로 옮김 (있어도 한번만)
   migrateLegacyDataUrlsToIDB(settings);
 
-  // ===== 상단 옵션 =====
+  // ===== 상단 옵션 DOM query =====
   const kw = root.querySelector("#abgm_keywordMode");
   const dbg = root.querySelector("#abgm_debugMode");
   const pm = root.querySelector("#abgm_playMode");
@@ -1129,6 +1156,60 @@ function initModal(overlay) {
     settings.useDefault = !!e.target.checked;
     saveSettingsDebounced();
   });
+
+  const btnBind = root.querySelector("#abgm_bind_to_char");
+const btnUnbind = root.querySelector("#abgm_unbind_from_char");
+const bindStatus = root.querySelector("#abgm_bind_status");
+
+async function refreshBindStatus() {
+  const ctx = getStContextSafe();
+  const cid = ctx?.characterId;
+  if (cid === undefined || cid === null) {
+    if (bindStatus) bindStatus.textContent = "캐릭 채팅이 아님(그룹/미선택)";
+    return;
+  }
+  const bound = getBoundPresetIdFromCharacter(ctx);
+  const presetName = bound && settings.presets?.[bound] ? (settings.presets[bound].name || bound) : "";
+  if (bindStatus) bindStatus.textContent = bound ? `종속됨 → ${presetName}` : "종속 없음";
+}
+
+btnBind?.addEventListener("click", async () => {
+  const ctx = getStContextSafe();
+  const cid = ctx?.characterId;
+  const writeExtensionField = ctx?.writeExtensionField;
+
+  if (cid === undefined || cid === null || typeof writeExtensionField !== "function") {
+    alert("현재 캐릭을 찾을 수 없음(그룹채팅이거나 ST API 접근 실패)");
+    return;
+  }
+
+  const presetId = String(settings.activePresetId || "");
+  await writeExtensionField(cid, AUTOBGM_BIND_KEY, { presetId });
+  await refreshBindStatus();
+
+  // 바로 적용 체감
+  try { engineTick(); } catch {}
+});
+
+btnUnbind?.addEventListener("click", async () => {
+  const ctx = getStContextSafe();
+  const cid = ctx?.characterId;
+  const writeExtensionField = ctx?.writeExtensionField;
+
+  if (cid === undefined || cid === null || typeof writeExtensionField !== "function") {
+    alert("현재 캐릭을 찾을 수 없음(그룹채팅이거나 ST API 접근 실패)");
+    return;
+  }
+
+  // 삭제 대신 빈 값으로 덮어쓰기(호환/안전)
+  await writeExtensionField(cid, AUTOBGM_BIND_KEY, { presetId: "" });
+  await refreshBindStatus();
+
+  try { engineTick(); } catch {}
+});
+
+// 모달 열릴 때 1회
+refreshBindStatus();
 
   // ===== Sort =====
   const sortSel = root.querySelector("#abgm_sort");
@@ -1653,6 +1734,17 @@ function init() {
     stopRuntime();
   }
   _engineLastChatKey = chatKey;
+
+  // ====== Character-bound preset (stored in character card extensions) ======
+const stx = getStContextSafe();
+const boundPresetId = getBoundPresetIdFromCharacter(stx);
+
+if (boundPresetId && settings.presets?.[boundPresetId]) {
+  if (String(settings.activePresetId) !== boundPresetId) {
+    settings.activePresetId = boundPresetId;
+    saveSettingsDebounced?.(); // 선택: 바뀐 activePresetId 저장
+  }
+}
 
   // preset 선택(지금은 activePresetId 기준. 나중에 캐릭 매칭 끼우면 여기서 바꾸면 됨)
   let preset = settings.presets?.[settings.activePresetId];
