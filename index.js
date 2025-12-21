@@ -469,29 +469,64 @@ function getChatKeyFromContext(ctx) {
 // Ai 컨텍스트 제발 돼라 ㅅㅂ
 function getLastAssistantText(ctx) {
   try {
-    // 1) ctx에서 채팅 배열 꺼내기
+    // 1) ctx에서 먼저 시도
     let chat = (ctx && (ctx.chat || ctx.messages)) || null;
 
-    // 2) ctx가 없으면 전역 fallback (모바일에서 getContext 죽는 케이스 대응)
+    // 2) 그래도 없으면 SillyTavern 객체/함수에서 시도
+    if (!Array.isArray(chat) || chat.length === 0) {
+      try {
+        const st = window.SillyTavern || window?.parent?.SillyTavern;
+        const gc = st && typeof st.getContext === "function" ? st.getContext() : null;
+        chat = (gc && (gc.chat || gc.messages)) || chat;
+      } catch {}
+    }
+
+    // 3) 그래도 없으면 (가능하면) window.chat 시도
     if (!Array.isArray(chat) || chat.length === 0) {
       if (Array.isArray(window.chat)) chat = window.chat;
-      else if (window.SillyTavern && Array.isArray(window.SillyTavern.chat)) chat = window.SillyTavern.chat;
-      else chat = [];
     }
 
-    // 3) 뒤에서부터 "assistant" 마지막 메시지 찾기
-    for (let i = chat.length - 1; i >= 0; i--) {
-      const m = chat[i] || {};
-      // user 메시지는 스킵
-      if (m.is_user === true) continue;
-      const role = (m.role || m.sender || "").toLowerCase();
-      if (role === "user") continue;
+    // 4) 배열이 있으면 거기서 마지막 assistant 찾기
+    if (Array.isArray(chat) && chat.length) {
+      for (let i = chat.length - 1; i >= 0; i--) {
+        const m = chat[i] || {};
+        if (m.is_user === true) continue;
 
-      // ST는 content, mes, message 같은 키를 씀(버전/스킨차)
-      const text = (m.content ?? m.mes ?? m.message ?? "");
-      if (typeof text === "string" && text.trim()) return text;
+        const role = String(m.role || m.sender || "").toLowerCase();
+        if (role === "user") continue;
+
+        const text = (m.content ?? m.mes ?? m.message ?? m.text ?? "");
+        if (typeof text === "string" && text.trim()) return text;
+      }
     }
-  } catch (e) {}
+
+    // 5) 최후의 수단: DOM에서 마지막 assistant 메시지 긁기
+    // (ST UI 구조가 바뀌어도 최대한 버티도록 넓게 잡음)
+    const root =
+      document.querySelector("#chat") ||
+      document.querySelector("#chat_content") ||
+      document.querySelector("main") ||
+      document.body;
+
+    if (root) {
+      const nodes = Array.from(root.querySelectorAll(".mes, .message, .chat_message"));
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const el = nodes[i];
+        if (!el) continue;
+
+        // 유저 메시지로 보이는 것들 최대한 스킵
+        const cls = el.classList;
+        if (cls && (cls.contains("is_user") || cls.contains("user") || cls.contains("from_user"))) continue;
+
+        // 메시지 텍스트 후보
+        const textEl =
+          el.querySelector(".mes_text, .message_text, .text, .content, .mes_content") || el;
+
+        const txt = (textEl.innerText || textEl.textContent || "").trim();
+        if (txt) return txt;
+      }
+    }
+  } catch {}
 
   return "";
 }
