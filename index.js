@@ -321,7 +321,7 @@ function openBindMultiDialog(ctx, settings) {
   ov.style.position = "fixed";
   ov.style.inset = "0";
   ov.style.background = "rgba(0,0,0,.55)";
-  ov.style.zIndex = "2147483647";
+  ov.style.zIndex = "999999";
   ov.style.display = "flex";
   ov.style.alignItems = "center";
   ov.style.justifyContent = "center";
@@ -332,8 +332,7 @@ function openBindMultiDialog(ctx, settings) {
   const box = document.createElement("div");
   box.style.width = "min(520px, 92vw)";
   box.style.maxHeight = "min(560px, 78vh)";
-  box.style.background = "#0b0b0d"
-  box.style.color = "var(--SmartThemeTextColor, #eaeaea)";
+  box.style.background = "var(--SmartThemeBodyColor, #111)";
   box.style.border = "1px solid rgba(255,255,255,.12)";
   box.style.borderRadius = "12px";
   box.style.padding = "12px";
@@ -346,7 +345,7 @@ function openBindMultiDialog(ctx, settings) {
   title.style.alignItems = "center";
   title.style.justifyContent = "space-between";
   title.innerHTML = `
-    <div style="font-weight:700;">종속</div>
+    <div style="font-weight:700;">캐릭들에 종속</div>
     <div style="opacity:.8; font-size:12px;">preset: ${escapeHtml(presetId)}</div>
   `;
 
@@ -397,11 +396,10 @@ function openBindMultiDialog(ctx, settings) {
   const actions = document.createElement("div");
   actions.style.display = "flex";
   actions.style.gap = "8px";
-  actions.style.justifyContent = "space-between";
-  actions.style.width = "100%";
+  actions.style.justifyContent = "flex-end";
   actions.innerHTML = `
-    <button class="menu_button" id="abgm_multi_apply">적용</button>
     <button class="menu_button" id="abgm_multi_cancel">취소</button>
+    <button class="menu_button" id="abgm_multi_apply">적용</button>
   `;
 
   box.appendChild(title);
@@ -1307,7 +1305,63 @@ function initModal(overlay) {
     settings.useDefault = !!e.target.checked;
     saveSettingsDebounced();
   });
-btnBindMulti?.addEventListener("click", () => {
+
+  const btnBind = root.querySelector("#abgm_bind_to_char");
+const btnUnbind = root.querySelector("#abgm_unbind_from_char");
+const bindStatus = root.querySelector("#abgm_bind_status");
+  const btnBindMulti = root.querySelector("#abgm_bind_multi");
+
+async function refreshBindStatus() {
+  const ctx = getStContextSafe();
+  const cid = ctx?.characterId;
+  if (cid === undefined || cid === null) {
+    if (bindStatus) bindStatus.textContent = "캐릭 채팅이 아님(그룹/미선택)";
+    return;
+  }
+  const bound = getBoundPresetIdFromCharacter(ctx);
+  const presetName = bound && settings.presets?.[bound] ? (settings.presets[bound].name || bound) : "";
+  if (bindStatus) bindStatus.textContent = bound ? `종속됨 → ${presetName}` : "종속 없음";
+}
+
+btnBind?.addEventListener("click", async () => {
+  const ctx = getStContextSafe();
+  const cid = ctx?.characterId;
+  const writeExtensionField = ctx?.writeExtensionField;
+
+  if (cid === undefined || cid === null || typeof writeExtensionField !== "function") {
+    alert("현재 캐릭을 찾을 수 없음(그룹채팅이거나 ST API 접근 실패)");
+    return;
+  }
+
+  const presetId = String(settings.activePresetId || "");
+  await writeExtensionField(cid, AUTOBGM_BIND_KEY, { presetId });
+  await refreshBindStatus();
+
+  // 바로 적용 체감
+  try { engineTick(); } catch {}
+});
+
+btnUnbind?.addEventListener("click", async () => {
+  const ctx = getStContextSafe();
+  const cid = ctx?.characterId;
+  const writeExtensionField = ctx?.writeExtensionField;
+
+  if (cid === undefined || cid === null || typeof writeExtensionField !== "function") {
+    alert("현재 캐릭을 찾을 수 없음(그룹채팅이거나 ST API 접근 실패)");
+    return;
+  }
+
+  // 삭제 대신 빈 값으로 덮어쓰기(호환/안전)
+  await writeExtensionField(cid, AUTOBGM_BIND_KEY, { presetId: "" });
+  await refreshBindStatus();
+
+  try { engineTick(); } catch {}
+});
+
+// 모달 열릴 때 1회
+refreshBindStatus();
+
+  btnBindMulti?.addEventListener("click", () => {
     const ctx = getStContextSafe();
     if (!ctx || !Array.isArray(ctx.characters)) {
       alert("캐릭 목록을 불러올 수 없음");
