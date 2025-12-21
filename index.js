@@ -7,6 +7,8 @@
 let extension_settings;
 let saveSettingsDebounced;
 let __abgmDebugLine = ""; // 키워드 모드 디버깅
+let __abgmDebugMode = false; // 디버그 모드
+let __abgmDebugLine = "";
 
 async function __abgmResolveDeps() {
   const base = import.meta.url;
