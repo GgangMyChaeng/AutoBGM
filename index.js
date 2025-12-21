@@ -1689,11 +1689,37 @@ if (settings.keywordMode) {
     ? hitKey
     : (useDefault && defKey ? defKey : "");
 
-  // 2) 디버그는 출력만 (변수/흐름 수정 금지)
-  if (__abgmDebugMode) {
-    __abgmDebugLine = `asstLen:${as.length} hit:${hitKey || "none"} desired:${desired || "none"}`;
-    try { updateNowPlayingUI(); } catch {}
+  // 2) 디버그는 "출력만" 한다 (변수/흐름 수정 금지)
+if (__abgmDebugMode) {
+  const tLower = String(lastAsst ?? "").toLowerCase();
+
+  // 최종 결정 곡(= 지금 틀 곡)
+  const finalKey = desired || "";
+
+  // 걸린 키워드 목록(중복 제거)
+  let kwList = [];
+
+  if (hit && hitKey) {
+    const kws = parseKeywords(hit.keywords);
+    const seen = new Set();
+
+    for (const kw of kws) {
+      const k = String(kw ?? "").trim();
+      if (!k) continue;
+      const kLower = k.toLowerCase();
+
+      if (tLower.includes(kLower) && !seen.has(kLower)) {
+        seen.add(kLower);
+        kwList.push(k);
+      }
+    }
   }
+
+  const kwText = kwList.length ? kwList.join(", ") : "none";
+
+  __abgmDebugLine = `asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
+  try { updateNowPlayingUI(); } catch {}
+}
 
   // 3) 키워드 히트 or default 있으면 그걸 무한 유지
   if (desired) {
