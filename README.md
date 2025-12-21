@@ -1,7 +1,11 @@
 # Autobgm (For SillyTavern)
 ## License
 This project is licensed under CC BY-NC-ND 4.0.
-Third-party libraries are licensed separately (see LICENSE’S NOTICE).
+Third-party libraries(JsZip) are licensed separately (see LICENSE’S NOTICE).
+- 비상업적 용도에 한해 깡통 사이트(https://kkangtong.xyz/) 내 공유 가능
+- 확장 자체의 소스 코드 및 파일 수정·변형·재배포 금지
+- 확장을 통해 생성된 프리셋 및 사용자 데이터는 자유롭게 사용 가능
+- 공유 시 출처 표기 필수
 
 ## 설명
 - 깃허브 내에서 SillyTavern 전용 확장 제작 중임
@@ -137,7 +141,6 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
 
 ***
 <NOTE>
-
 # 개발자 노트
 
 ## 현재 깃허브 폴더 상태
