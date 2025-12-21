@@ -471,7 +471,7 @@ function getChatKeyFromContext(ctx) {
   return `${chatId}::${char}`;
 }
 
-// Ai 컨텍스트 제발 돼라 해결 굿
+// Ai 컨텍스트 제발 돼라 ㅅㅂ
 function getLastAssistantText(ctx) {
   try {
     // 1) ctx에서 먼저 시도
@@ -676,51 +676,6 @@ function isFileKeyReferenced(settings, fileKey) {
     if (p.bgms?.some((b) => b.fileKey === fileKey)) return true;
   }
   return false;
-}
-
-/** ========= Chid 테스트 ========= */
-function getCurrentChid(ctx) {
-  // 0) 가능한 값들 먼저
-  const direct =
-    window.this_chid ??
-    window.parent?.this_chid ??
-    window.top?.this_chid ??
-    ctx?.characterId ??
-    ctx?.character_id ??
-    ctx?.character?.id;
-
-  if (direct !== undefined && direct !== null && String(direct) !== "") {
-    return String(direct);
-  }
-
-  // 1) DOM에서 "선택된 캐릭터 카드" 찾기 (ST 버전/테마마다 클래스가 다름)
-  const sel =
-    document.querySelector(".character_select.selected") ||
-    document.querySelector(".character_select.active") ||
-    document.querySelector(".character_select.chosen") ||
-    document.querySelector("#rm_print_characters .character_select.selected") ||
-    document.querySelector("#rm_print_characters .character_select");
-
-  if (sel) {
-    // 2) dataset에서 chid류 뽑기
-    const ds = sel.dataset || {};
-    const d =
-      ds.chid ?? ds.characterId ?? ds.character_id ?? ds.id ?? ds.key;
-
-    if (d !== undefined && d !== null && String(d) !== "") return String(d);
-
-    // 3) id 속성/onclick 등에서 숫자 뽑기(최후 보루)
-    const idAttr = sel.getAttribute("data-chid") || sel.getAttribute("chid") || sel.id || "";
-    const m = String(idAttr).match(/\d+/);
-    if (m) return String(m[0]);
-
-    // 4) 그래도 없으면 이름을 키로 사용 (중복 위험은 있음)
-    const nameEl = sel.querySelector(".ch_name, .character_name, .name, .char_name");
-    const nm = (nameEl?.textContent || "").trim();
-    if (nm) return `name:${nm}`;
-  }
-
-  return "";
 }
 
 /** ========= Modal open/close ========= */
@@ -1688,14 +1643,6 @@ function init() {
 
   // ST 컨텍스트 (없어도 global로 굴러가게)
   const ctx = (typeof getContext === "function") ? getContext() : null;
-
-    // Chid 테스트
-    if (__abgmDebugMode) {
-  const chid = getCurrentChid(ctx);
-  __abgmDebugLine = `chid:${chid}`;
-  try { updateNowPlayingUI(); } catch {}
-}
-
   const chatKey = getChatKeyFromContext(ctx);
 
   settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
@@ -1784,8 +1731,7 @@ for (const b of (preset.bgms ?? [])) {
 
 const kwText = kwList.length ? kwList.join(", ") : "none";
 
-  const chid = getCurrentChid(ctx);
-  __abgmDebugLine = `chid:${chid || "?"} (w:${String(window.this_chid ?? "")}) `;
+  __abgmDebugLine = `asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
   try { updateNowPlayingUI(); } catch {}
 }
 
