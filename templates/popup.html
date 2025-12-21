@@ -172,8 +172,24 @@
     </div>
   
   <!-- Bind Overlay (covers modal) -->
-  <div id="abgm_bind_overlay" style="display:none; position:fixed; inset:0; z-index:999999; align-items:center; justify-content:center; background:rgba(0,0,0,.55);">
-    <div style="width:min(560px, calc(100vw - 24px)); height:min(70vh, 560px); background:rgba(20,20,20,.98); border:1px solid rgba(255,255,255,.14); border-radius:14px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.55);">
+  <div id="abgm_bind_overlay" style="
+  display:none;
+  position:fixed;
+  left:0; top:0;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  z-index:9999999;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  box-sizing:border-box;
+  background:rgba(0,0,0,.55);
+">
+
+    <div style="width:min(560px, calc(100vw - 24px)); height:min(70dvh, 560px); background:rgba(20,20,20,.98); border:1px solid rgba(255,255,255,.14); border-radius:14px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.55);">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 12px 10px 12px; border-bottom:1px solid rgba(255,255,255,.10); gap:10px;">
         <b id="abgm_bind_title">Bind Preset</b>
         <div class="menu_button" id="abgm_bind_close" title="Close">
