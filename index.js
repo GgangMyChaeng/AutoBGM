@@ -8,6 +8,7 @@ let extension_settings;
 let saveSettingsDebounced;
 let __abgmDebugLine = ""; // 키워드 모드 디버깅
 let __abgmDebugMode = false;
+let _engineLastPresetId = "";
 
 async function __abgmResolveDeps() {
   const base = import.meta.url;
@@ -1659,6 +1660,11 @@ function init() {
   if (!preset) return;
 
   _engineCurrentPresetId = preset.id;
+    if (_engineLastPresetId && _engineLastPresetId !== String(preset.id)) {
+  stopRuntime(); // 프리셋 바뀌면 기존 곡 끊고
+}
+_engineLastPresetId = String(preset.id);
+
 
   const sort = getBgmSort(settings);
   const keys = getSortedKeys(preset, sort);
