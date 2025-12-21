@@ -680,12 +680,7 @@ function isFileKeyReferenced(settings, fileKey) {
 
 /** ========= Chid 테스트 ========= */
 function getCurrentChid(ctx) {
-  return String(
-    window.this_chid ??
-    ctx?.characterId ??
-    ctx?.character_id ??
-    ""
-  );
+  return String(window.this_chid ?? ctx?.characterId ?? ctx?.character_id ?? "");
 }
 
 /** ========= Modal open/close ========= */
@@ -1749,7 +1744,8 @@ for (const b of (preset.bgms ?? [])) {
 
 const kwText = kwList.length ? kwList.join(", ") : "none";
 
-  __abgmDebugLine = `asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
+  const chid = getCurrentChid(ctx);
+  __abgmDebugLine = `chid:${chid} asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
   try { updateNowPlayingUI(); } catch {}
 }
 
