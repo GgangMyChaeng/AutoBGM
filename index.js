@@ -265,7 +265,6 @@ function ensureSettings() {
   extension_settings[SETTINGS_KEY] ??= {
     enabled: true,
     keywordMode: true,
-    debugMode: false,
     globalVolume: 0.7,
     useDefault: true,
     activePresetId: "default",
@@ -299,8 +298,6 @@ function ensureSettings() {
 
   ensureAssetList(s);
   s.chatStates ??= {};
-  s.debugMode ??= false;
-  __abgmDebugMode = !!s.debugMode;
 
   // 프리셋/곡 스키마 보정 + 구버전 변환
   Object.values(s.presets).forEach((p) => {
@@ -410,8 +407,8 @@ function updateNowPlayingUI() {
     // preset명 / 모드
     const preset = settings?.presets?.[settings?.activePresetId] || Object.values(settings?.presets || {})[0] || {};
     const presetName = preset?.name || "Preset";
-    const metaBase = `${modeLabel} · ${presetName}`;
-    const meta = metaBase + (__abgmDebugMode && __abgmDebugLine ? ` · ${__abgmDebugLine}` : "");
+    const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
+    const meta = `${modeLabel} · ${presetName}` + (__abgmDebugLine ? ` · ${__abgmDebugLine}` : ""); // +부터 키워드 모드 디버깅
 
     // drawer
     _abgmSetText("autobgm_now_title", fk || "(none)");
@@ -1077,21 +1074,8 @@ function initModal(overlay) {
   const gv = root.querySelector("#abgm_globalVol");
   const gvText = root.querySelector("#abgm_globalVolText");
   const useDef = root.querySelector("#abgm_useDefault");
-  const dbg = root.querySelector("#abgm_debugMode");
 
   if (kw) kw.checked = !!settings.keywordMode;
-
-  if (dbg) dbg.checked = !!settings.debugMode;
-__abgmDebugMode = !!settings.debugMode;
-
-dbg?.addEventListener("change", (e) => {
-  settings.debugMode = !!e.target.checked;
-  __abgmDebugMode = !!settings.debugMode;
-  // 디버그 끄면 라인도 지워라
-  if (!__abgmDebugMode) __abgmDebugLine = "";
-  saveSettingsDebounced();
-  updateNowPlayingUI();
-});
 
   if (pm) {
     pm.value = settings.playMode ?? "manual";
@@ -1664,14 +1648,9 @@ function init() {
   const sort = getBgmSort(settings);
   const keys = getSortedKeys(preset, sort);
   const lastAsst = getLastAssistantText(ctx);
-    const as = String(lastAsst ?? "");
-
-    // 디버그 모드
-    if (__abgmDebugMode) {
-      __abgmDebugLine = `asstLen:${as.length} ${as.slice(0, 18).replace(/\s+/g, " ")}`;
-      try { updateNowPlayingUI(); } catch {}
-    }
-
+  const as = String(lastAsst ?? ""); // 얘랑 밑에 두 줄 키워드 모드 디버깅
+__abgmDebugLine = `asstLen:${as.length} ${as.slice(0, 18).replace(/\s+/g, " ")}`;
+  try { updateNowPlayingUI(); } catch {}
   const useDefault = !!settings.useDefault;
   const defKey = String(preset.defaultBgmKey ?? "");
 
@@ -1684,13 +1663,8 @@ function init() {
   // ====== Keyword Mode ON ======
   if (settings.keywordMode) {
     const hit = pickByKeyword(preset, lastAsst, st.currentKey || _engineCurrentFileKey || "");
-    
-    // 디버그 모드
-    if (__abgmDebugMode) {
-      __abgmDebugLine += ` hit:${hit?.fileKey ? String(hit.fileKey) : "none"}`;
-      try { updateNowPlayingUI(); } catch {}
-    }
-    
+    __abgmDebugLine += ` hit:${hit?.fileKey ? String(hit.fileKey) : "none"}`; // 얘랑 밑에 한 줄 키워드 모드 디버깅
+    try { updateNowPlayingUI(); } catch {}
     const desired = hit?.fileKey
       ? String(hit.fileKey)
       : (useDefault && defKey ? defKey : "");
