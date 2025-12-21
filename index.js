@@ -1696,26 +1696,25 @@ if (__abgmDebugMode) {
   // 최종 결정 곡(= 지금 틀 곡)
   const finalKey = desired || "";
 
-  // 걸린 키워드 목록(중복 제거)
-  let kwList = [];
+// 걸린 키워드 목록(모든 BGM 전체에서 스캔, 중복 제거)
+let kwList = [];
+const seen = new Set();
 
-  if (hit && hitKey) {
-    const kws = parseKeywords(hit.keywords);
-    const seen = new Set();
+for (const b of (preset.bgms ?? [])) {
+  const kws = parseKeywords(b.keywords);
+  for (const kw of kws) {
+    const k = String(kw ?? "").trim();
+    if (!k) continue;
 
-    for (const kw of kws) {
-      const k = String(kw ?? "").trim();
-      if (!k) continue;
-      const kLower = k.toLowerCase();
-
-      if (tLower.includes(kLower) && !seen.has(kLower)) {
-        seen.add(kLower);
-        kwList.push(k);
-      }
+    const kLower = k.toLowerCase();
+    if (tLower.includes(kLower) && !seen.has(kLower)) {
+      seen.add(kLower);
+      kwList.push(k);
     }
   }
+}
 
-  const kwText = kwList.length ? kwList.join(", ") : "none";
+const kwText = kwList.length ? kwList.join(", ") : "none";
 
   __abgmDebugLine = `asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
   try { updateNowPlayingUI(); } catch {}
