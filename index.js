@@ -1413,18 +1413,10 @@ function initModal(overlay) {
   };
 
   const showBindOverlay = async () => {
-  if (!bindOverlay) return;
-
-  // 모바일에서 fixed가 컨테이너 기준으로 먹는 거 방지: body로 붙임
-  try {
-    if (bindOverlay.parentElement !== document.body) {
-      document.body.appendChild(bindOverlay);
-    }
-  } catch {}
-
-  bindOverlay.style.display = "flex";
-  await renderBindOverlay();
-};
+    if (!bindOverlay) return;
+    bindOverlay.style.display = "flex";
+    await renderBindOverlay();
+  };
 
   bindOpen?.addEventListener("click", showBindOverlay);
   bindClose?.addEventListener("click", hideBindOverlay);
