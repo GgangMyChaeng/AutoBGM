@@ -51,7 +51,7 @@ function fitModalToViewport(overlay) {
 
   const setI = (k, v) => modal.style.setProperty(k, v, "important");
 
-  // ✅ 좁은 폭에서도 무조건 화면 안
+  // 좁은 폭에서도 무조건 화면 안
   setI("box-sizing", "border-box");
   setI("display", "block");
   setI("position", "relative");
@@ -60,7 +60,7 @@ function fitModalToViewport(overlay) {
   setI("min-width", "0");
   setI("margin", "12px");
 
-  // ✅ 높이 강제 (CSS !important도 뚫음)
+  // 높이 강제 (CSS !important도 뚫음)
   setI("min-height", "240px");
   setI("height", `${maxH}px`);
   setI("max-height", `${maxH}px`);
@@ -92,7 +92,7 @@ function fitModalToHost(overlay, host) {
   const vw = vv?.width || window.innerWidth;
   const vh = vv?.height || window.innerHeight;
 
-  // ✅ PC만 여백/최대폭 제한
+  // PC만 여백/최대폭 제한
   const isPc = vw >= 900;
   const pad = isPc ? 18 : 12;          // PC는 살짝 더 여유
   const maxWDesktop = 860;              // <-- 여기 숫자 줄이면 더 콤팩트
@@ -150,7 +150,7 @@ function abgmConfirm(containerOrDoc, message, {
 } = {}) {
   const doc = containerOrDoc?.ownerDocument || document;
 
-  // ✅ overlay(=root) 같은 엘리먼트가 들어오면 거기에 붙임
+  // overlay(=root) 같은 엘리먼트가 들어오면 거기에 붙임
   const container =
     containerOrDoc && containerOrDoc.nodeType === 1 ? containerOrDoc : doc.body;
 
@@ -158,7 +158,7 @@ function abgmConfirm(containerOrDoc, message, {
     const wrap = doc.createElement("div");
     wrap.className = "abgm-confirm-wrap";
 
-    // ✅ overlay 안에 붙일 때는 absolute 센터링 모드
+    // overlay 안에 붙일 때는 absolute 센터링 모드
     if (container !== doc.body) wrap.classList.add("abgm-confirm-in-modal");
 
     wrap.innerHTML = `
@@ -465,22 +465,40 @@ function getChatKeyFromContext(ctx) {
   return `${chatId}::${char}`;
 }
 
+// Ai 컨텍스트 제발 돼라 ㅅㅂ
 function getLastAssistantText(ctx) {
-  const arr = ctx?.chat ?? ctx?.messages ?? [];
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const m = arr[i];
-    // ST 메시지 구조 버전차 대응
-    const isUser = m?.is_user ?? (m?.role === "user");
-    if (isUser) continue;
-    const txt = m?.mes ?? m?.content ?? "";
-    return String(txt || "");
-  }
+  try {
+    // 1) ctx에서 채팅 배열 꺼내기
+    let chat = (ctx && (ctx.chat || ctx.messages)) || null;
+
+    // 2) ctx가 없으면 전역 fallback (모바일에서 getContext 죽는 케이스 대응)
+    if (!Array.isArray(chat) || chat.length === 0) {
+      if (Array.isArray(window.chat)) chat = window.chat;
+      else if (window.SillyTavern && Array.isArray(window.SillyTavern.chat)) chat = window.SillyTavern.chat;
+      else chat = [];
+    }
+
+    // 3) 뒤에서부터 "assistant" 마지막 메시지 찾기
+    for (let i = chat.length - 1; i >= 0; i--) {
+      const m = chat[i] || {};
+      // user 메시지는 스킵
+      if (m.is_user === true) continue;
+      const role = (m.role || m.sender || "").toLowerCase();
+      if (role === "user") continue;
+
+      // ST는 content, mes, message 같은 키를 씀(버전/스킨차)
+      const text = (m.content ?? m.mes ?? m.message ?? "");
+      if (typeof text === "string" && text.trim()) return text;
+    }
+  } catch (e) {}
+
   return "";
 }
 
+// 키워드 구분 (쉼표, 띄어쓰기)
 function parseKeywords(s) {
   return String(s ?? "")
-    .split(",")
+    .split(/[,\n]+/)
     .map((x) => x.trim())
     .filter(Boolean);
 }
@@ -573,7 +591,7 @@ async function ensurePlayFile(fileKey, vol01, loop) {
 async function ensureJSZipLoaded() {
   if (window.JSZip) return window.JSZip;
 
-  // ✅ 너가 vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드됨
+  // vendor/jszip.min.js를 확장 폴더에 넣으면 여기서 로드됨
   const s = document.createElement("script");
   s.src = new URL("vendor/jszip.min.js", import.meta.url).toString();
   document.head.appendChild(s);
@@ -658,7 +676,7 @@ async function openModal() {
     if (e.target === overlay) closeModal();
   });
 
-   // ✅ 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
+   // 모바일 WebView 강제 스타일 (CSS 씹는 경우 방지) — important 버전
 const host = getModalHost();
 
 // host가 static이면 absolute overlay가 제대로 안 잡힘
@@ -678,18 +696,18 @@ setO("padding", "0"); // modal이 margin/pad 갖고 있으니 overlay는 0
 
 host.appendChild(overlay);
 
-// ✅ 컨테이너 기준으로 사이징
+// 컨테이너 기준으로 사이징
 fitModalToHost(overlay, host);
 requestAnimationFrame(() => fitModalToHost(overlay, host));
 setTimeout(() => fitModalToHost(overlay, host), 120);
 
-// ✅ 키보드/주소창 변화 대응 (visualViewport)
+// 키보드/주소창 변화 대응 (visualViewport)
 _abgmViewportHandler = () => {
   // 키보드 올라왔다 내려올 때 width/height가 바뀜
   fitModalToHost(overlay, host);
 };
 
-// ✅ 키보드 내려갈 때 resize 이벤트가 안 오기도 해서, 포커스 빠질 때 강제 재계산
+// 키보드 내려갈 때 resize 이벤트가 안 오기도 해서, 포커스 빠질 때 강제 재계산
 const kickFit = () => {
   _abgmViewportHandler?.();
   setTimeout(() => _abgmViewportHandler?.(), 60);
@@ -706,7 +724,7 @@ window.addEventListener("resize", _abgmViewportHandler);
 // visualViewport가 있으면 더 정확히
 if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", _abgmViewportHandler);
-  window.visualViewport.addEventListener("scroll", _abgmViewportHandler); // ✅ 중요: 키보드 올라오면 scroll도 같이 변함
+  window.visualViewport.addEventListener("scroll", _abgmViewportHandler); // 중요: 키보드 올라오면 scroll도 같이 변함
 }
 
   document.body.classList.add("autobgm-modal-open");
@@ -781,7 +799,7 @@ function renderDefaultSelect(root, settings) {
   none.textContent = "(none)";
   sel.appendChild(none);
 
-  // ✅ 현재 default가 룰 목록에 없으면(=missing) 옵션을 하나 만들어서 고정 유지
+  // 현재 default가 룰 목록에 없으면(=missing) 옵션을 하나 만들어서 고정 유지
   if (cur && !keys.includes(cur)) {
     const miss = document.createElement("option");
     miss.value = cur;
@@ -797,7 +815,7 @@ function renderDefaultSelect(root, settings) {
     sel.appendChild(opt);
   }
 
-  // ✅ value로 고정 (selected 속성보다 이게 안전)
+  // value로 고정 (selected 속성보다 이게 안전)
   sel.value = cur;
 }
 
@@ -907,11 +925,11 @@ function rerenderAll(root, settings) {
   renderDefaultSelect(root, settings);
   renderBgmTable(root, settings);
 
-  // ✅ 이건 “함수 안”에 있어야 함
+  // 이건 “함수 안”에 있어야 함
   if (typeof root?.__abgmUpdateSelectionUI === "function") {
     root.__abgmUpdateSelectionUI();
   }
-  // ✅ KeywordMode 상태에 따라 Play 버튼 잠금/해제
+  // KeywordMode 상태에 따라 Play 버튼 잠금/해제
   setPlayButtonsLocked(root, !!settings.keywordMode);
 }
 
@@ -1035,7 +1053,7 @@ function initModal(overlay) {
     kw.addEventListener("change", (e) => {
       settings.keywordMode = !!e.target.checked;
       if (pm) pm.disabled = !!settings.keywordMode;
-      // ✅ KeywordMode 상태에 따라 Play 버튼 잠금/해제
+      // KeywordMode 상태에 따라 Play 버튼 잠금/해제
       setPlayButtonsLocked(root, !!settings.keywordMode);
       saveSettingsDebounced();
     });
@@ -1420,7 +1438,7 @@ function initModal(overlay) {
 
     // test / runtime play
     if (e.target.closest(".abgm_test")) {
-      if (settings.keywordMode) return; // ✅ 키워드 모드에서는 개별 재생 금지
+      if (settings.keywordMode) return; // 키워드 모드에서는 개별 재생 금지
 
       settings.playMode = "manual";
       if (pm) { pm.value = "manual"; pm.disabled = false; }
@@ -1500,10 +1518,10 @@ async function mount() {
   const host = document.querySelector("#extensions_settings");
   if (!host) return;
 
-  // ✅ 이미 붙었으면 끝
+  // 이미 붙었으면 끝
   if (document.getElementById("autobgm-root")) return;
 
-  // ✅ mount 레이스 방지 (핵심)
+  // mount 레이스 방지 (핵심)
   if (window.__AUTOBGM_MOUNTING__) return;
   window.__AUTOBGM_MOUNTING__ = true;
 
@@ -1549,7 +1567,7 @@ async function mount() {
 }
 
 function init() {
-  // ✅ 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
+  // 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
   if (window.__AUTOBGM_BOOTED__) return;
   window.__AUTOBGM_BOOTED__ = true;
 
@@ -1668,7 +1686,7 @@ function init() {
 // loop_list / random 은 ended 이벤트에서 다음곡 넘김(여기선 “시작 보장” + 재생중 볼륨 갱신)
 if (mode === "loop_list" || mode === "random") {
 
-  // ✅ 이미 재생 중이면: 볼륨만 갱신(글로벌/개별 모두 반영)
+  // 이미 재생 중이면: 볼륨만 갱신(글로벌/개별 모두 반영)
   if (_engineCurrentFileKey) {
     const fk = _engineCurrentFileKey;
     _bgmAudio.loop = false;
@@ -1677,7 +1695,7 @@ if (mode === "loop_list" || mode === "random") {
     return;
   }
 
-  // ✅ 아직 아무것도 안 틀었으면: 모드에 맞게 시작
+  // 아직 아무것도 안 틀었으면: 모드에 맞게 시작
   if (mode === "loop_list") {
     const idx = Math.max(0, Math.min(st.listIndex ?? 0, keys.length - 1));
     const fk = keys[idx] || "";
