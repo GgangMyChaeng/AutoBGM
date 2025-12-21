@@ -6,6 +6,7 @@
 */
 let extension_settings;
 let saveSettingsDebounced;
+let __abgmDebugLine = ""; // 키워드 모드 디버깅
 
 async function __abgmResolveDeps() {
   const base = import.meta.url;
@@ -405,7 +406,7 @@ function updateNowPlayingUI() {
     const preset = settings?.presets?.[settings?.activePresetId] || Object.values(settings?.presets || {})[0] || {};
     const presetName = preset?.name || "Preset";
     const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
-    const meta = `${modeLabel} · ${presetName}`;
+    const meta = `${modeLabel} · ${presetName}` + (__abgmDebugLine ? ` · ${__abgmDebugLine}` : ""); // +부터 키워드 모드 디버깅
 
     // drawer
     _abgmSetText("autobgm_now_title", fk || "(none)");
@@ -1577,7 +1578,7 @@ function init() {
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
-/** ========= Audio ========= */
+/** ========= 엔진틱 ========= */
   function engineTick() {
   const settings = ensureSettings();
   ensureEngineFields(settings);
@@ -1610,7 +1611,9 @@ function init() {
   const sort = getBgmSort(settings);
   const keys = getSortedKeys(preset, sort);
   const lastAsst = getLastAssistantText(ctx);
-
+  const as = String(lastAsst ?? ""); // 얘랑 밑에 두 줄 키워드 모드 디버깅
+__abgmDebugLine = `asstLen:${as.length} ${as.slice(0, 18).replace(/\s+/g, " ")}`;
+  try { updateNowPlayingUI(); } catch {}
   const useDefault = !!settings.useDefault;
   const defKey = String(preset.defaultBgmKey ?? "");
 
@@ -1623,6 +1626,8 @@ function init() {
   // ====== Keyword Mode ON ======
   if (settings.keywordMode) {
     const hit = pickByKeyword(preset, lastAsst, st.currentKey || _engineCurrentFileKey || "");
+    __abgmDebugLine += ` hit:${hit?.fileKey ? String(hit.fileKey) : "none"}`; // 얘랑 밑에 한 줄 키워드 모드 디버깅
+    try { updateNowPlayingUI(); } catch {}
     const desired = hit?.fileKey
       ? String(hit.fileKey)
       : (useDefault && defKey ? defKey : "");
