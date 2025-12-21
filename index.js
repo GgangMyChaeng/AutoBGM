@@ -379,41 +379,6 @@ async function playAsset(fileKey, volume01) {
 
   /** ========= Runtime Audio Engine ========= */
 const _bgmAudio = new Audio();
-// 모바일 autoplay 정책 대응
-let __abgmAudioUnlocked = false;
-let __abgmAutoplayBlocked = false;
-let __abgmLastPlayError = "";
-
-async function unlockAudioOnce() {
-  if (__abgmAudioUnlocked) return true;
-  try {
-    const prevVol = _bgmAudio.volume;
-    const prevSrc = _bgmAudio.src;
-    const prevLoop = _bgmAudio.loop;
-
-    _bgmAudio.loop = false;
-    _bgmAudio.volume = 0;
-
-    // src가 없으면 play 의미 없음
-    if (prevSrc) {
-      await _bgmAudio.play();
-      _bgmAudio.pause();
-      _bgmAudio.currentTime = 0;
-      __abgmAudioUnlocked = true;
-      __abgmAutoplayBlocked = false;
-      __abgmLastPlayError = "";
-    }
-
-    _bgmAudio.loop = prevLoop;
-    _bgmAudio.volume = prevVol;
-    return __abgmAudioUnlocked;
-  } catch (e) {
-    __abgmAutoplayBlocked = true;
-    __abgmLastPlayError = String(e?.name || e?.message || e || "");
-    return false;
-  }
-}
-
 let _bgmUrl = "";
 let _engineTimer = null;
 let _engineLastChatKey = "";
@@ -498,36 +463,6 @@ function getChatKeyFromContext(ctx) {
   const chatId = ctx?.chatId ?? ctx?.chat_id ?? ctx?.chat?.id ?? "global";
   const char = ctx?.characterId ?? ctx?.character_id ?? ctx?.character?.id ?? ctx?.name2 ?? "";
   return `${chatId}::${char}`;
-}
-
-// getContext 대체용
-function getCtxSafe() {
-  try {
-    if (typeof getContext === "function") {
-      const c = getContext();
-      if (c) return c;
-    }
-  } catch {}
-
-  const chat =
-    window.chat ??
-    window?.SillyTavern?.chat ??
-    window?.SillyTavern?.context?.chat ??
-    [];
-
-  const chatId =
-    window?.this_chid ??
-    window?.SillyTavern?.this_chid ??
-    window?.SillyTavern?.context?.chatId ??
-    "global";
-
-  const characterId =
-    window?.this_chid ??
-    window?.SillyTavern?.this_chid ??
-    window?.SillyTavern?.context?.characterId ??
-    "";
-
-  return { chat, chatId, characterId };
 }
 
 function getLastAssistantText(ctx) {
@@ -1490,7 +1425,7 @@ function initModal(overlay) {
       settings.playMode = "manual";
       if (pm) { pm.value = "manual"; pm.disabled = false; }
 
-      const ctx = const ctx = getCtxSafe();
+      const ctx = (typeof getContext === "function") ? getContext() : null;
       const chatKey = getChatKeyFromContext(ctx);
       settings.chatStates ??= {};
       settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
@@ -1599,12 +1534,11 @@ async function mount() {
     enable.addEventListener("change", (e) => {
       settings.enabled = !!e.target.checked;
       saveSettingsDebounced();
-      unlockAudioOnce();
       try { engineTick(); } catch {}
     });
 
     openBtn.addEventListener("click", () => openModal());
-    unlockAudioOnce();
+
     bindNowPlayingEventsOnce();
     updateNowPlayingUI();
 
@@ -1636,7 +1570,7 @@ function init() {
   }
 
   // ST 컨텍스트 (없어도 global로 굴러가게)
-  const ctx = const ctx = getCtxSafe();
+  const ctx = (typeof getContext === "function") ? getContext() : null;
   const chatKey = getChatKeyFromContext(ctx);
 
   settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
@@ -1773,7 +1707,7 @@ _bgmAudio.addEventListener("ended", () => {
   if (!settings.enabled) return;
   if (settings.keywordMode) return; // keyword는 loop=true라 보통 안 옴
 
-  const ctx = const ctx = getCtxSafe();
+  const ctx = (typeof getContext === "function") ? getContext() : null;
   const chatKey = getChatKeyFromContext(ctx);
   settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
   const st = settings.chatStates[chatKey];
