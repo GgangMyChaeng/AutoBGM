@@ -1755,7 +1755,7 @@ for (const b of (preset.bgms ?? [])) {
 const kwText = kwList.length ? kwList.join(", ") : "none";
 
   const chid = getCurrentChid(ctx);
-  __abgmDebugLine = `chid || "?"} asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
+  __abgmDebugLine = `chid:${chid || "?"} (w:${String(window.this_chid ?? "")}) ` + __abgmDebugLine;
   try { updateNowPlayingUI(); } catch {}
 }
 
