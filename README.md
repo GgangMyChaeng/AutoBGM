@@ -200,5 +200,5 @@ Third-party libraries are licensed separately (see LICENSE’S NOTICE).
   * 마지막 AI 메시지에 인식된 키워드가 없고, Default BGM도 없을 시, 이전에 재생 중이었던 BGM이 유지(자동 무한 재생)되는가? (O)
   * 채팅에서 나왔을 시 BGM이 정상적으로 꺼지는가? (O)
   * 채팅에 다시 들어갔을 때 ai 마지막 메시지를 인식하여 자동으로 해당 곡이 재생되는가? (O)
-> 노트: 흠
+> 노트: 특정 프리셋을 캐릭터 카드(들)에 자동 연결 시켜주는 기능 / 상황에 따른 bgm 자동 off 로직 필요
 </NOTE>
