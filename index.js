@@ -471,7 +471,7 @@ function getChatKeyFromContext(ctx) {
   return `${chatId}::${char}`;
 }
 
-// Ai 컨텍스트 제발 돼라 ㅅㅂ
+// Ai 컨텍스트 제발 돼라 해결 굿
 function getLastAssistantText(ctx) {
   try {
     // 1) ctx에서 먼저 시도
@@ -676,6 +676,16 @@ function isFileKeyReferenced(settings, fileKey) {
     if (p.bgms?.some((b) => b.fileKey === fileKey)) return true;
   }
   return false;
+}
+
+/** ========= Chid 테스트 ========= */
+function getCurrentChid(ctx) {
+  return String(
+    window.this_chid ??
+    ctx?.characterId ??
+    ctx?.character_id ??
+    ""
+  );
 }
 
 /** ========= Modal open/close ========= */
@@ -1643,6 +1653,14 @@ function init() {
 
   // ST 컨텍스트 (없어도 global로 굴러가게)
   const ctx = (typeof getContext === "function") ? getContext() : null;
+
+    // Chid 테스트
+    if (__abgmDebugMode) {
+  const chid = getCurrentChid(ctx);
+  __abgmDebugLine = `chid:${chid}`;
+  try { updateNowPlayingUI(); } catch {}
+}
+
   const chatKey = getChatKeyFromContext(ctx);
 
   settings.chatStates[chatKey] ??= { currentKey: "", listIndex: 0 };
