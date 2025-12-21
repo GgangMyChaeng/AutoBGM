@@ -680,7 +680,17 @@ function isFileKeyReferenced(settings, fileKey) {
 
 /** ========= Chid 테스트 ========= */
 function getCurrentChid(ctx) {
-  return String(window.this_chid ?? ctx?.characterId ?? ctx?.character_id ?? "");
+  // ST는 환경/프레임에 따라 this_chid가 window가 아니라 parent/top에 있을 때가 있음
+  const chid =
+    window.this_chid ??
+    window.parent?.this_chid ??
+    window.top?.this_chid ??
+    ctx?.characterId ??
+    ctx?.character_id ??
+    ctx?.character?.id ??
+    "";
+
+  return String(chid ?? "");
 }
 
 /** ========= Modal open/close ========= */
@@ -1745,7 +1755,7 @@ for (const b of (preset.bgms ?? [])) {
 const kwText = kwList.length ? kwList.join(", ") : "none";
 
   const chid = getCurrentChid(ctx);
-  __abgmDebugLine = `chid:${chid} asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
+  __abgmDebugLine = `chid || "?"} asstLen:${as.length} kw:${kwText} hit:${finalKey || "none"}`;
   try { updateNowPlayingUI(); } catch {}
 }
 
