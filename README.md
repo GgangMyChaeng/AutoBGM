@@ -494,7 +494,7 @@
                 &nbsp;&nbsp;* 마지막 AI 메시지에 인식된 키워드가 없고, Default BGM도 없을 시, 이전에 재생 중이었던 BGM이 유지(자동 무한 재생)되는가? (O)<br>
                 &nbsp;&nbsp;* 채팅에서 나왔을 시 BGM이 정상적으로 꺼지는가? (O)<br>
                 &nbsp;&nbsp;* 채팅에 다시 들어갔을 때 ai 마지막 메시지를 인식하여 자동으로 해당 곡이 재생되는가? (O)</p>
-                <p><br>&gt; 노트: 이제부터는 테스트 &amp; UI만 손보면 될 듯</p>
+                <p><br>&gt; 노트: UI 개선 필요</p>
             </div>
         </div>
     </div><details>
