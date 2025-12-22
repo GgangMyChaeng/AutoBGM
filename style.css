@@ -673,3 +673,31 @@ body.autobgm-modal-open{ overflow:hidden; }
   /* debug 라벨이 가운데서 너무 커지면 아이콘 크기만 남기기 */
   .abgm-top-item.center i{ opacity:.9; }
 }
+
+/* ===== FIX: top 3 controls must stay on ONE line ===== */
+.abgm-top-row3{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  flex-wrap:nowrap !important;   /* 무조건 한 줄 */
+  width:100% !important;
+}
+
+/* 각 칸이 줄 안에서 찌그러질 수 있게 */
+.abgm-top-row3 .abgm-top-item{
+  display:flex !important;
+  align-items:center !important;
+  min-width:0 !important;
+}
+
+/* popup.html에 inline으로 박힌 min-width(160px) 때문에 모바일에서 터짐 → 강제로 무시 */
+.abgm-top-row3 .abgm-top-item.right{
+  min-width:0 !important;
+}
+
+/* Play Mode select도 모바일에서 과하게 커지면 줄바꿈 유발 → 축소 가능하게 */
+.abgm-top-row3 .abgm-top-item.right .abgm-select-slim{
+  min-width:0 !important;
+  width:auto !important;
+  max-width:140px;              /* 필요하면 120px로 더 줄이기 */
+}
