@@ -1738,17 +1738,34 @@ async function mount() {
     root.innerHTML = html;
     host.appendChild(root);
 
-    const enable = root.querySelector("#autobgm_enabled");
+    const helpBtn = root.querySelector("#autobgm_help_toggle");
+    const helpText = root.querySelector("#autobgm_help_text");
+    
+    const enabledBtn = root.querySelector("#autobgm_enabled_btn");
+    const enabledState = root.querySelector("#autobgm_enabled_state");
+    
     const openBtn = root.querySelector("#autobgm_open");
-    if (!enable || !openBtn) return;
-
-    enable.checked = !!settings.enabled;
-    enable.addEventListener("change", (e) => {
-      settings.enabled = !!e.target.checked;
+    if (!enabledBtn || !enabledState || !openBtn) return;
+    
+    const syncEnabledUI = () => {
+      enabledState.textContent = settings.enabled ? "On" : "Off";
+    };
+    
+    syncEnabledUI();
+    
+    enabledBtn.addEventListener("click", () => {
+      settings.enabled = !settings.enabled;
       saveSettingsDebounced();
+      syncEnabledUI();
       try { engineTick(); } catch {}
     });
-
+    
+    helpBtn?.addEventListener("click", () => {
+      if (!helpText) return;
+      const on = helpText.style.display !== "none";
+      helpText.style.display = on ? "none" : "block";
+    });
+    
     openBtn.addEventListener("click", () => openModal());
 
     bindNowPlayingEventsOnce();
