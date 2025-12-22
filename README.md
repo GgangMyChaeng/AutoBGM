@@ -508,4 +508,4 @@
                 <p><br>&gt; 노트: UI 개선 필요</p>
             </div>
         </div>
-    </div><details>
+    </div></details>
