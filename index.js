@@ -170,6 +170,13 @@ function getActivePreset(settings) {
   return settings.presets[settings.activePresetId];
 }
 
+// 엔트리 이름
+function basenameNoExt(fileKey = "") {
+  const s = String(fileKey || "");
+  const base = s.split("/").pop() || s;
+  return base.replace(/\.[^/.]+$/, ""); // 마지막 확장자 제거
+}
+
 /** ========= 삭제 확인 및 취소 ========= */
 function abgmConfirm(containerOrDoc, message, {
   title = "Confirm",
@@ -297,7 +304,7 @@ function ensureSettings() {
     presets: {
       default: {
         id: "default",
-        name: "Default",
+        name: basenameNoExt(fileKey), // 엔트리 이름
         defaultBgmKey: "",
         bgms: [],
       },
@@ -846,6 +853,13 @@ function renderPresetSelect(root, settings) {
   });
 
   nameInput.value = getActivePreset(settings).name || "";
+}
+
+// 엔트리 이름
+function ensureBgmNames(preset) {
+  for (const b of preset?.bgms ?? []) {
+    if (!b.name) b.name = basenameNoExt(b.fileKey);
+  }
 }
 
 function renderDefaultSelect(root, settings) {
@@ -1452,6 +1466,7 @@ function initModal(overlay) {
     if (!exists) {
       preset.bgms.push({
         id: uid(),
+        name: "", // 엔트리 이름
         fileKey,
         keywords: "",
         priority: 0,
