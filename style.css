@@ -705,3 +705,23 @@ body.autobgm-modal-open{ overflow:hidden; }
   width:auto !important;
   max-width:140px;              /* 필요하면 120px로 더 줄이기 */
 }
+
+/* Default 어쩌고들 */
+.abgm-top-row2{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:nowrap;
+  width:100%;
+  padding: 0 10px;   /* 좌우 벽에서 숨 */
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.abgm-top-row2 .abgm-top-item{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
