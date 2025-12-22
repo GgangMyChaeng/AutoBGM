@@ -7,18 +7,7 @@
 
     <div class="inline-drawer-content">
 
-      <!-- 1) 사용방법 버튼 -->
-      <div class="autobgm-menublock">
-        <div id="autobgm_help_toggle" class="menu_button autobgm-menu-btn" title="Help">
-          <i class="fa-solid fa-book"></i>
-        </div>
-
-        <div id="autobgm_help_text" class="autobgm-helptext" style="display:none;">
-          사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
-        </div>
-      </div>
-
-      <!-- 2) Now Playing -->
+      <!-- 1) Now Playing -->
       <div class="autobgm-nowplaying" style="margin-top:10px; padding:8px 10px; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(0,0,0,.18);">
         <small style="opacity:.75;">Now Playing</small>
         <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
@@ -28,11 +17,20 @@
         <small id="autobgm_now_meta" style="opacity:.65; display:block; margin-top:2px;">—</small>
       </div>
 
-      <!-- 3) Enabled 버튼 -->
+      <!-- 2) Enabled 버튼 -->
       <div class="autobgm-menublock" style="margin-top:10px;">
         <div id="autobgm_enabled_btn" class="menu_button autobgm-menu-btn" title="Enabled">
           <i id="autobgm_enabled_icon" class="fa-solid fa-power-off"></i>
           <span id="autobgm_enabled_state" class="autobgm-menu-state">Off</span>
+        </div>
+      </div>
+
+      <!-- 3) 사용방법 버튼 -->
+      <div class="autobgm-menublock">
+        <div id="autobgm_help_toggle" class="menu_button autobgm-menu-btn" title="Help">
+          <i class="fa-solid fa-book"></i>
+        </div><div id="autobgm_help_text" class="autobgm-helptext" style="display:none;">
+          사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
         </div>
       </div>
 
