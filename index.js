@@ -1103,14 +1103,6 @@ function initModal(overlay) {
   const gv = root.querySelector("#abgm_globalVol");
   const gvText = root.querySelector("#abgm_globalVolText");
   const useDef = root.querySelector("#abgm_useDefault");
-  const bgmHelpBtn = root.querySelector("#abgm_bgm_help_toggle");
-  const bgmHelpBox = root.querySelector("#abgm_bgm_help");
-  
-  bgmHelpBtn?.addEventListener("click", () => {
-  if (!bgmHelpBox) return;
-  const on = bgmHelpBox.style.display !== "none";
-  bgmHelpBox.style.display = on ? "none" : "block";
-});
 
   if (kw) kw.checked = !!settings.keywordMode;
   if (dbg) dbg.checked = !!settings.debugMode;
