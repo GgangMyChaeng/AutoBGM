@@ -45,8 +45,24 @@
       </select>
     </div>
   </div>
+  
+   <!-- 2줄: Default 어쩌고 -->
+<div class="abgm-top-row2">
 
-  <!-- 2줄: Global Volume -->
+  <!-- Use Default (좌측) -->
+  <label class="checkbox_label abgm-top-item left" style="margin:0;">
+    <input type="checkbox" id="abgm_useDefault">
+    <small>Use Default when no keyword</small>
+  </label>
+
+  <!-- Default select (우측) -->
+  <div class="abgm-top-item right" style="min-width:160px;">
+    <small style="opacity:.85;">Default</small>
+    <select id="abgm_default_select" class="abgm-select"></select>
+  </div>
+</div>
+
+  <!-- 3줄: Global Volume -->
   <div class="abgm-top-row1">
     <div class="abgm-volume-block">
       <small style="opacity:.85;">Global Volume</small>
@@ -124,17 +140,6 @@
             <input id="abgm_zip_file" type="file" accept=".zip,application/zip" style="display:none;">
           </div>
         </div>
-
-        <div class="abgm-row" style="gap:10px; flex-wrap:wrap;">
-          <label class="checkbox_label" style="margin:0;">
-            <input type="checkbox" id="abgm_useDefault">
-            <small>Use Default when no keyword</small>
-          </label>
-
-          <div class="abgm-inline" style="min-width:220px;">
-            <small style="opacity:.85;">Default</small>
-            <select id="abgm_default_select" class="abgm-select"></select>
-          </div>
 
           <div class="abgm-row" style="gap:10px; flex-wrap:wrap; margin-top:8px;">
             <div class="abgm-inline" style="min-width:240px;">
