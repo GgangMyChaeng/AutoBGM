@@ -572,3 +572,38 @@ body.autobgm-modal-open{ overflow:hidden; }
     justify-self: end !important;
   }
 }
+
+/* ===== AutoBGM extension menu buttons (window.html) ===== */
+.autobgm-menublock{
+  margin-top:6px;
+}
+
+.menu_button.autobgm-menu-btn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  box-sizing:border-box;
+}
+
+.menu_button.autobgm-menu-btn .autobgm-menu-label{
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.menu_button.autobgm-menu-btn .autobgm-menu-state{
+  opacity:.8;
+  white-space:nowrap;
+}
+
+/* help text (collapsible) */
+.autobgm-helptext{
+  margin-top:8px;
+  opacity:.85;
+  font-size:12px;
+  line-height:1.35;
+}
