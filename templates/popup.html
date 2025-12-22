@@ -85,19 +85,21 @@
           </div>
         </div>
 
-        <div class="abgm-row" style="gap:8px; margin-top:10px; flex-wrap:wrap;">
-          <div class="menu_button" id="abgm_bind_open" title="Bind this preset to character cards">
-            <i class="fa-solid fa-link"></i> Bind to Characters
-          </div>
-        </div>
+<div class="abgm-row abgm-preset-actions" style="gap:10px; margin-top:10px; flex-wrap:wrap; align-items:center;">
+  <div class="menu_button" id="abgm_bind_open" title="Bind this preset to character cards">
+    <i class="fa-solid fa-link"></i> Bind
+  </div>
 
-        <div class="abgm-row" style="gap:10px; flex-wrap:wrap;">
-          <div class="menu_button" id="abgm_import"><i class="fa-solid fa-file-import"></i> Import</div>
-          <div class="menu_button" id="abgm_export"><i class="fa-solid fa-file-export"></i> Export</div>
-          <input id="abgm_import_file" type="file" accept="application/json" style="display:none;">
-        </div>
+  <!-- 오른쪽으로 밀기 -->
+  <div class="abgm-row" style="gap:10px; margin-left:auto; flex-wrap:wrap; align-items:center;">
+    <div class="menu_button" id="abgm_import"><i class="fa-solid fa-file-import"></i> Import</div>
+    <div class="menu_button" id="abgm_export"><i class="fa-solid fa-file-export"></i> Export</div>
+  </div>
 
-        <hr class="abgm-hr"/>
+  <input id="abgm_import_file" type="file" accept="application/json" style="display:none;">
+</div>
+
+<hr class="abgm-hr"/>
 
         <div class="abgm-minihelp">
           프리셋은 “채팅별 세팅 묶음”이라고 보면 됨<br/>
