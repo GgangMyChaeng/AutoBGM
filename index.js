@@ -1698,6 +1698,16 @@ function initModal(overlay) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
+  // 프리셋 헬프
+  const presetHelpBtn = root.querySelector("#abgm_preset_help_toggle");
+  const presetHelpBox = root.querySelector("#abgm_preset_help");
+  presetHelpBtn?.addEventListener("click", () => {
+  if (!presetHelpBox) return;
+  const on = presetHelpBox.style.display !== "none";
+  presetHelpBox.style.display = on ? "none" : "block";
+});
+
+
   // 키보드/주소창 변화 대응
   overlay.addEventListener("focusin", () => {
     requestAnimationFrame(() => fitModalToHost(overlay, getModalHost()));
