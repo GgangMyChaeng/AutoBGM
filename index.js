@@ -958,65 +958,62 @@ function renderBgmTable(root, settings) {
     const vol100 = Math.round((b.volume ?? 1) * 100);
     const locked = !!b.volLocked;
 
-    tr2.innerHTML = `
-      <td colspan="4">
-        <div class="abgm-detail-grid">
-          <!-- Keywords (left, taller) -->
-          <!-- LEFT COLUMN -->
-<div class="abgm-leftcol">
-  <!-- Keywords -->
-  <div class="abgm-keywords">
-    <small>Keywords</small>
-    <textarea
-      class="abgm_keywords"
-      placeholder="rain, storm..."
-    >${escapeHtml(b.keywords ?? "")}</textarea>
-  </div>
+// index.js (renderBgmTable 안 tr2.innerHTML 부분에서 abgm-detail-grid 통째로 교체)
 
-  <!-- Source (file / url) -->
-  <div class="abgm-source">
-    <small>Source</small>
-    <input
-      type="text"
-      class="abgm_source"
-      value="${escapeHtml(b.fileKey ?? "")}"
-      placeholder="neutral_01.mp3 or https://..."
-    >
-  </div>
-</div>
+tr2.innerHTML = `
+  <td colspan="4">
+    <div class="abgm-detail-grid abgm-detail-v3">
 
-          <small style="margin-top:6px;">Source</small>
-          <input type="text" class="abgm_source" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3 or https://...">
-          </div>
+      <!-- Row 1: Keywords / Priority -->
+      <div class="abgm-kwh">
+        <small>Keywords</small>
+      </div>
 
-          <!-- Right stack: Priority (top) / Volume (bottom) -->
-          <div class="abgm-side">
-            <div class="abgm-field-tight">
-              <small>Priority</small>
-              <input type="number" class="abgm_priority abgm_narrow" value="${Number(b.priority ?? 0)}" step="1">
-            </div>
+      <div class="abgm-prih">
+        <small>Priority</small>
+        <input type="number" class="abgm_priority abgm_narrow" value="${Number(b.priority ?? 0)}" step="1">
+      </div>
 
-            <div class="abgm-field-tight">
-              <small>Volume</small>
-              <div class="abgm-volcell">
-                <input type="range" class="abgm_vol" min="0" max="100" value="${vol100}" ${locked ? "disabled" : ""}>
-                <input type="number" class="abgm_volnum" min="0" max="100" step="1" value="${vol100}">
-                <div class="menu_button abgm-iconbtn abgm_vol_lock" title="Lock slider">
-                  <i class="fa-solid ${locked ? "fa-lock" : "fa-lock-open"}"></i>
-                </div>
-              </div>
-            </div>
-          </div>
+      <!-- Row 2: Keywords input / Volume -->
+      <div class="abgm-kwbox">
+        <textarea
+          class="abgm_keywords"
+          placeholder="rain, storm..."
+        >${escapeHtml(b.keywords ?? "")}</textarea>
+      </div>
 
-          <!-- Delete (right) -->
-          <div class="abgm-detail-actions">
-            <div class="menu_button abgm_del" title="Delete">
-            <i class="fa-solid fa-trash"></i> <span class="abgm-del-label">Delete</span>
-            </div>
+      <div class="abgm-volbox">
+        <small>Volume</small>
+        <div class="abgm-volcell">
+          <input type="range" class="abgm_vol" min="0" max="100" value="${vol100}" ${locked ? "disabled" : ""}>
+          <input type="number" class="abgm_volnum" min="0" max="100" step="1" value="${vol100}">
+          <div class="menu_button abgm-iconbtn abgm_vol_lock" title="Lock slider">
+            <i class="fa-solid ${locked ? "fa-lock" : "fa-lock-open"}"></i>
           </div>
         </div>
-      </td>
-    `;
+      </div>
+
+      <!-- Row 3: Source (ONLY under Keywords column) -->
+      <div class="abgm-srcbox">
+        <small>Source</small>
+        <input
+          type="text"
+          class="abgm_source"
+          value="${escapeHtml(b.fileKey ?? "")}"
+          placeholder="neutral_01.mp3 or https://..."
+        >
+      </div>
+
+      <!-- Delete (right, spans rows) -->
+      <div class="abgm-detail-actions">
+        <div class="menu_button abgm_del" title="Delete">
+          <i class="fa-solid fa-trash"></i> <span class="abgm-del-label">Delete</span>
+        </div>
+      </div>
+
+    </div>
+  </td>
+`;
 
   // Entry name change
 const nameInput = tr.querySelector(".abgm_name");
