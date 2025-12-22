@@ -145,7 +145,7 @@
         <h3 id="tutorial">튜토리얼</h3>
         <h4 id="for-start">For start</h4>
         <ol start="0">
-            <li>해당 확장을 SillyTavern의 확장 프로그램 설치를 눌러 설치 (이 글 초반에 제공한 <a href="https://github.com/GgangMyChaeng/AutoBGM" target="_blank" rel="noopener noreferrer">링크</a>&nbsp;있었을 거임 그거 설치)</li>
+            <li>해당 확장을 SillyTavern의 확장 프로그램 설치를 눌러 설치</li>
             <li>확장 메뉴 중 AutoBGM을 눌러 메뉴를 펼친 뒤 Enabled를 눌러 해당 확장을 활성화</li>
             <li>Enabled 버튼 아래 톱니바퀴(Settings) 버튼 클릭을 통해 해당 확장의 모달 화면 활성화</li>
             <li>프리셋 제작 or 프리셋 불러오기(Import)</li>
