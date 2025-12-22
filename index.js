@@ -1010,7 +1010,6 @@ if (nameInput) {
   });
 }
 
-
 function setPlayButtonsLocked(root, locked) {
   root?.querySelectorAll?.(".abgm_test")?.forEach((btn) => {
     btn.classList.toggle("abgm-test-locked", !!locked);
@@ -1557,16 +1556,6 @@ function initModal(overlay) {
     const preset = getActivePreset(settings);
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
-
-    if (e.target.classList.contains("abgm_name")) {
-      const oldKey = bgm.fileKey;
-      const newKey = String(e.target.value || "").trim();
-      bgm.fileKey = newKey;
-      if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
-      saveSettingsDebounced();
-      renderDefaultSelect(root, settings);
-      return;
-    }
 
     if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
     if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
