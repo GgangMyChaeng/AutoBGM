@@ -1155,6 +1155,15 @@ function initModal(overlay) {
     saveSettingsDebounced();
   });
 
+  const bgmHelpBtn = root.querySelector("#abgm_bgm_help_toggle");
+  const bgmHelpBox = root.querySelector("#abgm_bgm_help");
+  
+  bgmHelpBtn?.addEventListener("click", () => {
+  if (!bgmHelpBox) return;
+  const on = bgmHelpBox.style.display !== "none";
+  bgmHelpBox.style.display = on ? "none" : "block";
+});
+
   // ===== Sort =====
   const sortSel = root.querySelector("#abgm_sort");
   if (sortSel) {
