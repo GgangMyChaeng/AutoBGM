@@ -965,9 +965,7 @@ function renderBgmTable(root, settings) {
           <div class="abgm-keywords">
             <small>Keywords</small>
             <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
-          <small style="margin-top:6px;">Source</small>
-      <input type="text" class="abgm_source" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3 or https://...">    
-      </div>
+          </div>
 
           <!-- Right stack: Priority (top) / Volume (bottom) -->
           <div class="abgm-side">
@@ -1569,21 +1567,8 @@ function initModal(overlay) {
       }
     }
 
-    if (e.target.classList.contains("abgm_source")) {
-  const oldKey = bgm.fileKey;
-  const newKey = String(e.target.value || "").trim();
-
-  bgm.fileKey = newKey;
-
-  // default bgm 따라가게
-  if (preset.defaultBgmKey === oldKey) {
-    preset.defaultBgmKey = newKey;
-  }
-
-  saveSettingsDebounced();
-  renderDefaultSelect(root, settings);
-  return;
-  }
+    saveSettingsDebounced();
+  });
 
   // ===== tbody click (toggle/lock/del/test) =====
   root.querySelector("#abgm_bgm_tbody")?.addEventListener("click", async (e) => {
