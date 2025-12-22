@@ -635,6 +635,13 @@ body.autobgm-modal-open{ overflow:hidden; }
   margin-left: calc(50% + 14px);
 }
 
+/* 파일명 */
+.abgm-leftcol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* ===== AutoBGM modal top controls mobile layout ===== */
 .abgm-top-controls { width: 100%; }
 
@@ -724,11 +731,4 @@ body.autobgm-modal-open{ overflow:hidden; }
   min-width:0;
   padding: 6px 8px;
   border-radius: 10px;
-}
-
-/* 파일명 */
-.abgm-leftcol {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
