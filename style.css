@@ -607,3 +607,10 @@ body.autobgm-modal-open{ overflow:hidden; }
   font-size:12px;
   line-height:1.35;
 }
+
+.menu_button.autobgm-menu-btn{
+  justify-content:center;
+}
+.menu_button.autobgm-menu-btn .autobgm-menu-state{
+  margin-left:8px;
+}
