@@ -652,7 +652,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 .abgm-top-item.right{ justify-content:flex-end; }
 
 .abgm-top-item.right select{
-  max-width: 140%;
+  max-width: 100%;
 }
 
 /* Global volume line */
