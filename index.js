@@ -838,15 +838,16 @@ function getSortedBgms(preset, sort) {
   if (mode === "added_desc") return arr.reverse();
 
   if (mode === "name_asc" || mode === "name_desc") {
-    arr.sort((a, b) =>
-      String(a?.fileKey ?? "").localeCompare(String(b?.fileKey ?? ""), undefined, {
-        numeric: true,
-        sensitivity: "base",
-      })
-    );
-    if (mode === "name_desc") arr.reverse();
-    return arr;
-  }
+  arr.sort((a, b) =>
+    getEntryName(a).localeCompare(
+      getEntryName(b),
+      undefined,
+      { numeric: true, sensitivity: "base" }
+    )
+  );
+  if (mode === "name_desc") arr.reverse();
+  return arr;
+}
 
   return arr; // added_asc
 }
