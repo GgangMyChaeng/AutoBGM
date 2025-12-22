@@ -141,56 +141,53 @@
           </div>
         </div>
 
-          <div class="abgm-row" style="gap:10px; flex-wrap:wrap; margin-top:8px;">
-            <div class="abgm-inline" style="min-width:240px;">
-              <small style="opacity:.85;">Sort</small>
-              <select id="abgm_sort" class="abgm-select abgm-select-slim">
-                <option value="added_asc">Added (old → new)</option>
-                <option value="added_desc">Added (new → old)</option>
-                <option value="name_asc">Name (A → Z)</option>
-                <option value="name_desc">Name (Z → A)</option>
-              </select>
-            </div>
+<!-- ===== BGM List controls (2 rows + help) ===== -->
 
-            <div class="menu_button" id="abgm_delete_selected" title="Delete selected rows">
-              <i class="fa-solid fa-trash"></i> Delete Selected
-            </div>
-            <small id="abgm_selected_count" style="opacity:.75;">0 selected</small>
-          </div>
+<!-- Row 1: selected count (left) / sort (right) -->
+<div class="abgm-row abgm-bgmbar1" style="margin-top:8px;">
+  <small id="abgm_selected_count" style="opacity:.75;">0 selected</small>
 
-          <div class="menu_button" id="abgm_expand_all" title="Expand all rows">
-            <i class="fa-solid fa-angles-down"></i>
-          </div>
-          <div class="menu_button" id="abgm_collapse_all" title="Collapse all rows">
-            <i class="fa-solid fa-angles-up"></i>
-          </div>
-          <div class="menu_button" id="abgm_lock_all_vol" title="Lock all volume sliders">
-            <i class="fa-solid fa-lock"></i>
-          </div>
+  <div class="abgm-inline" style="margin-left:auto; min-width:240px;">
+    <small style="opacity:.85;">Sort</small>
+    <select id="abgm_sort" class="abgm-select abgm-select-slim">
+      <option value="added_asc">Added (old → new)</option>
+      <option value="added_desc">Added (new → old)</option>
+      <option value="name_asc">Name (A → Z)</option>
+      <option value="name_desc">Name (Z → A)</option>
+    </select>
+  </div>
+</div>
 
-          <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
-        </div>
+<!-- Row 2: delete (left) / help+expand+collapse+lock (right) -->
+<div class="abgm-row abgm-bgmbar2" style="margin-top:8px; align-items:center; gap:10px;">
+  <div class="menu_button" id="abgm_delete_selected" title="Delete selected rows">
+    <i class="fa-solid fa-trash"></i> Delete Selected
+  </div>
 
-        <div class="abgm-tablewrap">
-          <table class="abgm-table">
-            <thead>
-              <tr>
-                <th class="abgm-col-check">
-                  <input type="checkbox" id="abgm_sel_all" title="Select all">
-                </th>
-                <th>File</th>
-                <th style="width:92px;">Play</th>
-                <th style="width:64px;">More</th>
-              </tr>
-            </thead>
-            <tbody id="abgm_bgm_tbody"></tbody>
-          </table>
-        </div>
+  <div class="abgm-row" style="margin-left:auto; gap:10px; align-items:center;">
+    <div class="menu_button" id="abgm_bgm_help_toggle" title="BGM List help">
+      <i class="fa-solid fa-book"></i>
+    </div>
 
-        <div class="abgm-minihelp">
-          키워드는 쉼표로 구분 (예: rain, storm, thunder)<br/>
-          우선도 높은 놈이 이김 / 키워드 변동 없으면 유지(이 로직은 다음 단계)
-        </div>
+    <div class="menu_button" id="abgm_expand_all" title="Expand all rows">
+      <i class="fa-solid fa-angles-down"></i>
+    </div>
+    <div class="menu_button" id="abgm_collapse_all" title="Collapse all rows">
+      <i class="fa-solid fa-angles-up"></i>
+    </div>
+    <div class="menu_button" id="abgm_lock_all_vol" title="Lock all volume sliders">
+      <i class="fa-solid fa-lock"></i>
+    </div>
+  </div>
+
+  <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
+</div>
+
+<!-- Row 3: help (collapsed by default) -->
+<div class="abgm-minihelp" id="abgm_bgm_help" style="display:none;">
+  키워드는 쉼표로 구분 (예: rain, storm, thunder)<br/>
+  우선도 높은 놈이 이김 / 키워드 변동 없으면 유지(이 로직은 다음 단계)
+</div>
       </section>
     </div>
   
