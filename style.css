@@ -732,3 +732,105 @@ body.autobgm-modal-open{ overflow:hidden; }
   padding: 6px 8px;
   border-radius: 10px;
 }
+
+/* ===========================
+   Detail layout v3 (3 lines)
+   1) Keywords / Priority
+   2) Keywords input / Volume
+   3) Source (under Keywords only)
+   =========================== */
+
+.abgm-detail-grid.abgm-detail-v3{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) 220px 140px;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "kwh prih act"
+    "kw  vol  act"
+    "src  .   act";
+  gap:10px;
+  align-items:start;
+}
+
+/* areas */
+.abgm-kwh{ grid-area:kwh; }
+.abgm-prih{ grid-area:prih; }
+.abgm-kwbox{ grid-area:kw; }
+.abgm-volbox{ grid-area:vol; }
+.abgm-srcbox{ grid-area:src; }
+.abgm-detail-actions{ grid-area:act; }
+
+/* Priority block */
+.abgm-prih{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+}
+.abgm-prih .abgm_priority{
+  width:100%;
+}
+
+/* Volume block */
+.abgm-volbox{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+}
+.abgm-volbox .abgm-volcell{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.abgm-volbox .abgm_vol{
+  flex: 1 0 100%;
+  width:100%;
+  min-width:0;
+}
+.abgm-volbox .abgm_volnum{
+  width:72px;
+  margin-left:auto;
+}
+.abgm-volbox .abgm_vol_lock{
+  width:34px;
+  height:30px;
+}
+
+/* Source block (under keyword column) */
+.abgm-srcbox{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+}
+.abgm-srcbox .abgm_source{
+  width:100%;
+}
+
+/* Delete stays right-middle-ish */
+.abgm-detail-actions{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  min-width:140px;
+}
+
+/* Mobile: 2 columns + delete row at bottom */
+@media (max-width: 520px){
+  .abgm-detail-grid.abgm-detail-v3{
+    grid-template-columns: minmax(0, 1fr) 150px;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "kwh prih"
+      "kw  vol"
+      "src  ."
+      "act act";
+  }
+
+  .abgm-detail-actions{
+    justify-content:flex-end;
+    margin-top:6px;
+  }
+}
