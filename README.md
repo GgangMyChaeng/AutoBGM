@@ -1,4 +1,5 @@
 ## 목차
+- [License](#license)
 - [설명](#설명)
   - [Q&A](#해당-확장에-대한-이해를-도울-qa)
   - [튜토리얼](#튜토리얼)
@@ -7,7 +8,6 @@
   - [Modal (AutoBGM Settings)](#modal-autobgm-settings)
   - [Presets](#presets)
   - [BGM list](#bgm-list)
-- [License](#license)
 ***
 <div class="container">
 <h1>AutoBGM (For SillyTavern)</h1><div></div>
