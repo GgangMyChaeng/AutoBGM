@@ -725,3 +725,10 @@ body.autobgm-modal-open{ overflow:hidden; }
   padding: 6px 8px;
   border-radius: 10px;
 }
+
+/* 파일명 */
+.abgm-leftcol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
