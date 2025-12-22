@@ -967,6 +967,10 @@ function renderBgmTable(root, settings) {
             <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
           </div>
 
+          <small style="margin-top:6px;">Source</small>
+          <input type="text" class="abgm_source" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3 or https://...">
+          </div>
+
           <!-- Right stack: Priority (top) / Volume (bottom) -->
           <div class="abgm-side">
             <div class="abgm-field-tight">
@@ -1566,6 +1570,22 @@ function initModal(overlay) {
         if (r) r.value = String(v);
       }
     }
+
+    if (e.target.classList.contains("abgm_source")) {
+  const oldKey = bgm.fileKey;
+  const newKey = String(e.target.value || "").trim();
+
+  bgm.fileKey = newKey;
+
+  // default가 이 곡을 가리키고 있었다면 같이 갱신
+  if (preset.defaultBgmKey === oldKey) {
+    preset.defaultBgmKey = newKey;
+  }
+
+  saveSettingsDebounced();
+  renderDefaultSelect(root, settings);
+  return;
+}
 
     saveSettingsDebounced();
   });
