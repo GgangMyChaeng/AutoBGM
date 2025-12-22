@@ -1749,7 +1749,7 @@ async function mount() {
     
     const syncEnabledUI = () => {
       const on = !!settings.enabled;
-      enabledState.textContent = on ? "(현재 On)" : "(현재 Off)";
+      enabledState.textContent = on ? "On" : "Off";
       
       if (enabledIcon) {
     // on/off 아이콘 바꾸기 (원하면 다른 아이콘 써도 됨)
