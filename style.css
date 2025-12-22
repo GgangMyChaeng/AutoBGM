@@ -637,7 +637,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 /* 상단 3개 컨트롤 줄: 벽에서 숨 + 버튼간 간격 */
 .abgm-top-row3{
   padding: 0 10px;          /* 좌/우 벽에서 숨 좀 쉬게 */
-  gap: 12px;                /* 세 덩어리 간격 */
+  gap: 6px;                /* 세 덩어리 간격 */
 }
 
 /* 각 영역 자체도 터치하기 쉽게 */
