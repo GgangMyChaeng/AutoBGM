@@ -7,24 +7,19 @@
 
     <div class="inline-drawer-content">
 
-      <!-- Enabled + Settings 버튼 한 줄 -->
-      <div class="autobgm-toprow">
-        <label class="checkbox_label" for="autobgm_enabled" style="margin:0;">
-          <input type="checkbox" id="autobgm_enabled" />
-          <small>Enabled</small>
-        </label>
+      <!-- 1) 사용방법 버튼 -->
+      <div class="autobgm-menublock">
+        <div id="autobgm_help_toggle" class="menu_button autobgm-menu-btn" title="Help">
+          <i class="fa-solid fa-book"></i>
+          <span class="autobgm-menu-label">사용방법</span>
+        </div>
 
-        <div class="autobgm-gearwrap" title="Settings">
-          <div id="autobgm_open" class="menu_button">
-            <i class="fa-solid fa-gear fa-lg"></i>
-          </div>
+        <div id="autobgm_help_text" class="autobgm-helptext" style="display:none;">
+          사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
         </div>
       </div>
 
-      <div style="margin-top:8px; opacity:.85; font-size:12px;">
-        사용방법: Settings &gt; 프리셋 선택 &gt; BGM 추가 &gt; 각 BGM에 키워드 입력
-      </div>
-
+      <!-- 2) Now Playing -->
       <div class="autobgm-nowplaying" style="margin-top:10px; padding:8px 10px; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(0,0,0,.18);">
         <small style="opacity:.75;">Now Playing</small>
         <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
@@ -32,6 +27,23 @@
           <small id="autobgm_now_state" style="opacity:.7; white-space:nowrap;">Stopped</small>
         </div>
         <small id="autobgm_now_meta" style="opacity:.65; display:block; margin-top:2px;">—</small>
+      </div>
+
+      <!-- 3) Enabled 버튼 -->
+      <div class="autobgm-menublock" style="margin-top:10px;">
+        <div id="autobgm_enabled_btn" class="menu_button autobgm-menu-btn" title="Enabled">
+          <i class="fa-solid fa-power-off"></i>
+          <span class="autobgm-menu-label">Enabled</span>
+          <span id="autobgm_enabled_state" class="autobgm-menu-state">Off</span>
+        </div>
+      </div>
+
+      <!-- 4) Settings 버튼 -->
+      <div class="autobgm-menublock" style="margin-top:8px;">
+        <div id="autobgm_open" class="menu_button autobgm-menu-btn" title="Settings">
+          <i class="fa-solid fa-gear"></i>
+          <span class="autobgm-menu-label">Settings</span>
+        </div>
       </div>
 
     </div>
