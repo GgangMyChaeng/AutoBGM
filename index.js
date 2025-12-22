@@ -1743,13 +1743,20 @@ async function mount() {
     
     const enabledBtn = root.querySelector("#autobgm_enabled_btn");
     const enabledState = root.querySelector("#autobgm_enabled_state");
-    
+    const enabledIcon = root.querySelector("#autobgm_enabled_icon");
     const openBtn = root.querySelector("#autobgm_open");
     if (!enabledBtn || !enabledState || !openBtn) return;
     
     const syncEnabledUI = () => {
-      enabledState.textContent = settings.enabled ? "On" : "Off";
-    };
+      const on = !!settings.enabled;
+      enabledState.textContent = on ? "(현재 On)" : "(현재 Off)";
+      
+      if (enabledIcon) {
+    // on/off 아이콘 바꾸기 (원하면 다른 아이콘 써도 됨)
+    enabledIcon.classList.toggle("fa-power-off", !on);
+    enabledIcon.classList.toggle("fa-circle-play", on);
+  }
+};
     
     syncEnabledUI();
     
