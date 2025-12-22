@@ -630,3 +630,42 @@ body.autobgm-modal-open{ overflow:hidden; }
 #autobgm_enabled_btn #autobgm_enabled_state{
   margin-left: calc(50% + 14px);
 }
+
+/* ===== AutoBGM modal top controls mobile layout ===== */
+.abgm-top-controls { width: 100%; }
+
+.abgm-top-row3{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.abgm-top-item{
+  display:flex;
+  align-items:center;
+  min-width:0;
+}
+
+.abgm-top-item.left{ justify-content:flex-start; flex:1; }
+.abgm-top-item.center{ justify-content:center; flex:1; }
+.abgm-top-item.right{ justify-content:flex-end; flex:1; }
+
+.abgm-top-item.right select{
+  max-width: 100%;
+}
+
+/* Global volume line */
+.abgm-top-row1{
+  margin-top:10px;
+}
+
+.abgm-volume-block{
+  width:100%;
+}
+
+/* 모바일에서만: Debug 텍스트 숨기고 아이콘만 남기기 */
+@media (max-width: 520px){
+  .abgm-debug-text{ display:none; }
+  /* debug 라벨이 가운데서 너무 커지면 아이콘 크기만 남기기 */
+  .abgm-top-item.center i{ opacity:.9; }
+}
