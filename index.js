@@ -1045,6 +1045,7 @@ function exportPresetFile(preset) {
     bgms: (preset.bgms ?? []).map((b) => ({
       id: b.id,
       fileKey: b.fileKey ?? "",
+      name: b.name ?? "", // ✅ 엔트리 이름 저장
       keywords: b.keywords ?? "",
       priority: Number(b.priority ?? 0),
       volume: Number(b.volume ?? 1),
@@ -1070,6 +1071,7 @@ function rekeyPreset(preset) {
   p.bgms = (p.bgms ?? []).map((b) => ({
     id: uid(),
     fileKey: b.fileKey ?? "",
+    name: b.name ?? "", // 엔트리 이름 복원
     keywords: b.keywords ?? "",
     priority: Number(b.priority ?? 0),
     volume: Number(b.volume ?? 1),
@@ -1081,22 +1083,6 @@ function rekeyPreset(preset) {
   }
 
   return p;
-}
-
-function pickPresetFromImportData(data) {
-  if (data?.type === "autobgm_preset" && data?.preset) return data.preset;
-
-  // (구형 전체 설정 파일) 들어오면 activePreset 하나만 뽑아서 import
-  if (data?.presets && typeof data.presets === "object") {
-    const pid =
-      data.activePresetId && data.presets[data.activePresetId]
-        ? data.activePresetId
-        : Object.keys(data.presets)[0];
-
-    return data.presets?.[pid] ?? null;
-  }
-
-  return null;
 }
 
 /** ========= Modal logic ========= */
