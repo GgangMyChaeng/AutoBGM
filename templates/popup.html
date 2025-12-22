@@ -7,36 +7,49 @@
     </div>
   </div>
 
-  <div class="autobgm-modal-b">
-    <!-- 상단 옵션 -->
-    <div class="abgm-topbar">
-      <label class="checkbox_label" style="margin:0;">
-        <input type="checkbox" id="abgm_keywordMode">
-        <small>Keyword Mode</small>
-      </label>
-      <label class="checkbox_label" style="margin:0;">
-        <input type="checkbox" id="abgm_debugMode">
-        <small>Debug Mode</small>
-      </label>
+<!-- 상단 옵션 -->
+<div class="abgm-top-controls">
 
-      <div class="abgm-inline" style="min-width:240px;">
-        <small style="opacity:.85;">Play Mode</small>
-        <select id="abgm_playMode" class="abgm-select abgm-select-slim" title="Works when Keyword Mode is OFF">
-          <option value="manual">Manual</option>
-          <option value="loop_one">Loop One</option>
-          <option value="loop_list">Loop List</option>
-          <option value="random">Random</option>
-        </select>
-      </div>
+  <!-- 1줄: Keyword / Debug / Play Mode -->
+  <div class="abgm-top-row3">
 
-      <div class="abgm-inline">
-        <small style="opacity:.85;">Global Volume</small>
+    <!-- Keyword (좌측) -->
+    <label class="checkbox_label abgm-top-item left" style="margin:0;">
+      <input type="checkbox" id="abgm_keywordMode">
+      <small>Keyword Mode</small>
+    </label>
+
+    <!-- Debug (중앙: 아이콘 + (PC에서만 텍스트)) -->
+    <label class="checkbox_label abgm-top-item center" style="margin:0;" title="Debug Mode">
+      <input type="checkbox" id="abgm_debugMode">
+      <i class="fa-solid fa-bug"></i>
+      <small class="abgm-debug-text">Debug</small>
+    </label>
+
+    <!-- Play Mode (우측) -->
+    <div class="abgm-top-item right" style="min-width:160px;">
+      <select id="abgm_playMode" class="abgm-select abgm-select-slim" title="Works when Keyword Mode is OFF">
+        <option value="manual">Manual</option>
+        <option value="loop_one">Loop One</option>
+        <option value="loop_list">Loop List</option>
+        <option value="random">Random</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- 2줄: Global Volume -->
+  <div class="abgm-top-row1">
+    <div class="abgm-volume-block">
+      <small style="opacity:.85;">Global Volume</small>
+      <div style="display:flex; align-items:center; gap:10px;">
         <input id="abgm_globalVol" type="range" min="0" max="100" value="70" class="abgm-range">
         <small id="abgm_globalVolText" style="opacity:.85; width:38px; text-align:right;">70</small>
       </div>
     </div>
+  </div>
 
-    <hr class="abgm-hr"/>
+</div>
 
     <!-- Now Playing -->
     <div class="abgm-nowplaying" style="display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; padding:8px 10px; border:1px solid rgba(255,255,255,.12); border-radius:12px; background:rgba(0,0,0,.18); margin:10px 0;">
