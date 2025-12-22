@@ -962,10 +962,28 @@ function renderBgmTable(root, settings) {
       <td colspan="4">
         <div class="abgm-detail-grid">
           <!-- Keywords (left, taller) -->
-          <div class="abgm-keywords">
-            <small>Keywords</small>
-            <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
-          </div>
+          <!-- LEFT COLUMN -->
+<div class="abgm-leftcol">
+  <!-- Keywords -->
+  <div class="abgm-keywords">
+    <small>Keywords</small>
+    <textarea
+      class="abgm_keywords"
+      placeholder="rain, storm..."
+    >${escapeHtml(b.keywords ?? "")}</textarea>
+  </div>
+
+  <!-- Source (file / url) -->
+  <div class="abgm-source">
+    <small>Source</small>
+    <input
+      type="text"
+      class="abgm_source"
+      value="${escapeHtml(b.fileKey ?? "")}"
+      placeholder="neutral_01.mp3 or https://..."
+    >
+  </div>
+</div>
 
           <small style="margin-top:6px;">Source</small>
           <input type="text" class="abgm_source" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3 or https://...">
