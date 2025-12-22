@@ -126,6 +126,10 @@ body.autobgm-modal-open{ overflow:hidden; }
   min-width:0;
 }
 
+.abgm-top-row1{
+  margin-bottom:10px;
+}
+
 .abgm-select{
   width:100%;
   padding:6px 10px;
