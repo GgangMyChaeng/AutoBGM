@@ -170,13 +170,6 @@ function getActivePreset(settings) {
   return settings.presets[settings.activePresetId];
 }
 
-// 엔트리 이름
-function basenameNoExt(fileKey = "") {
-  const s = String(fileKey || "");
-  const base = s.split("/").pop() || s;
-  return base.replace(/\.[^/.]+$/, ""); // 마지막 확장자 제거
-}
-
 /** ========= 삭제 확인 및 취소 ========= */
 function abgmConfirm(containerOrDoc, message, {
   title = "Confirm",
@@ -304,7 +297,7 @@ function ensureSettings() {
     presets: {
       default: {
         id: "default",
-        name: basenameNoExt(fileKey), // 엔트리 이름
+        name: "Default",
         defaultBgmKey: "",
         bgms: [],
       },
@@ -660,6 +653,26 @@ async function ensurePlayFile(fileKey, vol01, loop) {
   return true;
 }
 
+// ===== Entry Name helpers =====
+function basenameNoExt(fileKey = "") {
+  const s = String(fileKey || "");
+  const base = s.split("/").pop() || s;
+  return base.replace(/\.[^/.]+$/, ""); // 확장자 제거
+}
+
+function getEntryName(bgm) {
+  const n = String(bgm?.name ?? "").trim();
+  return n ? n : basenameNoExt(bgm?.fileKey ?? "");
+}
+
+function ensureBgmNames(preset) {
+  for (const b of preset?.bgms ?? []) {
+    if (!String(b?.name ?? "").trim()) {
+      b.name = basenameNoExt(b.fileKey);
+    }
+  }
+}
+
 /** ========= ZIP (JSZip 필요) ========= */
 async function ensureJSZipLoaded() {
   if (window.JSZip) return window.JSZip;
@@ -855,13 +868,6 @@ function renderPresetSelect(root, settings) {
   nameInput.value = getActivePreset(settings).name || "";
 }
 
-// 엔트리 이름
-function ensureBgmNames(preset) {
-  for (const b of preset?.bgms ?? []) {
-    if (!b.name) b.name = basenameNoExt(b.fileKey);
-  }
-}
-
 function renderDefaultSelect(root, settings) {
   const preset = getActivePreset(settings);
   const sel = root.querySelector("#abgm_default_select");
@@ -904,6 +910,8 @@ function renderBgmTable(root, settings) {
   const tbody = root.querySelector("#abgm_bgm_tbody");
   if (!tbody) return;
 
+  ensureBgmNames(preset);
+
   const selected = root?.__abgmSelected instanceof Set ? root.__abgmSelected : new Set();
   root.__abgmSelected = selected;
 
@@ -925,8 +933,9 @@ function renderBgmTable(root, settings) {
         <input type="checkbox" class="abgm_sel" ${selected.has(b.id) ? "checked" : ""}>
       </td>
       <td class="abgm-filecell">
-        <input type="text" class="abgm_name" value="${escapeHtml(b.fileKey ?? "")}" placeholder="neutral_01.mp3">
+      <input type="text" class="abgm_name" value="${escapeHtml(getEntryName(b))}" placeholder="Entry name">
       </td>
+
       <td>
         <div class="menu_button abgm-iconbtn abgm_test" title="Play">
           <i class="fa-solid fa-play"></i>
@@ -986,6 +995,15 @@ function renderBgmTable(root, settings) {
       </td>
     `;
 
+  // Entry name change
+const nameInput = tr.querySelector(".abgm_name");
+if (nameInput) {
+  nameInput.addEventListener("change", () => {
+    b.name = nameInput.value.trim();
+    saveSettingsDebounced();
+  });
+}
+    
     tbody.appendChild(tr);
     tbody.appendChild(tr2);
   });
@@ -1466,8 +1484,8 @@ function initModal(overlay) {
     if (!exists) {
       preset.bgms.push({
         id: uid(),
-        name: "", // 엔트리 이름
         fileKey,
+        name: basenameNoExt(fileKey),
         keywords: "",
         priority: 0,
         volume: 1.0,
@@ -1499,6 +1517,7 @@ function initModal(overlay) {
           preset.bgms.push({
             id: uid(),
             fileKey: fk,
+            name: basenameNoExt(fileKey),
             keywords: "",
             priority: 0,
             volume: 1.0,
