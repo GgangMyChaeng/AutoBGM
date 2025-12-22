@@ -634,33 +634,37 @@ body.autobgm-modal-open{ overflow:hidden; }
 /* ===== AutoBGM modal top controls mobile layout ===== */
 .abgm-top-controls { width: 100%; }
 
+/* 상단 3개 컨트롤 줄: 벽에서 숨 + 버튼간 간격 */
 .abgm-top-row3{
-  display:flex;
-  align-items:center;
-  gap:8px;
+  padding: 0 10px;          /* 좌/우 벽에서 숨 좀 쉬게 */
+  gap: 12px;                /* 세 덩어리 간격 */
 }
 
+/* 각 영역 자체도 터치하기 쉽게 */
 .abgm-top-item{
-  display:flex;
-  align-items:center;
-  min-width:0;
+  padding: 6px 8px;         /* 각 덩어리 내부 숨(터치 영역) */
+  border-radius: 10px;
 }
 
-.abgm-top-item.left{ justify-content:flex-start; flex:1; }
-.abgm-top-item.center{ justify-content:center; flex:1; }
-.abgm-top-item.right{ justify-content:flex-end; flex:1; }
+/* 좌/우는 너무 벽으로 쏠리지 않게 */
+.abgm-top-item.left{ justify-content:flex-start; }
+.abgm-top-item.center{ justify-content:center; }
+.abgm-top-item.right{ justify-content:flex-end; }
 
 .abgm-top-item.right select{
-  max-width: 100%;
+  max-width: 140%;
 }
 
 /* Global volume line */
+/* 글로벌 볼륨 줄도 벽에서 숨 */
 .abgm-top-row1{
-  margin-top:10px;
+  padding: 0 10px;          /* 좌/우 벽에서 숨 */
 }
 
+/* 슬라이더가 너무 길면 적당히 제한 */
 .abgm-volume-block{
-  width:100%;
+  max-width: 520px;         /* PC에서 무한히 길어지는 거 방지 */
+  margin: 0 auto;           /* 가운데 정렬 */
 }
 
 /* 모바일에서만: Debug 텍스트 숨기고 아이콘만 남기기 */
