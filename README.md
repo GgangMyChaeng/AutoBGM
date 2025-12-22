@@ -8,7 +8,7 @@
   - [Presets](#presets)
   - [BGM list](#bgm-list)
 - [License](#license)
-
+***
 <div class="container">
 <h1>AutoBGM (For SillyTavern)</h1><div></div>
         <div class="toc">
