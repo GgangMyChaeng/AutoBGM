@@ -450,23 +450,26 @@ function updateNowPlayingUI() {
     const settings = ensureSettings?.() || {};
     const preset =
       settings?.presets?.[settings?.activePresetId] ||
-      Object.values(settings?.presets || {})[0] || {};
+      Object.values(settings?.presets || {})[0] ||
+      {};
 
-    // url 호환 추가 굿
-    let title = fk || "(none)";
-    if (fk) {
-      const b = findBgmByKey(preset, fk);
-      if (b) title = getEntryName(b); // URL이면 엔트리 이름이 뜸
-    }
+    // fk(=source)로 현재 엔트리 찾기
+    const bgm = (preset.bgms ?? []).find((b) => String(b?.fileKey ?? "") === fk) || null;
 
+    // 표시용 제목: 엔트리 이름 우선
+    const title = bgm ? getEntryName(bgm) : (fk || "(none)");
+
+    // meta는 기존처럼
     const presetName = preset?.name || "Preset";
     const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
     const meta = `${modeLabel} · ${presetName}` + (__abgmDebugMode && __abgmDebugLine ? ` · ${__abgmDebugLine}` : "");
 
+    // drawer
     _abgmSetText("autobgm_now_title", title);
     _abgmSetText("autobgm_now_state", state);
     _abgmSetText("autobgm_now_meta", meta);
 
+    // modal
     _abgmSetText("abgm_now_title", title);
     _abgmSetText("abgm_now_state", state);
     _abgmSetText("abgm_now_meta", meta);
