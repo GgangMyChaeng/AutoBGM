@@ -1083,6 +1083,22 @@ function rekeyPreset(preset) {
   }
 
   return p;
+  
+}
+function pickPresetFromImportData(data) {
+  if (data?.type === "autobgm_preset" && data?.preset) return data.preset;
+
+  // (구형 전체 설정 파일) 들어오면 activePreset 하나만 뽑아서 import
+  if (data?.presets && typeof data.presets === "object") {
+    const pid =
+      data.activePresetId && data.presets[data.activePresetId]
+        ? data.activePresetId
+        : Object.keys(data.presets)[0];
+
+    return data.presets?.[pid] ?? null;
+  }
+
+  return null;
 }
 
 /** ========= Modal logic ========= */
