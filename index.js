@@ -444,29 +444,33 @@ function _abgmSetText(id, text) {
 
 function updateNowPlayingUI() {
   try {
-    // 표시할 파일명/상태
     const fk = String(_engineCurrentFileKey || "");
     const state = !fk ? "Stopped" : (_bgmAudio?.paused ? "Paused" : "Playing");
 
     const settings = ensureSettings?.() || {};
-    // preset명 / 모드
-    const preset = settings?.presets?.[settings?.activePresetId] || Object.values(settings?.presets || {})[0] || {};
+    const preset =
+      settings?.presets?.[settings?.activePresetId] ||
+      Object.values(settings?.presets || {})[0] || {};
+
+    // url 호환 추가 굿
+    let title = fk || "(none)";
+    if (fk) {
+      const b = findBgmByKey(preset, fk);
+      if (b) title = getEntryName(b); // URL이면 엔트리 이름이 뜸
+    }
+
     const presetName = preset?.name || "Preset";
     const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
-    const meta = `${modeLabel} · ${presetName}` + (__abgmDebugMode && __abgmDebugLine ? ` · ${__abgmDebugLine}` : ""); // +부터 키워드 모드 디버깅
+    const meta = `${modeLabel} · ${presetName}` + (__abgmDebugMode && __abgmDebugLine ? ` · ${__abgmDebugLine}` : "");
 
-    // drawer
-    _abgmSetText("autobgm_now_title", fk || "(none)");
+    _abgmSetText("autobgm_now_title", title);
     _abgmSetText("autobgm_now_state", state);
     _abgmSetText("autobgm_now_meta", meta);
 
-    // modal
-    _abgmSetText("abgm_now_title", fk || "(none)");
+    _abgmSetText("abgm_now_title", title);
     _abgmSetText("abgm_now_state", state);
     _abgmSetText("abgm_now_meta", meta);
-  } catch (e) {
-    // ignore
-  }
+  } catch {}
 }
 
 function bindNowPlayingEventsOnce() {
@@ -686,21 +690,36 @@ async function ensurePlayFile(fileKey, vol01, loop) {
 }
 
 // ===== Entry Name helpers =====
-function basenameNoExt(fileKey = "") {
-  const s = String(fileKey || "");
+function nameFromSource(src = "") {
+  const s = String(src || "").trim();
+  if (!s) return "";
+
+  // URL이면 path 마지막 조각 or hostname
+  if (isProbablyUrl(s)) {
+    try {
+      const u = new URL(s);
+      const last = (u.pathname.split("/").pop() || "").trim();
+      const cleanLast = last.replace(/\.[^/.]+$/, ""); // 확장자 제거
+      return cleanLast || u.hostname || "URL";
+    } catch {
+      return "URL";
+    }
+  }
+
+  // 파일이면 기존대로
   const base = s.split("/").pop() || s;
-  return base.replace(/\.[^/.]+$/, ""); // 확장자 제거
+  return base.replace(/\.[^/.]+$/, "");
 }
 
 function getEntryName(bgm) {
   const n = String(bgm?.name ?? "").trim();
-  return n ? n : basenameNoExt(bgm?.fileKey ?? "");
+  return n ? n : nameFromSource(bgm?.fileKey ?? "");
 }
 
 function ensureBgmNames(preset) {
   for (const b of preset?.bgms ?? []) {
     if (!String(b?.name ?? "").trim()) {
-      b.name = basenameNoExt(b.fileKey);
+      b.name = nameFromSource(b.fileKey);
     }
   }
 }
