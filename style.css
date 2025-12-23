@@ -734,103 +734,94 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* ===========================
-   Detail layout v3 (3 lines)
-   1) Keywords / Priority
-   2) Keywords input / Volume
-   3) Source (under Keywords only)
+   Detail layout v4 (2 cols, 4 rows)
+   - Left: Keywords/Source
+   - Right: Priority + Volume stack (right-aligned, fixed-ish width)
+   - Row3 right: Lock + Delete
    =========================== */
 
-.abgm-detail-grid.abgm-detail-v3{
-  display:grid;
-  grid-template-columns: minmax(0, 1fr) 220px 140px;
-  grid-template-rows: auto auto auto;
+.abgm-detail-grid.abgm-detail-v4{
+  --abgm-gap: 10px;
+  --abgm-right-w: clamp(180px, 28vw, 260px);
+
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) var(--abgm-right-w);
+  grid-template-rows: auto auto auto auto;
   grid-template-areas:
-    "kwh prih act"
-    "kw  vol  act"
-    "src  .   act";
-  gap:10px;
-  align-items:start;
+    "kwh  rh"
+    "kw   rstack"
+    "srch actions"
+    "src  .";
+  gap: var(--abgm-gap);
+  align-items: start;
 }
 
 /* areas */
-.abgm-kwh{ grid-area:kwh; }
-.abgm-prih{ grid-area:prih; }
-.abgm-kwbox{ grid-area:kw; }
-.abgm-volbox{ grid-area:vol; }
-.abgm-srcbox{ grid-area:src; }
-.abgm-detail-actions{ grid-area:act; }
+.abgm-kwh{ grid-area: kwh; }
+.abgm-rh{ grid-area: rh; text-align: right; }
+.abgm-kwbox{ grid-area: kw; }
+.abgm-rstack{ grid-area: rstack; }
+.abgm-srch{ grid-area: srch; }
+.abgm-actions{ grid-area: actions; }
+.abgm-srcbox{ grid-area: src; }
 
-/* Priority block */
-.abgm-prih{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  min-width:0;
-}
-.abgm-prih .abgm_priority{
-  width:100%;
-}
-
-/* Volume block */
-.abgm-volbox{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  min-width:0;
-}
-.abgm-volbox .abgm-volcell{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
-.abgm-volbox .abgm_vol{
-  flex: 1 0 100%;
-  width:100%;
-  min-width:0;
-}
-.abgm-volbox .abgm_volnum{
-  width:72px;
-  margin-left:auto;
-}
-.abgm-volbox .abgm_vol_lock{
-  width:34px;
-  height:30px;
+/* left column inputs */
+.abgm-kwbox textarea.abgm_keywords{
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  max-height: 220px;   /* “세로 늘리기 적당히” */
+  min-height: 72px;    /* 기본은 가로 넓고 세로는 적당히 */
 }
 
-/* Source block (under keyword column) */
-.abgm-srcbox{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  min-width:0;
-}
 .abgm-srcbox .abgm_source{
-  width:100%;
+  width: 100%;
+  min-width: 0;
 }
 
-/* Delete stays right-middle-ish */
-.abgm-detail-actions{
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  min-width:140px;
+/* right column stack */
+.abgm-rstack{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* <- 니가 말한 “항목 우측 정렬 기준” */
+  gap: 10px;
 }
 
-/* Mobile: 2 columns + delete row at bottom */
+.abgm-rfield{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* 타이틀-입력 간격 동일 */
+}
+
+.abgm-rfield small{
+  text-align: right;
+  opacity: .85;
+}
+
+.abgm-rinput{
+  width: 100%;
+  min-width: 0;
+  height: 34px; /* 우선도/볼륨 입력 높이 동일 */
+}
+
+.abgm-rrange{
+  width: 100%;
+  min-width: 0;
+}
+
+/* actions row (lock + delete aligned right) */
+.abgm-actions{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+/* mobile: right column shrinks but stays right-aligned */
 @media (max-width: 520px){
-  .abgm-detail-grid.abgm-detail-v3{
-    grid-template-columns: minmax(0, 1fr) 150px;
-    grid-template-rows: auto auto auto auto;
-    grid-template-areas:
-      "kwh prih"
-      "kw  vol"
-      "src  ."
-      "act act";
-  }
-
-  .abgm-detail-actions{
-    justify-content:flex-end;
-    margin-top:6px;
+  .abgm-detail-grid.abgm-detail-v4{
+    --abgm-right-w: clamp(150px, 40vw, 200px);
+    grid-template-columns: minmax(0, 1fr) var(--abgm-right-w);
   }
 }
