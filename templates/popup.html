@@ -158,35 +158,42 @@
     </div>
   </div>
 
-  <!-- Row 2: delete (left) / help+expand+collapse+lock (right) -->
-  <div class="abgm-row abgm-bgmbar2" style="margin-top:8px; align-items:center; gap:10px;">
-    <div class="menu_button" id="abgm_delete_selected" title="Delete selected rows">
-      <i class="fa-solid fa-trash"></i> Delete Selected
-    </div>
-
-    <div class="abgm-row" style="margin-left:auto; gap:10px; align-items:center;">
-      <div class="menu_button" id="abgm_bgm_help_toggle" title="BGM List help">
-        <i class="fa-solid fa-book"></i>
-      </div>
-
-      <div class="menu_button" id="abgm_expand_all" title="Expand all rows">
-        <i class="fa-solid fa-angles-down"></i>
-      </div>
-      <div class="menu_button" id="abgm_collapse_all" title="Collapse all rows">
-        <i class="fa-solid fa-angles-up"></i>
-      </div>
-      <div class="menu_button" id="abgm_lock_all_vol" title="Lock all volume sliders">
-        <i class="fa-solid fa-lock"></i>
-      </div>
-    </div>
-
-    <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
+  <!-- Row 2: delete+help (left) / add+expand+collapse+lock (right) -->
+<div class="abgm-row abgm-bgmbar2" style="margin-top:8px; align-items:center; gap:10px;">
+  <div class="menu_button" id="abgm_delete_selected" title="Delete selected rows">
+    <i class="fa-solid fa-trash"></i> Delete Selected
   </div>
+
+  <!-- help 버튼: Delete 옆으로 이동 -->
+  <div class="menu_button" id="abgm_bgm_help_toggle" title="BGM List help">
+    <i class="fa-solid fa-book"></i>
+  </div>
+
+  <!-- 우측 정렬 영역 -->
+  <div class="abgm-row" style="margin-left:auto; gap:10px; align-items:center;">
+    <!-- 엔트리 추가 버튼: 책 버튼 원래 자리로 -->
+    <div class="menu_button" id="abgm_bgm_add_row" title="Add empty entry">
+      <i class="fa-solid fa-plus"></i>
+    </div>
+
+    <div class="menu_button" id="abgm_expand_all" title="Expand all rows">
+      <i class="fa-solid fa-angles-down"></i>
+    </div>
+    <div class="menu_button" id="abgm_collapse_all" title="Collapse all rows">
+      <i class="fa-solid fa-angles-up"></i>
+    </div>
+    <div class="menu_button" id="abgm_lock_all_vol" title="Lock all volume sliders">
+      <i class="fa-solid fa-lock"></i>
+    </div>
+  </div>
+
+  <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
+</div>
 
   <!-- Row 3: help (collapsed by default) -->
   <div class="abgm-minihelp" id="abgm_bgm_help" style="display:none;">
     키워드는 쉼표로 구분 (예: rain, storm, thunder)<br/>
-    우선도 높은 놈이 이김 / 키워드 변동 없으면 유지(이 로직은 다음 단계)
+    웅앵 어쩌고저쩌고 BGM List 설명
   </div>
 
   <!-- 집 나갔던 파일들 -->
