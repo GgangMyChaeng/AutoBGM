@@ -71,12 +71,6 @@
   border-radius: 10px;
 }
 
-.abgm-disabled{
-  opacity:.35;
-  filter: grayscale(1);
-  cursor: not-allowed;
-}
-
 /* ===== modal base ===== */
 body.autobgm-modal-open{ overflow:hidden; }
 
@@ -727,6 +721,12 @@ body.autobgm-modal-open{ overflow:hidden; }
 /* 상태 텍스트는 중앙 아이콘 오른쪽으로 */
 #autobgm_enabled_btn #autobgm_enabled_state{
   margin-left: calc(50% + 14px);
+}
+
+.abgm-disabled{
+  opacity:.35;
+  filter: grayscale(1);
+  cursor: not-allowed;
 }
 
 /* ===== AutoBGM modal top controls mobile layout ===== */
