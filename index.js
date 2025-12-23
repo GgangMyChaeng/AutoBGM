@@ -506,8 +506,35 @@ function updateNowPlayingUI() {
         settings?.keywordMode ? "Mode: Keyword" :
         `Mode: ${settings?.playMode || "manual"}`;
     }
-
+    setNowControlsLocked(!settings.enabled);
   } catch {}
+}
+
+function setNowControlsLocked(locked) {
+  const root = document.getElementById("autobgm-root");
+  if (!root) return;
+
+  const btnPlay = root.querySelector("#autobgm_np_play");
+  const btnDef  = root.querySelector("#autobgm_np_default");
+  const selMode = root.querySelector("#autobgm_np_mode");
+
+  const lockBtn = (el, on) => {
+    if (!el) return;
+    el.classList.toggle("abgm-disabled", !!on);
+    el.style.pointerEvents = on ? "none" : "";
+    el.style.opacity = on ? "0.35" : "";
+    el.setAttribute("aria-disabled", on ? "true" : "false");
+    el.title = on ? "Disabled (Extension Off)" : "";
+  };
+
+  lockBtn(btnPlay, locked);
+  lockBtn(btnDef, locked);
+
+  if (selMode) {
+    selMode.disabled = !!locked;
+    selMode.classList.toggle("abgm-disabled", !!locked);
+    selMode.title = locked ? "Disabled (Extension Off)" : "";
+  }
 }
 
 function bindNowPlayingEventsOnce() {
@@ -2013,12 +2040,7 @@ async function mount() {
     // Play/Pause/Start
     btnPlay?.addEventListener("click", async () => {
       const s = ensureSettings();
-
-      // 꺼져있으면 켜고 시작(원래 enabled 버튼 역할까지 겸하게)
-      if (!s.enabled) {
-        s.enabled = true;
-        saveSettingsDebounced();
-      }
+      if (!s.enabled) return;
 
       // 현재 재생중이면 pause
       if (_engineCurrentFileKey && !_bgmAudio.paused) {
@@ -2042,6 +2064,7 @@ async function mount() {
     // Mode cycle: manual → loop_one → loop_list → random → keyword → manual ...
     btnMode?.addEventListener("click", () => {
       const s = ensureSettings();
+      if (!s.enabled) return;
 
       const next = (() => {
         if (s.keywordMode) return "manual";
