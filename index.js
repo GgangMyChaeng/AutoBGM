@@ -1045,7 +1045,7 @@ function exportPresetFile(preset) {
     bgms: (preset.bgms ?? []).map((b) => ({
       id: b.id,
       fileKey: b.fileKey ?? "",
-      name: b.name ?? "", // ✅ 엔트리 이름 저장
+      name: b.name ?? "", // 엔트리 이름 저장
       keywords: b.keywords ?? "",
       priority: Number(b.priority ?? 0),
       volume: Number(b.volume ?? 1),
@@ -1081,6 +1081,11 @@ function rekeyPreset(preset) {
   if (!p.defaultBgmKey && p.bgms.length && p.bgms[0].fileKey) {
     p.defaultBgmKey = p.bgms[0].fileKey;
   }
+
+// defaultBgmKey가 bgms에 실제로 존재하는지 보정
+if (p.defaultBgmKey && !p.bgms.some(b => b.fileKey === p.defaultBgmKey)) {
+  p.defaultBgmKey = p.bgms[0]?.fileKey ?? "";
+}
 
   return p;
   
