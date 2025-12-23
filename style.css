@@ -250,7 +250,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 .abgm_toggle i{ transition: transform .15s ease; }
 .abgm-bgm-summary.abgm-expanded .abgm_toggle i{ transform: rotate(180deg); }
 
-/* ===== detail row ===== */
+/* ===== detail row (기존) ===== */
 .abgm-bgm-detail td{
   padding: 10px 10px 12px;
   background: rgba(255,255,255,.03);
@@ -288,9 +288,9 @@ body.autobgm-modal-open{ overflow:hidden; }
   flex-direction:column;
   gap:10px;
   height:100%;
-  justify-content: space-between;
-  padding-top: 14px;
-  padding-bottom: 10px;
+  justify-content: flex-start;
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 
 .abgm-field-tight small{ opacity:.8; }
@@ -399,8 +399,8 @@ body.autobgm-modal-open{ overflow:hidden; }
 
   /* 우측 스택 */
   .abgm-side{
-    padding-top: 10px;
-    padding-bottom: 8px;
+    padding-top: 0px;
+    padding-bottom: 0px;
     justify-content: flex-start;
     gap:10px;
   }
