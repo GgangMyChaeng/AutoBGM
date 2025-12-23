@@ -732,19 +732,3 @@ body.autobgm-modal-open{ overflow:hidden; }
   padding: 6px 8px;
   border-radius: 10px;
 }
-
-/* ===========================
-   Detail (Source)
-   - Right: Priority + Volume stack (right-aligned, fixed-ish width)
-   - Row3 right: Lock + Delete
-   =========================== */
-
-.abgm-srcbox .abgm_source{
-  width: 100%;
-  min-width: 0;
-}
-
-.abgm-rfield small{
-  text-align: right;
-  opacity: .85;
-}
