@@ -392,9 +392,26 @@ async function migrateLegacyDataUrlsToIDB(settings) {
 const _testAudio = new Audio();
 let _testUrl = "";
 async function playAsset(fileKey, volume01) {
-  const blob = await idbGet(fileKey);
+  const fk = String(fileKey ?? "").trim();
+  if (!fk) return;
+
+  // URL이면 그대로 재생
+  if (isProbablyUrl(fk)) {
+    if (_testUrl) URL.revokeObjectURL(_testUrl);
+    _testUrl = ""; // url은 revoke 대상 아님
+
+    _testAudio.pause();
+    _testAudio.currentTime = 0;
+    _testAudio.src = fk;
+    _testAudio.volume = Math.max(0, Math.min(1, volume01));
+    _testAudio.play().catch(() => {});
+    return;
+  }
+
+  // 파일키면 기존대로 IDB
+  const blob = await idbGet(fk);
   if (!blob) {
-    console.warn("[AutoBGM] missing asset:", fileKey);
+    console.warn("[AutoBGM] missing asset:", fk);
     return;
   }
 
@@ -631,9 +648,26 @@ function findBgmByKey(preset, fileKey) {
 }
 
 async function ensurePlayFile(fileKey, vol01, loop) {
-  const fk = String(fileKey ?? "");
+  const fk = String(fileKey ?? "").trim();
   if (!fk) return false;
 
+  // ✅ URL이면 IDB 없이 바로 재생
+  if (isProbablyUrl(fk)) {
+    if (_bgmUrl) URL.revokeObjectURL(_bgmUrl);
+    _bgmUrl = ""; // url은 revoke 대상 아님
+
+    _bgmAudio.loop = !!loop;
+    _bgmAudio.src = fk;
+    _bgmAudio.volume = clamp01(vol01);
+
+    try { await _bgmAudio.play(); } catch {}
+
+    _engineCurrentFileKey = fk;
+    updateNowPlayingUI();
+    return true;
+  }
+
+  // ✅ 파일키면 기존대로 IDB
   const blob = await idbGet(fk);
   if (!blob) return false;
 
@@ -644,9 +678,7 @@ async function ensurePlayFile(fileKey, vol01, loop) {
   _bgmAudio.src = _bgmUrl;
   _bgmAudio.volume = clamp01(vol01);
 
-  try {
-    await _bgmAudio.play();
-  } catch {}
+  try { await _bgmAudio.play(); } catch {}
 
   _engineCurrentFileKey = fk;
   updateNowPlayingUI();
@@ -671,6 +703,12 @@ function ensureBgmNames(preset) {
       b.name = basenameNoExt(b.fileKey);
     }
   }
+}
+
+/** ========= url 판별 함수 ========= */
+function isProbablyUrl(s) {
+  const v = String(s ?? "").trim();
+  return /^https?:\/\//i.test(v);
 }
 
 /** ========= ZIP (JSZip 필요) ========= */
