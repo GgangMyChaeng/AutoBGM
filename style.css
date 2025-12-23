@@ -38,6 +38,39 @@
   opacity:.8;
 }
 
+/* === Now Playing controls row (extension menu) === */
+.autobgm-now-controls{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* 좌 / 중앙 / 우 */
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;   /* 벽에 안 붙게 */
+}
+
+/* 좌/우는 자기 칸 안에서 가운데로 */
+.autobgm-now-controls .np-left{
+  justify-self: center;
+}
+.autobgm-now-controls .np-right{
+  justify-self: center;
+}
+
+/* 중앙 재생버튼은 진짜 중앙 고정 */
+.autobgm-now-controls .np-center{
+  justify-self: center;
+}
+
+/* 버튼들 크기/터치영역 통일(원하면 수치만 조절) */
+.autobgm-now-controls .menu_button{
+  min-width: 34px;
+  height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
 /* ===== modal base ===== */
 body.autobgm-modal-open{ overflow:hidden; }
 
