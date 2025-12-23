@@ -71,6 +71,12 @@
   border-radius: 10px;
 }
 
+.abgm-disabled{
+  opacity:.35;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+
 /* ===== modal base ===== */
 body.autobgm-modal-open{ overflow:hidden; }
 
