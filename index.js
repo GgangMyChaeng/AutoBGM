@@ -975,8 +975,8 @@ function renderBgmTable(root, settings) {
 
   <!-- 엔트리별 파일선택 input (숨김) -->
   <input type="file" class="abgm_change_mp3_file" accept="audio/mpeg,audio/mp3" style="display:none;">
+  </div>
 </div>
-
           <!-- Right stack: Priority (top) / Volume (bottom) -->
           <div class="abgm-side">
             <div class="abgm-field-tight">
