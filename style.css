@@ -406,13 +406,6 @@ body.autobgm-modal-open{ overflow:hidden; }
   }
 
   /* 볼륨: 슬라이더는 한 줄로 길게, 숫자/락은 아래 우측 */
-  .abgm-volcell{
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    gap:8px;
-  }
-
   .abgm-volcell .abgm_vol{
     flex: 1 0 100%;
     width: 100%;
@@ -592,6 +585,50 @@ body.autobgm-modal-open{ overflow:hidden; }
     width: 34px !important;
     height: 30px !important;
     justify-self: end !important;
+  }
+}
+
+/* ===== narrow window: volume num+lock goes UNDER slider (but stays side-by-side) ===== */
+/* 창 폭이 좁아지면(PC든 뭐든) 볼륨 숫자+락을 슬라이더 아래로 내림 */
+@media (max-width: 760px){
+
+  /* 우선도 입력창과 볼륨 컨트롤의 가로폭을 동일하게 맞춤 */
+  .abgm-side .abgm_priority{
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .abgm-volcell{
+    display: grid !important;
+    grid-template-columns: 1fr 72px 34px !important; /* 슬라이더 폭 / 숫자 / 락 */
+    grid-template-rows: auto auto !important;
+    gap: 8px !important;
+    align-items: center !important;
+    max-width: 220px !important;  /* 우선도랑 동일 폭 */
+  }
+
+  /* 슬라이더는 위에서 단독 한 줄 */
+  .abgm-volcell .abgm_vol{
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    margin-top: 2px;
+  }
+
+  /* 숫자 + 락은 아래에서 우측 정렬로 딱 붙게 */
+  .abgm-volcell .abgm_volnum{
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    width: 72px !important;
+  }
+
+  .abgm-volcell .abgm_vol_lock{
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    width: 34px !important;
+    height: 30px !important;
   }
 }
 
