@@ -479,9 +479,11 @@ function updateNowPlayingUI() {
     const btnPlay = document.getElementById("autobgm_now_btn_play");
     const btnMode = document.getElementById("autobgm_now_btn_mode");
 
-    // default 버튼은 keywordMode일 때만 노출
+    // default 버튼은 keywordMode일 때만 "보이게" (자리 유지 숨김)
     if (btnDef) {
-      btnDef.style.display = settings?.keywordMode ? "" : "none";
+      const leftWrap = btnDef.closest(".np-left");
+      if (leftWrap) leftWrap.classList.toggle("is-hidden", !settings?.keywordMode);
+
       btnDef.textContent = settings?.useDefault ? "⭐" : "☆";
       btnDef.title = settings?.useDefault ? "Use Default: ON" : "Use Default: OFF";
     }
