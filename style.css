@@ -284,6 +284,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 .abgm-side{
+  grid-area: side;
   display:flex;
   flex-direction:column;
   gap:10px;
@@ -395,14 +396,6 @@ body.autobgm-modal-open{ overflow:hidden; }
   .abgm-keywords textarea.abgm_keywords{
     min-height: 74px;
     max-height: 130px;
-  }
-
-  /* 우측 스택 */
-  .abgm-side{
-    padding-top: 0px;
-    padding-bottom: 0px;
-    justify-content: flex-start;
-    gap:10px;
   }
 
   /* 볼륨: 슬라이더는 한 줄로 길게, 숫자/락은 아래 우측 */
