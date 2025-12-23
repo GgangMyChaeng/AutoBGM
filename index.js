@@ -963,8 +963,10 @@ function renderBgmTable(root, settings) {
         <div class="abgm-detail-grid">
           <!-- Keywords (left, taller) -->
           <div class="abgm-keywords">
-            <small>Keywords</small>
-            <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
+          <small>Keywords</small>
+          <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
+          <small class="abgm-src-title">Source</small>
+          <input type="text" class="abgm_source" placeholder="file.mp3 or https://..." value="${escapeHtml(b.fileKey ?? "")}">
           </div>
 
           <!-- Right stack: Priority (top) / Volume (bottom) -->
@@ -1004,11 +1006,21 @@ if (nameInput) {
     saveSettingsDebounced();
   });
 }
+
+      // Source change
+  const srcInput = tr2.querySelector(".abgm_source");
+  if (srcInput) {
+    srcInput.addEventListener("change", () => {
+      b.fileKey = srcInput.value.trim();
+      saveSettingsDebounced();
+  });
+}
     
     tbody.appendChild(tr);
     tbody.appendChild(tr2);
   });
 }
+
 
 function setPlayButtonsLocked(root, locked) {
   root?.querySelectorAll?.(".abgm_test")?.forEach((btn) => {
