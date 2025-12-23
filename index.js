@@ -1289,6 +1289,25 @@ function initModal(overlay) {
     rerenderAll(root, settings);
   });
 
+  // ===== Add empty entry row =====
+  root.querySelector("#abgm_bgm_add_row")?.addEventListener("click", () => {
+  const preset = getActivePreset(settings);
+
+  preset.bgms ??= [];
+  preset.bgms.push({
+    id: uid(),
+    fileKey: "",          // Source 비어있음 (재생/모드에서 자동 무시됨)
+    name: "",             // Entry name도 비어있게 (placeholder 보이게)
+    keywords: "",
+    priority: 0,
+    volume: 1.0,
+    volLocked: false,
+  });
+
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+});
+
   // ===== Expand/Collapse all =====
   root.querySelector("#abgm_expand_all")?.addEventListener("click", () => {
     const preset = getActivePreset(settings);
