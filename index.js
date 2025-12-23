@@ -958,57 +958,59 @@ function renderBgmTable(root, settings) {
     const vol100 = Math.round((b.volume ?? 1) * 100);
     const locked = !!b.volLocked;
 
-// index.js (renderBgmTable 안 tr2.innerHTML 부분에서 abgm-detail-grid 통째로 교체)
-
+// index.js v4 레이아웃
 tr2.innerHTML = `
   <td colspan="4">
-    <div class="abgm-detail-grid abgm-detail-v3">
+    <div class="abgm-detail-grid abgm-detail-v4">
 
-      <!-- Row 1: Keywords / Priority -->
+      <!-- Row 1 -->
       <div class="abgm-kwh">
         <small>Keywords</small>
       </div>
 
-      <div class="abgm-prih">
+      <div class="abgm-rh">
         <small>Priority</small>
-        <input type="number" class="abgm_priority abgm_narrow" value="${Number(b.priority ?? 0)}" step="1">
       </div>
 
-      <!-- Row 2: Keywords input / Volume -->
+      <!-- Row 2 -->
       <div class="abgm-kwbox">
-        <textarea
-          class="abgm_keywords"
-          placeholder="rain, storm..."
-        >${escapeHtml(b.keywords ?? "")}</textarea>
+        <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
       </div>
 
-      <div class="abgm-volbox">
-        <small>Volume</small>
-        <div class="abgm-volcell">
-          <input type="range" class="abgm_vol" min="0" max="100" value="${vol100}" ${locked ? "disabled" : ""}>
-          <input type="number" class="abgm_volnum" min="0" max="100" step="1" value="${vol100}">
-          <div class="menu_button abgm-iconbtn abgm_vol_lock" title="Lock slider">
-            <i class="fa-solid ${locked ? "fa-lock" : "fa-lock-open"}"></i>
-          </div>
+      <div class="abgm-rstack">
+        <div class="abgm-rfield">
+          <input type="number" class="abgm_priority abgm_rinput" value="${Number(b.priority ?? 0)}" step="1">
+        </div>
+
+        <div class="abgm-rfield">
+          <small>Volume</small>
+          <input type="range" class="abgm_vol abgm_rrange" min="0" max="100" value="${vol100}" ${locked ? "disabled" : ""}>
+          <input type="number" class="abgm_volnum abgm_rinput" min="0" max="100" step="1" value="${vol100}" ${locked ? "disabled" : ""}>
         </div>
       </div>
 
-      <!-- Row 3: Source (ONLY under Keywords column) -->
-      <div class="abgm-srcbox">
+      <!-- Row 3 -->
+      <div class="abgm-srch">
         <small>Source</small>
+      </div>
+
+      <div class="abgm-actions">
+        <div class="menu_button abgm-iconbtn abgm_vol_lock2" title="Lock volume">
+          <i class="fa-solid ${locked ? "fa-lock" : "fa-lock-open"}"></i>
+        </div>
+        <div class="menu_button abgm_del" title="Delete">
+          <i class="fa-solid fa-trash"></i> <span class="abgm-del-label">Delete</span>
+        </div>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="abgm-srcbox">
         <input
           type="text"
           class="abgm_source"
           value="${escapeHtml(b.fileKey ?? "")}"
-          placeholder="neutral_01.mp3 or https://..."
+          readonly
         >
-      </div>
-
-      <!-- Delete (right, spans rows) -->
-      <div class="abgm-detail-actions">
-        <div class="menu_button abgm_del" title="Delete">
-          <i class="fa-solid fa-trash"></i> <span class="abgm-del-label">Delete</span>
-        </div>
       </div>
 
     </div>
@@ -1577,13 +1579,10 @@ function initModal(overlay) {
     }
 
     if (e.target.classList.contains("abgm_volnum")) {
+      if (bgm.volLocked) return;
       const v = Math.max(0, Math.min(100, Number(e.target.value || 100)));
       bgm.volume = v / 100;
       engineTick();
-      if (!bgm.volLocked) {
-        const r = detailRow.querySelector(".abgm_vol");
-        if (r) r.value = String(v);
-      }
     }
 
     if (e.target.classList.contains("abgm_source")) {
@@ -1638,20 +1637,24 @@ function initModal(overlay) {
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
 
-    // lock volume
-    if (e.target.closest(".abgm_vol_lock")) {
-      bgm.volLocked = !bgm.volLocked;
+  // lock volume (NEW: lock button moved to row3)
+  if (e.target.closest(".abgm_vol_lock2")) {
+  bgm.volLocked = !bgm.volLocked;
 
-      const detailRow = tr.classList.contains("abgm-bgm-detail") ? tr : tr.closest("tr.abgm-bgm-detail") || tr;
-      const range = detailRow.querySelector(".abgm_vol");
-      const icon = detailRow.querySelector(".abgm_vol_lock i");
+  const detailRow = tr.classList.contains("abgm-bgm-detail") ? tr : tr.closest("tr.abgm-bgm-detail") || tr;
 
-      if (range) range.disabled = !!bgm.volLocked;
-      if (icon) icon.className = `fa-solid ${bgm.volLocked ? "fa-lock" : "fa-lock-open"}`;
+  const range = detailRow.querySelector(".abgm_vol");
+  const num = detailRow.querySelector(".abgm_volnum");
+  const icon = detailRow.querySelector(".abgm_vol_lock2 i");
 
-      saveSettingsDebounced();
-      return;
-    }
+  if (range) range.disabled = !!bgm.volLocked;
+  if (num) num.disabled = !!bgm.volLocked;
+  if (icon) icon.className = `fa-solid ${bgm.volLocked ? "fa-lock" : "fa-lock-open"}`;
+
+  saveSettingsDebounced();
+  return;
+}
+
 
     // delete
     if (e.target.closest(".abgm_del")) {
