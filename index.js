@@ -997,24 +997,6 @@ function renderBgmTable(root, settings) {
         </div>
       </td>
     `;
-
-  // Entry name change
-const nameInput = tr.querySelector(".abgm_name");
-if (nameInput) {
-  nameInput.addEventListener("change", () => {
-    b.name = nameInput.value.trim();
-    saveSettingsDebounced();
-  });
-}
-
-      // Source change
-  const srcInput = tr2.querySelector(".abgm_source");
-  if (srcInput) {
-    srcInput.addEventListener("change", () => {
-      b.fileKey = srcInput.value.trim();
-      saveSettingsDebounced();
-  });
-}
     
     tbody.appendChild(tr);
     tbody.appendChild(tr2);
@@ -1635,6 +1617,26 @@ function initModal(overlay) {
     const preset = getActivePreset(settings);
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
+
+    // Entry Name
+if (e.target.classList.contains("abgm_name")) {
+  bgm.name = String(e.target.value || "").trim();
+  saveSettingsDebounced();
+  return;
+}
+
+// Source (fileKey or url)
+if (e.target.classList.contains("abgm_source")) {
+  const oldKey = bgm.fileKey;
+  const newKey = String(e.target.value || "").trim();
+  bgm.fileKey = newKey;
+
+  if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
+
+  saveSettingsDebounced();
+  renderDefaultSelect(root, settings);
+  return;
+}
 
     // lock volume
     if (e.target.closest(".abgm_vol_lock")) {
