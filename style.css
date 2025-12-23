@@ -780,3 +780,22 @@ body.autobgm-modal-open{ overflow:hidden; }
   padding: 6px 8px;
   border-radius: 10px;
 }
+
+/* Default select 폭 제한 + 말줄임 */
+#abgm_default_select{
+  max-width: 180px;   /* 원하는 값으로 */
+  width: 100%;
+}
+
+/* 셀렉트가 있는 덩어리도 같이 제한 (popup에서 right 블록 쓰는 구조라서) */
+.abgm-top-row2 .abgm-top-item.right{
+  max-width: 240px;   /* 전체 덩어리 제한 */
+  min-width: 0;
+}
+
+/* select 안 텍스트가 길면 ... (브라우저마다 완벽하진 않음) */
+.abgm-top-row2 .abgm-top-item.right select{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
