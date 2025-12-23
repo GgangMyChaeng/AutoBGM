@@ -473,6 +473,40 @@ function updateNowPlayingUI() {
     _abgmSetText("abgm_now_title", title);
     _abgmSetText("abgm_now_state", state);
     _abgmSetText("abgm_now_meta", meta);
+
+    // ===== side-menu Now Playing controls =====
+    const btnDef = document.getElementById("autobgm_now_btn_default");
+    const btnPlay = document.getElementById("autobgm_now_btn_play");
+    const btnMode = document.getElementById("autobgm_now_btn_mode");
+
+    // default 버튼은 keywordMode일 때만 노출
+    if (btnDef) {
+      btnDef.style.display = settings?.keywordMode ? "" : "none";
+      btnDef.textContent = settings?.useDefault ? "⭐" : "☆";
+      btnDef.title = settings?.useDefault ? "Use Default: ON" : "Use Default: OFF";
+    }
+
+    // 재생 상태 아이콘
+    if (btnPlay) {
+      const icon = !fk ? "⏹️" : (_bgmAudio?.paused ? "⏸️" : "▶️");
+      btnPlay.textContent = icon;
+      btnPlay.title = icon === "▶️" ? "Pause" : (icon === "⏸️" ? "Play" : "Start");
+    }
+
+    // 모드 아이콘 (5개 통합)
+    if (btnMode) {
+      const modeIcon =
+        settings?.keywordMode ? "💬" :
+        (settings?.playMode === "loop_one" ? "🔂" :
+         settings?.playMode === "loop_list" ? "🔁" :
+         settings?.playMode === "random" ? "🔀" : "▶️");
+
+      btnMode.textContent = modeIcon;
+      btnMode.title =
+        settings?.keywordMode ? "Mode: Keyword" :
+        `Mode: ${settings?.playMode || "manual"}`;
+    }
+
   } catch {}
 }
 
@@ -1961,6 +1995,76 @@ async function mount() {
     root.id = "autobgm-root";
     root.innerHTML = html;
     host.appendChild(root);
+
+    // ===== side-menu Now Playing controls bind =====
+    const btnDef = root.querySelector("#autobgm_now_btn_default");
+    const btnPlay = root.querySelector("#autobgm_now_btn_play");
+    const btnMode = root.querySelector("#autobgm_now_btn_mode");
+
+    // Use Default 토글 (keywordMode일 때만 의미 있음)
+    btnDef?.addEventListener("click", () => {
+      const s = ensureSettings();
+      s.useDefault = !s.useDefault;
+      saveSettingsDebounced();
+      try { engineTick(); } catch {}
+      updateNowPlayingUI();
+    });
+
+    // Play/Pause/Start
+    btnPlay?.addEventListener("click", async () => {
+      const s = ensureSettings();
+
+      // 꺼져있으면 켜고 시작(원래 enabled 버튼 역할까지 겸하게)
+      if (!s.enabled) {
+        s.enabled = true;
+        saveSettingsDebounced();
+      }
+
+      // 현재 재생중이면 pause
+      if (_engineCurrentFileKey && !_bgmAudio.paused) {
+        try { _bgmAudio.pause(); } catch {}
+        updateNowPlayingUI();
+        return;
+      }
+
+      // paused면 resume
+      if (_engineCurrentFileKey && _bgmAudio.paused) {
+        try { await _bgmAudio.play(); } catch {}
+        updateNowPlayingUI();
+        return;
+      }
+
+      // stopped면 엔진 로직대로 “알아서” 시작
+      try { engineTick(); } catch {}
+      updateNowPlayingUI();
+    });
+
+    // Mode cycle: manual → loop_one → loop_list → random → keyword → manual ...
+    btnMode?.addEventListener("click", () => {
+      const s = ensureSettings();
+
+      const next = (() => {
+        if (s.keywordMode) return "manual";
+        const cur = s.playMode || "manual";
+        if (cur === "manual") return "loop_one";
+        if (cur === "loop_one") return "loop_list";
+        if (cur === "loop_list") return "random";
+        if (cur === "random") return "keyword";
+        return "manual";
+      })();
+
+      if (next === "keyword") {
+        s.keywordMode = true;
+        // keywordMode면 playMode는 의미 적지만 혹시 모르니 남겨둠
+      } else {
+        s.keywordMode = false;
+        s.playMode = next; // manual/loop_one/loop_list/random
+      }
+
+      saveSettingsDebounced();
+      try { engineTick(); } catch {}
+      updateNowPlayingUI();
+    });
 
     const helpBtn = root.querySelector("#autobgm_help_toggle");
     const helpText = root.querySelector("#autobgm_help_text");
