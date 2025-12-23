@@ -267,6 +267,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 .abgm-keywords{
   display:flex;
   flex-direction:column;
+  gap:6px;
   min-width:0;
 }
 
@@ -330,6 +331,23 @@ body.autobgm-modal-open{ overflow:hidden; }
   pointer-events: none;
   cursor: not-allowed;
   filter: grayscale(1);
+}
+
+/* ===== Detail: Source ===== */
+
+.abgm-src-title{
+  margin-top:6px;
+  opacity:.85;
+}
+
+.abgm_source{
+  width:100%;
+  padding:6px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:inherit;
+  min-width:0;
 }
 
 /* ===== responsive: mobile table widths (play/more 항상 보이게) ===== */
