@@ -1647,6 +1647,16 @@ function initModal(overlay) {
 
     if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
     if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
+    
+    // 엔트리 이름 개선
+    if (e.target.classList.contains("abgm_name")) {
+      bgm.name = String(e.target.value || "").trim();
+      updateNowPlayingUI(); // 엔트리 이름 바꾸면 Now Playing도 즉시 갱신
+      renderDefaultSelect(root, settings); // Default 셀렉트에 엔트리 이름 표시하려면 즉시 재렌더
+      saveSettingsDebounced();
+      return;
+    }
+    
     if (e.target.classList.contains("abgm_source")) {
   const oldKey = String(bgm.fileKey ?? "");
   const newKey = String(e.target.value || "").trim();
@@ -1716,13 +1726,6 @@ function initModal(overlay) {
     const preset = getActivePreset(settings);
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
-
-    // Entry Name
-if (e.target.classList.contains("abgm_name")) {
-  bgm.name = String(e.target.value || "").trim();
-  saveSettingsDebounced();
-  return;
-}
 
 // Source (fileKey or url)
 if (e.target.classList.contains("abgm_source")) {
