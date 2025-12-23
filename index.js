@@ -966,8 +966,16 @@ function renderBgmTable(root, settings) {
           <small>Keywords</small>
           <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
           <small class="abgm-src-title">Source</small>
-          <input type="text" class="abgm_source" placeholder="file.mp3 or https://..." value="${escapeHtml(b.fileKey ?? "")}">
-          </div>
+
+<div class="abgm-source-row" style="display:flex; gap:8px; align-items:center;">
+  <input type="text" class="abgm_source" placeholder="file.mp3 or https://..." value="${escapeHtml(b.fileKey ?? "")}" style="flex:1; min-width:0;">
+  <div class="menu_button abgm-iconbtn abgm_change_mp3" title="Change MP3" style="white-space:nowrap;">
+    <i class="fa-solid fa-file-audio"></i>
+  </div>
+
+  <!-- 엔트리별 파일선택 input (숨김) -->
+  <input type="file" class="abgm_change_mp3_file" accept="audio/mpeg,audio/mp3" style="display:none;">
+</div>
 
           <!-- Right stack: Priority (top) / Volume (bottom) -->
           <div class="abgm-side">
@@ -1560,6 +1568,18 @@ function initModal(overlay) {
 
     if (e.target.classList.contains("abgm_keywords")) bgm.keywords = e.target.value;
     if (e.target.classList.contains("abgm_priority")) bgm.priority = Number(e.target.value || 0);
+    if (e.target.classList.contains("abgm_source")) {
+  const oldKey = String(bgm.fileKey ?? "");
+  const newKey = String(e.target.value || "").trim();
+  bgm.fileKey = newKey;
+
+  // default가 이 파일을 가리키고 있었으면 같이 바꿔줌
+  if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
+
+  saveSettingsDebounced();
+  renderDefaultSelect(root, settings);
+  return;
+}
 
     const detailRow = tr.classList.contains("abgm-bgm-detail") ? tr : tr.closest("tr.abgm-bgm-detail") || tr;
 
@@ -1638,6 +1658,21 @@ if (e.target.classList.contains("abgm_source")) {
   return;
 }
 
+    // change mp3 (swap only this entry's asset)
+if (e.target.closest(".abgm_change_mp3")) {
+  const detailRow = tr.classList.contains("abgm-bgm-detail")
+    ? tr
+    : tr.closest("tr.abgm-bgm-detail") || tr;
+
+  const fileInput = detailRow.querySelector(".abgm_change_mp3_file");
+  if (!fileInput) return;
+
+  // 이 엔트리의 id를 fileInput에 기억시켜둠
+  fileInput.dataset.bgmId = String(id);
+  fileInput.click();
+  return;
+}
+
     // lock volume
     if (e.target.closest(".abgm_vol_lock")) {
       bgm.volLocked = !bgm.volLocked;
@@ -1701,6 +1736,49 @@ if (e.target.classList.contains("abgm_source")) {
       return;
     }
   });
+
+  // file picker change (per-entry mp3 swap)
+root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
+  if (!e.target.classList?.contains("abgm_change_mp3_file")) return;
+
+  const file = e.target.files?.[0];
+  const bgmId = String(e.target.dataset.bgmId || "");
+  e.target.value = ""; // 같은 파일 다시 선택 가능하게
+
+  if (!file || !bgmId) return;
+
+  const preset = getActivePreset(settings);
+  const bgm = preset.bgms.find((x) => String(x.id) === bgmId);
+  if (!bgm) return;
+
+  const oldKey = String(bgm.fileKey ?? "");
+  const newKey = String(file.name ?? "").trim();
+  if (!newKey) return;
+
+  try {
+    // 새 파일 저장
+    await idbPut(newKey, file);
+    const assets = ensureAssetList(settings);
+    assets[newKey] = { fileKey: newKey, label: newKey.replace(/\.mp3$/i, "") };
+
+    // 엔트리 소스 교체
+    bgm.fileKey = newKey;
+
+    // default도 같이 따라가게
+    if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
+
+    // oldKey가 더 이상 참조 안 되면 정리(선택)
+    if (oldKey && oldKey !== newKey && !isFileKeyReferenced(settings, oldKey)) {
+      try { await idbDel(oldKey); delete settings.assets[oldKey]; } catch {}
+    }
+
+    saveSettingsDebounced();
+    rerenderAll(root, settings);
+    try { engineTick(); } catch {}
+  } catch (err) {
+    console.error("[AutoBGM] change mp3 failed:", err);
+  }
+});
 
   // ===== Import/Export (preset 1개: 룰만) =====
   const importFile = root.querySelector("#abgm_import_file");
@@ -1769,7 +1847,7 @@ if (e.target.classList.contains("abgm_source")) {
   });
 
   rerenderAll(root, settings);
-}
+} // initModal 닫기
 
 /** ========= Side menu mount ========= */
 async function mount() {
