@@ -481,8 +481,8 @@ body.autobgm-modal-open{ overflow:hidden; }
 @media (min-width: 700px){
 
   :root{
-    --abgm-pc-ctlw: 220px;   /* ✅ 우선도/슬라이더 최대 가로폭(둘 동일) */
-    --abgm-pc-delw: 160px;   /* ✅ delete 컬럼 폭 */
+    --abgm-pc-ctlw: 220px;   /* 우선도/슬라이더 최대 가로폭(둘 동일) */
+    --abgm-pc-delw: 160px;   /* delete 컬럼 폭 */
   }
 
   /* 키워드 | side(우선도/볼륨) | delete */
@@ -495,7 +495,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 
   .abgm-keywords{ grid-area: kw; }
 
-  /* ✅ side: Priority는 auto / Volume이 나머지 => 절대 멀어지지 않음 */
+  /* side: Priority는 auto / Volume이 나머지 => 절대 멀어지지 않음 */
   .abgm-side{
     grid-area: side;
     display: grid !important;
@@ -525,7 +525,7 @@ body.autobgm-modal-open{ overflow:hidden; }
 
   .abgm-side .abgm_priority{
     width: 100% !important;
-    max-width: var(--abgm-pc-ctlw) !important; /* ✅ 슬라이더와 동일 */
+    max-width: var(--abgm-pc-ctlw) !important; /* 슬라이더와 동일 */
   }
 
   /* Volume block: 타이틀+슬라이더가 Priority처럼 상하로 딱 붙게 */
@@ -549,7 +549,7 @@ body.autobgm-modal-open{ overflow:hidden; }
     gap: 8px !important;
     align-items: center !important;
     align-content: start !important;
-    max-width: var(--abgm-pc-ctlw) !important; /* ✅ 우선도와 동일 */
+    max-width: var(--abgm-pc-ctlw) !important; /* 우선도와 동일 */
   }
 
   input[type="range"].abgm_vol{
@@ -734,36 +734,10 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* ===========================
-   Detail layout v4 (2 cols, 4 rows)
-   - Left: Keywords/Source
+   Detail (Source)
    - Right: Priority + Volume stack (right-aligned, fixed-ish width)
    - Row3 right: Lock + Delete
    =========================== */
-
-.abgm-detail-grid.abgm-detail-v4{
-  --abgm-gap: 10px;
-  --abgm-right-w: clamp(180px, 28vw, 260px);
-
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) var(--abgm-right-w);
-  grid-template-rows: auto auto auto auto;
-  grid-template-areas:
-    "kwh  rh"
-    "kw   rstack"
-    "srch actions"
-    "src  .";
-  gap: var(--abgm-gap);
-  align-items: start;
-}
-
-/* areas */
-.abgm-kwh{ grid-area: kwh; }
-.abgm-rh{ grid-area: rh; text-align: right; }
-.abgm-kwbox{ grid-area: kw; }
-.abgm-rstack{ grid-area: rstack; }
-.abgm-srch{ grid-area: srch; }
-.abgm-actions{ grid-area: actions; }
-.abgm-srcbox{ grid-area: src; }
 
 /* left column inputs */
 .abgm-kwbox textarea.abgm_keywords{
@@ -779,49 +753,7 @@ body.autobgm-modal-open{ overflow:hidden; }
   min-width: 0;
 }
 
-/* right column stack */
-.abgm-rstack{
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* <- 니가 말한 “항목 우측 정렬 기준” */
-  gap: 10px;
-}
-
-.abgm-rfield{
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 6px; /* 타이틀-입력 간격 동일 */
-}
-
 .abgm-rfield small{
   text-align: right;
   opacity: .85;
-}
-
-.abgm-rinput{
-  width: 100%;
-  min-width: 0;
-  height: 34px; /* 우선도/볼륨 입력 높이 동일 */
-}
-
-.abgm-rrange{
-  width: 100%;
-  min-width: 0;
-}
-
-/* actions row (lock + delete aligned right) */
-.abgm-actions{
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-}
-
-/* mobile: right column shrinks but stays right-aligned */
-@media (max-width: 520px){
-  .abgm-detail-grid.abgm-detail-v4{
-    --abgm-right-w: clamp(150px, 40vw, 200px);
-    grid-template-columns: minmax(0, 1fr) var(--abgm-right-w);
-  }
 }
