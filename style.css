@@ -739,15 +739,6 @@ body.autobgm-modal-open{ overflow:hidden; }
    - Row3 right: Lock + Delete
    =========================== */
 
-/* left column inputs */
-.abgm-kwbox textarea.abgm_keywords{
-  width: 100%;
-  min-width: 0;
-  resize: vertical;
-  max-height: 220px;   /* “세로 늘리기 적당히” */
-  min-height: 72px;    /* 기본은 가로 넓고 세로는 적당히 */
-}
-
 .abgm-srcbox .abgm_source{
   width: 100%;
   min-width: 0;
