@@ -248,12 +248,12 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* 헬프 제목 */
-.autobgm-helptext .abgm-minihelp > b{
+.autobgm-helptext, .abgm-minihelp > b{
   font-size: 18px;
 }
 
 /* 헬프 */
-.autobgm-helptext .abgm-minihelp{
+.autobgm-helptext, .abgm-minihelp{
   margin-top:10px;
   font-size:16px;
   opacity:.75;
@@ -261,20 +261,20 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* 리스트 간격(항목끼리) */
-.autobgm-helptext .abgm-minihelp ul{
+.autobgm-helptext, .abgm-minihelp ul{
   margin: 8px 0;
   padding-left: 18px; /* 들여쓰기 살짝 */
 }
 
-.autobgm-helptext .abgm-minihelp li{
+.autobgm-helptext, .abgm-minihelp li{
   margin: 6px 0;      /* 항목 위아래 간격 */
 }
 
 /* 중첩 ul은 조금 덜 벌어지게 */
-.autobgm-helptext .abgm-minihelp li ul{
+.autobgm-helptext, .abgm-minihelp li ul{
   margin-top: 6px;
 }
-.autobgm-helptext .abgm-minihelp li ul li{
+.autobgm-helptext, .abgm-minihelp li ul li{
   margin: 4px 0;
 }
 
@@ -818,14 +818,6 @@ body.autobgm-modal-open{ overflow:hidden; }
 .menu_button.autobgm-menu-btn .autobgm-menu-state{
   opacity:.8;
   white-space:nowrap;
-}
-
-/* help text (collapsible) */
-.autobgm-helptext{
-  margin-top:8px;
-  opacity:.85;
-  font-size:12px;
-  line-height:1.35;
 }
 
 .menu_button.autobgm-menu-btn{
