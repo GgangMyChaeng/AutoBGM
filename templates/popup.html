@@ -105,6 +105,11 @@
   <div class="menu_button" id="abgm_bind_open" title="Bind this preset to character cards">
     <i class="fa-solid fa-link"></i> Bind
   </div>
+
+  <div class="menu_button" id="abgm_modal_help_toggle" title="Modal help">
+    <i class="fa-solid fa-book"></i>
+  </div>
+  
 <div class="menu_button" id="abgm_preset_help_toggle" title="Preset help">
   <i class="fa-solid fa-book"></i>
 </div>
@@ -120,7 +125,7 @@
 
         <!-- 모달 설명 -->
         <div class="abgm-minihelp" id="abgm_modal_help" style="display:none;">
-          # AutoBGM 설명
+          <b># AutoBGM 설명</b>b>
           <ul>
   <li>
     <strong>Now Playing: </strong>
@@ -187,7 +192,7 @@
 
         <!-- 프리셋 설명 -->
       <div class="abgm-minihelp" id="abgm_preset_help" style="display:none;">
-          # Presets 설명
+          <b># Presets 설명</b>b>
 <ul>
   <li><strong>프리셋 추가(+): </strong>새 프리셋 생성 기능</li>
   <li>
@@ -253,7 +258,7 @@
 
   <!-- Row 2: delete+Vol reset+help (left) / add+expand+collapse+lock (right) -->
 <div class="abgm-row abgm-bgmbar2" style="margin-top:8px; align-items:center; gap:10px;">
-  <div class="menu_button" id="abgm_delete_selected" title="Delete selected entrys">
+  <div class="menu_button" id="abgm_delete_selected" title="Delete selected entries">
     <i class="fa-solid fa-trash"></i> Ent
   </div>
 
@@ -264,6 +269,10 @@
 
   <!-- help 버튼 -->
   <div class="menu_button" id="abgm_bgm_help_toggle" title="BGM List help">
+    <i class="fa-solid fa-book"></i>
+  </div>
+
+    <div class="menu_button" id="abgm_bgm_entry_help_toggle" title="BGM List Entry help">
     <i class="fa-solid fa-book"></i>
   </div>
 
@@ -290,7 +299,7 @@
 
   <!-- 브금 리스트 설명 -->
   <div class="abgm-minihelp" id="abgm_bgm_help" style="display:none;">
-    # BGM List 설명
+    <b># BGM List 설명</b>b>
     <ul>
             <li><strong>MP3 파일 추가(음표): </strong>특정 경로에 있는 MP3 파일을 인식시켜줄 수 있음</li>
             <li><strong>ZIP 파일 추가(ZIP): </strong>특정 경로에 있는 ZIP 파일을(MP3 파일이 들어가 있는 ZIP) 인식시켜줄 수 있음</li>
@@ -305,7 +314,7 @@
         </ul>
   </div>
   <div class="abgm-minihelp" id="abgm_bgm_entry_help" style="display:none;">
-    # BGM List Entry 설명
+    <b># BGM List Entry 설명</b>
     <ul>
   <li><strong>File: </strong>해당 항목의 이름을 바꿀 수 있는 기능</li>
   <li><strong>Play: </strong>누르면 재생됨</li>
