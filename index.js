@@ -980,6 +980,25 @@ function getSortedBgms(preset, sort) {
   return arr;
 }
 
+if (mode === "priority_asc" || mode === "priority_desc") {
+  arr.sort((a, b) => {
+    const pa = Number(a?.priority ?? 0);
+    const pb = Number(b?.priority ?? 0);
+
+    if (pa !== pb) return pa - pb; // asc 기본
+
+    // 동률이면 이름 A-Z
+    return getEntryName(a).localeCompare(
+      getEntryName(b),
+      undefined,
+      { numeric: true, sensitivity: "base" }
+    );
+  });
+
+  if (mode === "priority_desc") arr.reverse();
+  return arr;
+}
+
   return arr; // added_asc
 }
 
