@@ -248,12 +248,12 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* 헬프 제목 */
-.abgm-help .abgm-minihelp > b{
+.autobgm-helptext .abgm-minihelp > b{
   font-size: 18px;
 }
 
 /* 헬프 */
-.abgm-help .abgm-minihelp{
+.autobgm-helptext .abgm-minihelp{
   margin-top:10px;
   font-size:16px;
   opacity:.75;
@@ -261,20 +261,20 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* 리스트 간격(항목끼리) */
-.abgm-help .abgm-minihelp ul{
+.autobgm-helptext .abgm-minihelp ul{
   margin: 8px 0;
   padding-left: 18px; /* 들여쓰기 살짝 */
 }
 
-.abgm-help .abgm-minihelp li{
+.autobgm-helptext .abgm-minihelp li{
   margin: 6px 0;      /* 항목 위아래 간격 */
 }
 
 /* 중첩 ul은 조금 덜 벌어지게 */
-.abgm-help .abgm-minihelp li ul{
+.autobgm-helptext .abgm-minihelp li ul{
   margin-top: 6px;
 }
-.abgm-help .abgm-minihelp li ul li{
+.autobgm-helptext .abgm-minihelp li ul li{
   margin: 4px 0;
 }
 
