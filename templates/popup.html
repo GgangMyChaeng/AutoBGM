@@ -185,7 +185,7 @@
 </ul>
         </div>
 
-        <!-- LEFT: 프리셋 설명 -->
+        <!-- 프리셋 설명 -->
       <div class="abgm-minihelp" id="abgm_preset_help" style="display:none;">
           # Presets 설명
 <ul>
@@ -288,7 +288,7 @@
   <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
 </div>
 
-  <!-- Row 3: 브금 리스트 설명 -->
+  <!-- 브금 리스트 설명 -->
   <div class="abgm-minihelp" id="abgm_bgm_help" style="display:none;">
     # BGM List 설명
     <ul>
@@ -304,6 +304,49 @@
             <li><strong>Lock all volume sliders(자물쇠):</strong> 각 BGM 볼륨을 설정해 주는 슬라이더를 잠가주는 기능임 → 키워드나 우선도 설정하다가 실수로 볼륨 설정 바꿔버리는 경우를 방지해 줌, 다만 볼륨 설정 입력창까지 잠가주진 않으니 그 점 유의 바람. 볼륨 입력창은 눌러서 수치를 입력해야 바뀌니까 굳이 실수할 거라 생각은 안 하고, 디테일한(터치로 하기 불편한 1 단위 조절이라든지) 설정을 할 수 있게 안 잠기게 해둔 거임.</li>
         </ul>
   </div>
+  <div class="abgm-minihelp" id="abgm_bgm_entry_help" style="display:none;">
+    # BGM List Entry 설명
+    <ul>
+  <li><strong>File: </strong>해당 항목의 이름을 바꿀 수 있는 기능</li>
+  <li><strong>Play: </strong>누르면 재생됨</li>
+  <li>
+    <strong>펼치기/접기(More): </strong>
+    BGM File 각각의 설정을 위한 기능. 항목별로 펼치거나 접을 수 있음
+    <ul>
+      <li><strong>Keywords: </strong>해당 BGM이 트리거(재생) 될 키워드 매칭 기능. 쉼표로 구분해 다수 키워드 매칭 가능</li>
+      <li>
+        <strong>Source: </strong>
+        해당 항목에 연결된 파일명 혹은 직링 URL이 보이거나(또는 입력하는) 칸.
+        MP3를 먹여둬 파일명이 적힌 경우 함부로 수정하면 유령 항목이 되니,
+        반드시 "(원본파일명).mp3" 또는 올바른 직링 URL을 유지해야 함
+      </li>
+
+      <li><strong>Change MP3: </strong>해당 항목에 mp3 파일을 먹이거나 교체하는 기능</li>
+      <li>
+        <strong>Priority: </strong>
+        여러 키워드가 인식됐을 때 어떤 BGM을 재생할지 결정하는 값.
+        우선도 숫자가 가장 큰 BGM이 재생됨
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>Volume: </strong>
+    mp3 파일들의 소리 설정을 각각 따로 할 수 있게 해주는 기능
+    <ul>
+      <li><strong>슬라이더: </strong>좌측(0)~우측(100). 터치로 조정 가능</li>
+      <li><strong>입력칸: </strong>1 단위 같은 미세 조절이 필요할 때 직접 수치 입력</li>
+    </ul>
+  </li>
+  <li>
+    <strong>자물쇠(Lock slider): </strong>
+    실수로 슬라이더를 건드려 볼륨이 바뀌는 걸 방지하는 기능. 눌러서 잠금/해제 가능
+  </li>
+  <li>
+    <strong>삭제(쓰레기통): </strong>
+    해당 항목을 리스트에서 삭제하는 기능 → 실수 방지용 쿠션 창(확인 메시지) 뜸
+  </li>
+</ul>
+    </div>
 
   <!-- 집 나갔던 파일들 -->
   <div class="abgm-tablewrap">
