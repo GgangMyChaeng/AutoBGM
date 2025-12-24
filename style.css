@@ -253,11 +253,17 @@ body.autobgm-modal-open{ overflow:hidden; }
   opacity:.18;
 }
 
+/* 헬프 */
 .abgm-minihelp{
   margin-top:10px;
-  font-size:12px;
+  font-size:16px;
   opacity:.75;
   line-height:1.35;
+}
+
+/* 헬프 제목 */
+.abgm-minihelp > b{
+  font-size: 18px;
 }
 
 /* inputs in modal should not overflow */
