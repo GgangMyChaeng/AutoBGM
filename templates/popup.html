@@ -118,6 +118,7 @@
   <input id="abgm_import_file" type="file" accept="application/json" style="display:none;">
 </div>
 
+        <!-- 모달 설명 -->
         <div class="abgm-minihelp" id="abgm_modal_help" style="display:none;">
           # AutoBGM 설명
           <ul>
@@ -183,6 +184,8 @@
   </li>
 </ul>
         </div>
+
+        <!-- LEFT: 프리셋 설명 -->
       <div class="abgm-minihelp" id="abgm_preset_help" style="display:none;">
           # Presets 설명
 <ul>
@@ -285,10 +288,21 @@
   <input id="abgm_bgm_file" type="file" accept="audio/mpeg,audio/mp3" style="display:none;">
 </div>
 
-  <!-- Row 3: help (collapsed by default) -->
+  <!-- Row 3: 브금 리스트 설명 -->
   <div class="abgm-minihelp" id="abgm_bgm_help" style="display:none;">
-    키워드는 쉼표로 구분 (예: rain, storm, thunder)<br/>
-    웅앵 어쩌고저쩌고 BGM List 설명
+    # BGM List 설명
+    <ul>
+            <li><strong>MP3 파일 추가(음표): </strong>특정 경로에 있는 MP3 파일을 인식시켜줄 수 있음</li>
+            <li><strong>ZIP 파일 추가(ZIP): </strong>특정 경로에 있는 ZIP 파일을(MP3 파일이 들어가 있는 ZIP) 인식시켜줄 수 있음</li>
+            <li><strong>Sort:</strong> BGM List의 파일 정렬 순서 설정 기능임. 참고로 우선도 순은 동일 값일 시 항목 이름 순으로 정렬됨.</li>
+            <li><strong>Ent(쓰레기통):</strong> 선택한 BGM들을 삭제해 주는 기능임. 버튼 상단에는 몇 개의 항목을 선택해뒀는지 "N selected"이라고 뜰 거임. 그리고 실수로 삭제하지 말라고 쿠션 창(삭제 확인 메시지) 뜰 거임.</li>
+            <li><strong>Vol(초기화):</strong> 선택한 BGM들의 볼륨 설정을 초기화해 주는 기능임. 역시 버튼 상단에는 몇 개의 항목을 선택해뒀는지 "N selected"이라고 뜸. 얘도 실수로 삭제하지 말라고 쿠션 창(초기화 확인 메시지) 뜰 거임. 참고로 "<strong>Lock all volume sliders</strong>" 기능 활성화 여부와 무관하게 무조건 초기화해 주니 유의 바람.</li>
+            <li><strong>책(BGM List help): </strong>BGM List 섹션에 있는 버튼 등에 대한 간략한 설명을 볼 수 있음</li>
+            <li><strong>Add empty entry(+): </strong>빈 항목을 만들 수 있는 버튼. 생성된 항목은 Source에 오디오 직링(url)을 입력하거나, Change MP3 버튼을 통해 BGM 연결 가능.</li>
+            <li><strong>Expand all rows(하단): </strong>BGM List 항목들을 전부 펼쳐주는 기능임</li>
+            <li><strong>Collapse all rows(상단): </strong>BGM List 항목들을 전부 접어주는 기능임</li>
+            <li><strong>Lock all volume sliders(자물쇠):</strong> 각 BGM 볼륨을 설정해 주는 슬라이더를 잠가주는 기능임 → 키워드나 우선도 설정하다가 실수로 볼륨 설정 바꿔버리는 경우를 방지해 줌, 다만 볼륨 설정 입력창까지 잠가주진 않으니 그 점 유의 바람. 볼륨 입력창은 눌러서 수치를 입력해야 바뀌니까 굳이 실수할 거라 생각은 안 하고, 디테일한(터치로 하기 불편한 1 단위 조절이라든지) 설정을 할 수 있게 안 잠기게 해둔 거임.</li>
+        </ul>
   </div>
 
   <!-- 집 나갔던 파일들 -->
