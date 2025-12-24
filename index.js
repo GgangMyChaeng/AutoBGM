@@ -325,7 +325,6 @@ function ensureSettings() {
   ensureAssetList(s);
   s.chatStates ??= {};
   s.debugMode ??= false;
-  __abgmDebugMode = !!s.debugMode;
 
   // 프리셋/곡 스키마 보정 + 구버전 변환
   Object.values(s.presets).forEach((p) => {
@@ -2069,8 +2068,6 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
   // 옵션: 밖(빈 곳) 클릭하면 다 닫기 하고 싶으면 이거 추가
   // root.addEventListener("click", (e) => { ... });
 }
-// initModal 마지막쯤에 호출
-setupHelpToggles(root);
 
   // 키보드/주소창 변화 대응
   overlay.addEventListener("focusin", () => {
