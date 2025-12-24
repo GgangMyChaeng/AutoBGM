@@ -1350,9 +1350,9 @@ function initModal(overlay) {
     saveSettingsDebounced();
   });
 
+  // 확장 헬프
   const bgmHelpBtn = root.querySelector("#abgm_bgm_help_toggle");
   const bgmHelpBox = root.querySelector("#abgm_bgm_help");
-  
   bgmHelpBtn?.addEventListener("click", () => {
   if (!bgmHelpBox) return;
   const on = bgmHelpBox.style.display !== "none";
