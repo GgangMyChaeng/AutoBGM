@@ -2032,6 +2032,15 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
+// 모달 헬프
+const modalHelpBtn = root.querySelector("#abgm_modal_help_toggle");
+const modalHelpBox = root.querySelector("#abgm_modal_help");
+modalHelpBtn?.addEventListener("click", () => {
+  if (!modalHelpBox) return;
+  const on = modalHelpBox.style.display !== "none";
+  modalHelpBox.style.display = on ? "none" : "block";
+});
+
   // 프리셋 헬프
   const presetHelpBtn = root.querySelector("#abgm_preset_help_toggle");
   const presetHelpBox = root.querySelector("#abgm_preset_help");
@@ -2041,6 +2050,14 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
   presetHelpBox.style.display = on ? "none" : "block";
 });
 
+  // 엔트리 헬프
+const entryHelpBtn = root.querySelector("#abgm_bgm_entry_help_toggle");
+const entryHelpBox = root.querySelector("#abgm_bgm_entry_help");
+entryHelpBtn?.addEventListener("click", () => {
+  if (!entryHelpBox) return;
+  const on = entryHelpBox.style.display !== "none";
+  entryHelpBox.style.display = on ? "none" : "block";
+});
 
   // 키보드/주소창 변화 대응
   overlay.addEventListener("focusin", () => {
