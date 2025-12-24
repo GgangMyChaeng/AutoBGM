@@ -2164,6 +2164,8 @@ async function mount() {
     const enabledState = root.querySelector("#autobgm_enabled_state");
     const enabledIcon = root.querySelector("#autobgm_enabled_icon");
     const openBtn = root.querySelector("#autobgm_open");
+    const debugBtn = root.querySelector("#autobgm_debug_btn");
+    
     if (!enabledBtn || !enabledState || !openBtn) return;
     
     const syncEnabledUI = () => {
@@ -2171,19 +2173,49 @@ async function mount() {
       enabledState.textContent = on ? "On" : "Off";
       
       if (enabledIcon) {
-    // on/off 아이콘 바꾸기 (원하면 다른 아이콘 써도 됨)
+    // on/off 아이콘 바꾸기 (원하면 다른 아이콘 사용 가능)
     enabledIcon.classList.toggle("fa-toggle-off", !on);
     enabledIcon.classList.toggle("fa-toggle-on", on);
   }
 };
-    
+
+    const syncDebugUI = () => {
+      const s = ensureSettings();
+      const on = !!s.debugMode;
+      if (!debugBtn) return;
+      
+      debugBtn.classList.toggle("abgm-debug-on", on);
+      debugBtn.title = on ? "Debug: ON" : "Debug: OFF";
+
+      const icon = debugBtn.querySelector("i");
+      if (icon) {
+        icon.classList.toggle("fa-bug", !on);
+        icon.classList.toggle("fa-bug-slash", on); // 싫으면 이 줄 빼고 bug만 써도 됨
+      }
+    };
+
     syncEnabledUI();
+    syncDebugUI();
     
     enabledBtn.addEventListener("click", () => {
       settings.enabled = !settings.enabled;
       saveSettingsDebounced();
       syncEnabledUI();
       try { engineTick(); } catch {}
+      updateNowPlayingUI(); // 이거도 같이 해주는 게 깔끔
+      syncDebugUI();
+    });
+
+    debugBtn?.addEventListener("click", () => {
+      const s = ensureSettings();
+      s.debugMode = !s.debugMode;
+      __abgmDebugMode = !!s.debugMode;
+      
+      if (!__abgmDebugMode) __abgmDebugLine = ""; // 끌 때 즉시 비우기
+      
+      saveSettingsDebounced();
+      syncDebugUI();
+      updateNowPlayingUI();
     });
     
     helpBtn?.addEventListener("click", () => {
