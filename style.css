@@ -583,6 +583,23 @@ body.autobgm-modal-open{ overflow:hidden; }
   place-items: center;
 }
 
+/* ===== confirm modal buttons: always horizontal ===== */
+.abgm-confirm-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:12px;              /* 기존 8px -> 12px 정도 */
+  flex-wrap:nowrap;      /* 절대 줄바꿈 금지 */
+}
+
+.abgm-confirm-actions .menu_button{
+  width:auto !important;         /* 세로로 찢기는 원인 차단 */
+  min-width: 84px;              /* 너무 찌그러지지 않게 */
+  display:inline-flex !important;
+  justify-content:center;
+  white-space:nowrap;           /* 글자 줄바꿈 방지 */
+}
+
 /* =========================================================
    PC detail rule (FINAL)
    - side는 Priority(위) / Volume(아래) 항상 붙음 (auto + 1fr)
