@@ -32,12 +32,6 @@
   color:inherit;
 }
 
-.abgm-help{
-  margin-top:10px;
-  font-size:12px;
-  opacity:.8;
-}
-
 /* ===== Extension menu: Now Playing layout only ===== */
 #autobgm-root .autobgm-now-wrap,
 #autobgm-root #autobgm_now_wrap {
@@ -254,12 +248,12 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* 헬프 제목 */
-.abgm-minihelp > b{
+.abgm-help, .abgm-minihelp > b{
   font-size: 18px;
 }
 
 /* 헬프 */
-.abgm-minihelp{
+.abgm-help, .abgm-minihelp{
   margin-top:10px;
   font-size:16px;
   opacity:.75;
@@ -267,20 +261,20 @@ body.autobgm-modal-open{ overflow:hidden; }
 }
 
 /* 리스트 간격(항목끼리) */
-.abgm-minihelp ul{
+.abgm-help, .abgm-minihelp ul{
   margin: 8px 0;
   padding-left: 18px; /* 들여쓰기 살짝 */
 }
 
-.abgm-minihelp li{
+.abgm-help, .abgm-minihelp li{
   margin: 6px 0;      /* 항목 위아래 간격 */
 }
 
 /* 중첩 ul은 조금 덜 벌어지게 */
-.abgm-minihelp li ul{
+.abgm-help, .abgm-minihelp li ul{
   margin-top: 6px;
 }
-.abgm-minihelp li ul li{
+.abgm-help, .abgm-minihelp li ul li{
   margin: 4px 0;
 }
 
