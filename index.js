@@ -2049,6 +2049,10 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
     const box = root.querySelector(`#${boxId}`);
     if (!btn || !box) continue;
 
+    // 중복 바인딩 방지
+    if (btn.dataset.abgmHelpBound === "1") continue;
+    btn.dataset.abgmHelpBound = "1";
+    
     // 초기 안전빵
     if (!box.style.display) box.style.display = "none";
 
@@ -2073,8 +2077,8 @@ setupHelpToggles(root);
     requestAnimationFrame(() => fitModalToHost(overlay, getModalHost()));
     setTimeout(() => fitModalToHost(overlay, getModalHost()), 120);
   });
-
   rerenderAll(root, settings);
+  setupHelpToggles(root);
 } // initModal 닫기
 
 /** ========= Side menu mount ========= */
