@@ -459,15 +459,23 @@ function updateNowPlayingUI() {
     // 표시용 제목: 엔트리 이름 우선
     const title = bgm ? getEntryName(bgm) : (fk || "(none)");
 
-    // meta는 기존처럼
-    const presetName = preset?.name || "Preset";
-    const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
-    const meta = `${modeLabel} · ${presetName}` + (__abgmDebugMode && __abgmDebugLine ? ` · ${__abgmDebugLine}` : "");
+    // meta(기본 정보) / debug(추가 정보) 분리
+const presetName = preset?.name || "Preset";
+const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
+const meta = `${modeLabel} · ${presetName}`;
+const debugLine = (__abgmDebugMode && __abgmDebugLine) ? String(__abgmDebugLine) : "";
 
-    // drawer
-    _abgmSetText("autobgm_now_title", title);
-    _abgmSetText("autobgm_now_state", state);
-    _abgmSetText("autobgm_now_meta", meta);
+// drawer
+_abgmSetText("autobgm_now_title", title);
+// _abgmSetText("autobgm_now_state", state);  // ST 확장 메뉴에는 필요없
+_abgmSetText("autobgm_now_meta", meta);
+
+// 확장메뉴 디버그 줄
+const dbg = document.getElementById("autobgm_now_debug");
+if (dbg) {
+  dbg.style.display = debugLine ? "" : "none";
+  dbg.textContent = debugLine;
+}
 
     // modal
     _abgmSetText("abgm_now_title", title);
