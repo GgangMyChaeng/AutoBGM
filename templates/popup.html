@@ -118,9 +118,99 @@
   <input id="abgm_import_file" type="file" accept="application/json" style="display:none;">
 </div>
 
-        <div class="abgm-minihelp" id="abgm_preset_help" style="display:none;">
-          프리셋은 설명<br/>
-          어쩌고저쩌고
+        <div class="abgm-minihelp" id="abgm_modal_help" style="display:none;">
+          # AutoBGM 설명
+          <ul>
+  <li>
+    <strong>Now Playing: </strong>
+    현재 재생 중인 곡이나 상태를 확인할 수 있는 작은 창. 키워드 모드를 포함한 다섯 가지 재생 모드 중 무엇인지,
+    현재 재생 중인 곡은 어느 프리셋에 속했는지 확인할 수 있음. 이외에 후술할 디버그 모드를 통해 다른 정보도 확인 가능.
+  </li>
+  <li>
+    <strong>Keyword Mode: </strong>
+    AI의 마지막 메시지에서 키워드가 인식되면 자동으로 해당 BGM이 조건(키워드 인식, 우선도 등)에 따라 자동 재생되는 기능임.
+    키워드 트리거 방식 기반이므로 키워드 모드를 활성화하는 동안은 모달 창의 개별 재생(Play), 재생 모드(Play Mode) 버튼은 자동으로 비활성화됨.
+  </li>
+  <li>
+    <strong>디버그 모드(Debug Mode): </strong>
+    지금 확장이 제대로 돌아가고 있는지 <strong>Now Playing</strong>에서 확인할 수 있음.
+    기본적으로 보이는 건 <strong>asstLen</strong>이고, 키워드 모드 활성화 시 <strong>kw</strong>와 <strong>hit</strong>가 추가로 보임.
+    즉, 키워드 설정을 해두고 제대로 매칭됐는지 확인하는 용도로 사용 가능.
+    <ul>
+      <li>
+        <strong>asstLen: </strong>
+        마지막 AI 메시지의 공백 및 줄바꿈 포함 글자 수(UTF-16 코드 유닛 기준).
+        키워드 모드가 아닐 때는 글자 수 뒤에 "kw"와 "hit" 대신, 현재 인식한 컨텍스트의 초반 몇 글자를 보여줌.
+      </li>
+      <li><strong>kw: </strong>현재 마지막 AI 메시지 기준으로 어떤 키워드들이 트리거 됐는지 보여줌</li>
+      <li><strong>hit: </strong>로직에 따라 <strong>최종적으로</strong> 결정된 곡(1개)을 보여줌</li>
+    </ul>
+  </li>
+  <li>
+    <strong>재생 모드(Play Mode): </strong>
+    키워드 모드 비활성화 시 사용할 수 있는 모드. Manual(일반 재생), Loop One(단일 무한), Loop List(리스트 무한), Random(랜덤)이 있음
+    <ul>
+      <li><strong>Manual(일반 재생): </strong>한 곡 재생 후 종료되면 그대로 끝남</li>
+      <li><strong>Loop One(단일 무한 재생): </strong>한 곡만 무한 자동 재생</li>
+      <li><strong>Loop List(리스트 무한 재생): </strong>프리셋의 BGM List 순서대로(Sort로 조정 가능) 무한 재생</li>
+      <li>
+        <strong>Random(랜덤 재생): </strong>
+        프리셋의 BGM을 랜덤 순서로 무한 재생. 활성화 방법은 2가지가 있음
+        <ul>
+          <li>🍏 아무 곡이나 재생 → Play Mode를 Manual에서 Random으로 변경 (첫 곡을 원하는 곡으로 시작 가능)</li>
+          <li>🍏 Play Mode를 Random으로 설정 → Enabled로 확장을 껐다 켜기</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>Use Default when no keyword: </strong>
+    키워드 모드 활성화 중, AI의 마지막 지문에 인식된 키워드가 <strong>없을 때</strong>
+    이전 BGM 유지 대신 Default BGM이 재생되도록 하는 기능임.
+    타이틀곡(Default BGM)을 설정해둬도 이전 곡을 유지하고 싶으면 이 기능을 끄면 됨.
+  </li>
+  <li>
+    <strong>Default: </strong>
+    프리셋 타이틀곡 설정 기능. "키워드 모드" + "Use Default when no keyword" 활성화 중,
+    AI 마지막 컨텍스트에 인식된 키워드가 없을 때 재생됨.
+    키워드 모드 킨 상태에서 Default도 없고 키워드도 없으면 이전 곡 재생이 유지됨.
+  </li>
+  <li>
+    <strong>Global Volume(전체 볼륨): </strong>
+    BGM별 상세 볼륨을 설정해놨어도, Global Volume으로 전체적인 소리 크기를 한 번 더 조정할 수 있음.
+    프리셋 mp3들의 음량 편차 때문에 쓰기 불편한 상황을 줄이기 위한 쿠션 기능이라고 보면 됨.
+    (세부 볼륨은 BGM List에서 따로 조정하면 됨)
+  </li>
+</ul>
+        </div>
+      <div class="abgm-minihelp" id="abgm_preset_help" style="display:none;">
+          # Presets 설명
+<ul>
+  <li><strong>프리셋 추가(+): </strong>새 프리셋 생성 기능</li>
+  <li>
+    <strong>삭제(쓰레기통): </strong>
+    현재 프리셋 삭제 기능 → 실수 방지용 쿠션 창(확인 메시지) 뜸
+  </li>
+  <li>
+    <strong>수정(연필): </strong>
+    현재 프리셋 명칭 수정 기능 → 입력창에 변경할 명칭 적고 연필 누르면 됨
+  </li>
+  <li>
+    <strong>Bind(Bind this preset to character cards): </strong>
+    특정 프리셋을 여러 캐릭터에 종속시키는 기능. Bind 해둔 캐릭터의 채팅에 들어가면 해당 프리셋으로 자동 연결됨
+    (확장 비활성화 상태면 동작 안 함)
+  </li>
+  <li>
+    <strong>Import: </strong>
+    (이름)_AutoBGM.json을 삽입하면, 프리셋 설정(프리셋명/엔트리명/파일명 또는 URL/키워드/우선도/볼륨)만 불러와짐.<br>
+    mp3 파일은 따로 추가해야 하고, 파일명이 프리셋에 등록된 것과 일치하면 정상 동작함
+  </li>
+  <li>
+    <strong>Export: </strong>
+    위 설정(프리셋명/엔트리명/파일명 또는 URL/키워드/우선도/볼륨)이 저장된 json 파일이 생성됨.<br>
+    mp3 파일까지 같이 공유하려면 사용자가 별도로 세팅해야 함
+  </li>
+</ul>
         </div>
       </section>
 
