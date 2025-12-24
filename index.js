@@ -1443,6 +1443,32 @@ function initModal(overlay) {
     rerenderAll(root, settings);
   });
 
+  // ===== bulk reset volume (selected) =====
+root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async () => {
+  const selected = root.__abgmSelected;
+  if (!selected?.size) return;
+
+  const preset = getActivePreset(settings);
+
+  const ok = await abgmConfirm(root, `선택한 ${selected.size}개 BGM의 볼륨을 100으로 초기화?`, {
+    title: "Reset volume",
+    okText: "확인",
+    cancelText: "취소",
+  });
+  if (!ok) return;
+
+  for (const id of selected) {
+    const bgm = preset.bgms.find((x) => x.id === id);
+    if (!bgm) continue;
+    bgm.volume = 1.0;      // 잠겨있어도 볼륨 값은 초기화
+    // bgm.volLocked 는 건드리지 않음(요구사항)
+  }
+
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+  try { engineTick(); } catch {}
+});
+
   // ===== Add empty entry row =====
   root.querySelector("#abgm_bgm_add_row")?.addEventListener("click", () => {
   const preset = getActivePreset(settings);
