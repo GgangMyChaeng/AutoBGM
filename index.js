@@ -966,8 +966,28 @@ function getSortedBgms(preset, sort) {
   const arr = [...(preset?.bgms ?? [])];
   const mode = sort || "added_asc";
 
-  if (mode === "added_desc") return arr.reverse();
+  // 우선도 순
+  if (mode === "priority_asc" || mode === "priority_desc") {
+  const dir = (mode === "priority_desc") ? -1 : 1; // asc=1, desc=-1
 
+  arr.sort((a, b) => {
+    const pa = Number(a?.priority ?? 0);
+    const pb = Number(b?.priority ?? 0);
+
+    if (pa !== pb) return (pa - pb) * dir; // 우선도 방향만 바꿈
+
+    // 동률이면 이름 A-Z (항상 A-Z 유지)
+    return getEntryName(a).localeCompare(
+      getEntryName(b),
+      undefined,
+      { numeric: true, sensitivity: "base" }
+    );
+  });
+    
+    return arr;
+}
+
+  // 이름순
   if (mode === "name_asc" || mode === "name_desc") {
   arr.sort((a, b) =>
     getEntryName(a).localeCompare(
@@ -980,24 +1000,8 @@ function getSortedBgms(preset, sort) {
   return arr;
 }
 
-if (mode === "priority_asc" || mode === "priority_desc") {
-  arr.sort((a, b) => {
-    const pa = Number(a?.priority ?? 0);
-    const pb = Number(b?.priority ?? 0);
-
-    if (pa !== pb) return pa - pb; // asc 기본
-
-    // 동률이면 이름 A-Z
-    return getEntryName(a).localeCompare(
-      getEntryName(b),
-      undefined,
-      { numeric: true, sensitivity: "base" }
-    );
-  });
-
-  if (mode === "priority_desc") arr.reverse();
-  return arr;
-}
+    // 추가순
+  if (mode === "added_desc") return arr.reverse();
 
   return arr; // added_asc
 }
