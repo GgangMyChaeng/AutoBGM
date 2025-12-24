@@ -1350,15 +1350,6 @@ function initModal(overlay) {
     saveSettingsDebounced();
   });
 
-  // 확장 헬프
-  const bgmHelpBtn = root.querySelector("#abgm_bgm_help_toggle");
-  const bgmHelpBox = root.querySelector("#abgm_bgm_help");
-  bgmHelpBtn?.addEventListener("click", () => {
-  if (!bgmHelpBox) return;
-  const on = bgmHelpBox.style.display !== "none";
-  bgmHelpBox.style.display = on ? "none" : "block";
-});
-
   // ===== Sort =====
   const sortSel = root.querySelector("#abgm_sort");
   if (sortSel) {
@@ -2032,32 +2023,50 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
-// 모달 헬프
-const modalHelpBtn = root.querySelector("#abgm_modal_help_toggle");
-const modalHelpBox = root.querySelector("#abgm_modal_help");
-modalHelpBtn?.addEventListener("click", () => {
-  if (!modalHelpBox) return;
-  const on = modalHelpBox.style.display !== "none";
-  modalHelpBox.style.display = on ? "none" : "block";
-});
+  // ===== 헬프 토글 =====
+  function setupHelpToggles(root) {
+  // 버튼ID : 박스ID
+  const helps = [
+    ["abgm_modal_help_toggle", "abgm_modal_help"],
+    ["abgm_preset_help_toggle", "abgm_preset_help"],
+    ["abgm_bgm_help_toggle", "abgm_bgm_help"],
+    ["abgm_bgm_entry_help_toggle", "abgm_bgm_entry_help"],
+  ];
 
-  // 프리셋 헬프
-  const presetHelpBtn = root.querySelector("#abgm_preset_help_toggle");
-  const presetHelpBox = root.querySelector("#abgm_preset_help");
-  presetHelpBtn?.addEventListener("click", () => {
-  if (!presetHelpBox) return;
-  const on = presetHelpBox.style.display !== "none";
-  presetHelpBox.style.display = on ? "none" : "block";
-});
+  const boxes = helps
+    .map(([, boxId]) => root.querySelector(`#${boxId}`))
+    .filter(Boolean);
 
-  // 엔트리 헬프
-const entryHelpBtn = root.querySelector("#abgm_bgm_entry_help_toggle");
-const entryHelpBox = root.querySelector("#abgm_bgm_entry_help");
-entryHelpBtn?.addEventListener("click", () => {
-  if (!entryHelpBox) return;
-  const on = entryHelpBox.style.display !== "none";
-  entryHelpBox.style.display = on ? "none" : "block";
-});
+  function closeAll(exceptEl = null) {
+    for (const el of boxes) {
+      if (exceptEl && el === exceptEl) continue;
+      el.style.display = "none";
+    }
+  }
+
+  for (const [btnId, boxId] of helps) {
+    const btn = root.querySelector(`#${btnId}`);
+    const box = root.querySelector(`#${boxId}`);
+    if (!btn || !box) continue;
+
+    // 초기 안전빵
+    if (!box.style.display) box.style.display = "none";
+
+    btn.addEventListener("click", () => {
+      const isOpen = box.style.display !== "none";
+      if (isOpen) {
+        box.style.display = "none";
+      } else {
+        closeAll(box);     // 나 말고 다 닫기
+        box.style.display = "block";
+      }
+    });
+  }
+  // 옵션: 밖(빈 곳) 클릭하면 다 닫기 하고 싶으면 이거 추가
+  // root.addEventListener("click", (e) => { ... });
+}
+// initModal 마지막쯤에 호출
+setupHelpToggles(root);
 
   // 키보드/주소창 변화 대응
   overlay.addEventListener("focusin", () => {
