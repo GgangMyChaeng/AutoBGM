@@ -365,6 +365,7 @@ function ensureSettings() {
     keywordMode: true,
     debugMode: false,
     globalVolume: 0.7,
+    globalVolLocked: false,
     useDefault: true,
     activePresetId: "default",
     presets: {
@@ -381,6 +382,7 @@ function ensureSettings() {
   };
 
   const s = extension_settings[SETTINGS_KEY];
+  s.globalVolLocked ??= false;
   ensureEngineFields(s);
 
   s.ui ??= { bgmSort: "added_asc" };
@@ -425,15 +427,12 @@ Object.values(s.presets).forEach((p) => {
     b.priority ??= 0;
     b.volume ??= 1.0;
     b.volLocked ??= false;
-
-    // 라이센스/설명 텍스트
     b.license ??= "";
   });
 });
 
 // 구버전: settings.defaultBgmId 같은 전역 값 남아있으면 제거 (있어도 안 쓰게)
   if (s.defaultBgmId) delete s.defaultBgmId;
-
   return s;
 }
 
@@ -816,7 +815,7 @@ async function ensurePlayFile(fileKey, vol01, loop) {
   const fk = String(fileKey ?? "").trim();
   if (!fk) return false;
 
-  // ✅ URL이면 IDB 없이 바로 재생
+  // URL이면 IDB 없이 바로 재생
   if (isProbablyUrl(fk)) {
     if (_bgmUrl) URL.revokeObjectURL(_bgmUrl);
     _bgmUrl = ""; // url은 revoke 대상 아님
@@ -832,7 +831,7 @@ async function ensurePlayFile(fileKey, vol01, loop) {
     return true;
   }
 
-  // ✅ 파일키면 기존대로 IDB
+  // 파일키면 기존대로 IDB
   const blob = await idbGet(fk);
   if (!blob) return false;
 
@@ -1089,14 +1088,14 @@ function getSortedBgms(preset, sort) {
 
     // 추가순
   if (mode === "added_desc") return arr.reverse();
-
   return arr; // added_asc
 }
 
+// 프리셋 선택
 function renderPresetSelect(root, settings) {
   const sel = root.querySelector("#abgm_preset_select");
-  const nameInput = root.querySelector("#abgm_preset_name");
-  if (!sel || !nameInput) return;
+  const nameInput = root.querySelector("#abgm_preset_name"); // 있을 수도/없을 수도
+  if (!sel) return;
 
   sel.innerHTML = "";
   Object.values(settings.presets).forEach((p) => {
@@ -1107,7 +1106,8 @@ function renderPresetSelect(root, settings) {
     sel.appendChild(opt);
   });
 
-  nameInput.value = getActivePreset(settings).name || "";
+  // nameInput이 있으면만 채우기
+  if (nameInput) nameInput.value = getActivePreset(settings).name || "";
 }
 
 function renderDefaultSelect(root, settings) {
@@ -1390,6 +1390,7 @@ function initModal(overlay) {
   const pm = root.querySelector("#abgm_playMode");
   const gv = root.querySelector("#abgm_globalVol");
   const gvText = root.querySelector("#abgm_globalVolText");
+  const gvLock = root.querySelector("#abgm_globalVol_lock");
   const useDef = root.querySelector("#abgm_useDefault");
 
   if (kw) kw.checked = !!settings.keywordMode;
@@ -1426,15 +1427,45 @@ function initModal(overlay) {
     });
   }
 
+  // ===== Global Volume + Lock =====
+  settings.globalVolLocked ??= false; // 안전빵(ensureSettings에도 넣는게 정석)
+
+  const syncGlobalVolUI = () => {
+    const locked = !!settings.globalVolLocked;
+
+    if (gv) gv.disabled = locked;
+
+    if (gvLock) {
+      gvLock.classList.toggle("abgm-locked", locked);
+      gvLock.title = locked ? "Global Volume Locked" : "Lock Global Volume";
+
+      const icon = gvLock.querySelector("i");
+      if (icon) {
+        icon.classList.toggle("fa-lock", locked);
+        icon.classList.toggle("fa-lock-open", !locked);
+      }
+    }
+  };
+
   if (gv) gv.value = String(Math.round((settings.globalVolume ?? 0.7) * 100));
   if (gvText) gvText.textContent = gv?.value ?? "70";
+  syncGlobalVolUI();
 
   gv?.addEventListener("input", (e) => {
+    if (settings.globalVolLocked) return; // 락이면 입력 무시
+
     const v = Number(e.target.value);
     settings.globalVolume = Math.max(0, Math.min(1, v / 100));
     if (gvText) gvText.textContent = String(v);
+
     saveSettingsDebounced();
     engineTick();
+  });
+
+  gvLock?.addEventListener("click", () => {
+    settings.globalVolLocked = !settings.globalVolLocked;
+    saveSettingsDebounced();
+    syncGlobalVolUI();
   });
 
   if (useDef) useDef.checked = !!settings.useDefault;
@@ -1644,13 +1675,27 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
     rerenderAll(root, settings);
   });
 
-  root.querySelector("#abgm_preset_rename")?.addEventListener("click", () => {
-    const name = root.querySelector("#abgm_preset_name")?.value?.trim();
-    if (!name) return;
-    getActivePreset(settings).name = name;
-    saveSettingsDebounced();
-    rerenderAll(root, settings);
+  // 프리셋 이름 변경
+  root.querySelector("#abgm_preset_rename_btn")?.addEventListener("click", async () => {
+  const preset = getActivePreset(settings);
+  const out = await abgmPrompt(root, `Preset name 변경`, {
+    title: "Rename Preset",
+    okText: "확인",
+    cancelText: "취소",
+    resetText: "초기화",
+    initialValue: preset?.name ?? "",
+    placeholder: "Preset name...",
   });
+
+  if (out === null) return;
+  const name = String(out ?? "").trim();
+  if (!name) return;
+
+  preset.name = name;
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+  updateNowPlayingUI();
+});
 
     // ===== Preset Binding UI (bind preset to character cards) =====
   const bindOpen = root.querySelector("#abgm_bind_open");
@@ -1787,7 +1832,7 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
       preset.bgms.push({
         id: uid(),
         fileKey,
-        name: basenameNoExt(fk),
+        name: basenameNoExt(filekey),
         keywords: "",
         priority: 0,
         volume: 1.0,
@@ -1819,7 +1864,7 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
           preset.bgms.push({
             id: uid(),
             fileKey: fk,
-            name: basenameNoExt(fileKey),
+            name: basenameNoExt(fK),
             keywords: "",
             priority: 0,
             volume: 1.0,
