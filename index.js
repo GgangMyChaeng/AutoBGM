@@ -218,6 +218,75 @@ function abgmConfirm(containerOrDoc, message, {
   });
 }
 
+// 라이센스 입력 쿠션창
+function abgmPrompt(containerOrDoc, message, {
+  title = "Edit",
+  okText = "확인",
+  cancelText = "취소",
+  resetText = "초기화",
+  initialValue = "",
+  placeholder = "License / Description...",
+} = {}) {
+  const doc = containerOrDoc?.ownerDocument || document;
+  const container =
+    containerOrDoc && containerOrDoc.nodeType === 1 ? containerOrDoc : doc.body;
+
+  return new Promise((resolve) => {
+    const wrap = doc.createElement("div");
+    wrap.className = "abgm-confirm-wrap";
+    if (container !== doc.body) wrap.classList.add("abgm-confirm-in-modal");
+
+    wrap.innerHTML = `
+      <div class="abgm-confirm-backdrop"></div>
+      <div class="abgm-confirm" role="dialog" aria-modal="true">
+        <div class="abgm-confirm-title">${escapeHtml(title)}</div>
+        <div class="abgm-confirm-msg">${escapeHtml(message)}</div>
+
+        <textarea class="abgm-prompt-text" style="
+          width:100%; min-height:96px; resize:vertical;
+          margin-top:10px; padding:10px;
+          border-radius:10px;
+          border:1px solid rgba(255,255,255,.14);
+          background:rgba(0,0,0,.25);
+          color:inherit;
+          box-sizing:border-box;
+        " placeholder="${escapeHtml(placeholder)}"></textarea>
+
+        <div class="abgm-confirm-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+          <button class="menu_button abgm-confirm-reset" type="button">${escapeHtml(resetText)}</button>
+          <button class="menu_button abgm-confirm-cancel" type="button">${escapeHtml(cancelText)}</button>
+          <button class="menu_button abgm-confirm-ok" type="button">${escapeHtml(okText)}</button>
+        </div>
+      </div>
+    `;
+
+    const ta = wrap.querySelector(".abgm-prompt-text");
+    if (ta) ta.value = String(initialValue ?? "");
+
+    const done = (v) => {
+      doc.removeEventListener("keydown", onKey);
+      wrap.remove();
+      resolve(v);
+    };
+
+    const onKey = (e) => { if (e.key === "Escape") done(null); };
+    doc.addEventListener("keydown", onKey);
+
+    wrap.querySelector(".abgm-confirm-backdrop")?.addEventListener("click", () => done(null));
+    wrap.querySelector(".abgm-confirm-cancel")?.addEventListener("click", () => done(null));
+    wrap.querySelector(".abgm-confirm-ok")?.addEventListener("click", () => done(ta ? ta.value : ""));
+    wrap.querySelector(".abgm-confirm-reset")?.addEventListener("click", () => {
+      if (ta) ta.value = "";
+      // reset 후 즉시 저장시키고 싶으면 여기서 done("")로 바꿔도 됨
+    });
+
+    container.appendChild(wrap);
+
+    // 포커스
+    setTimeout(() => { try { ta?.focus(); } catch {} }, 0);
+  });
+}
+
 /** ========= IndexedDB Assets =========
  * key: fileKey (예: "neutral_01.mp3")
  * value: Blob(File)
@@ -327,31 +396,36 @@ function ensureSettings() {
   s.debugMode ??= false;
 
   // 프리셋/곡 스키마 보정 + 구버전 변환
-  Object.values(s.presets).forEach((p) => {
-    p.defaultBgmKey ??= "";
-    p.bgms ??= [];
+Object.values(s.presets).forEach((p) => {
+  p.defaultBgmKey ??= "";
+  p.bgms ??= [];
 
-    // 구버전: preset.defaultBgmId가 있으면 -> defaultBgmKey로 변환
-    if (p.defaultBgmId && !p.defaultBgmKey) {
-      const hit = p.bgms.find((b) => b.id === p.defaultBgmId);
-      if (hit?.fileKey) p.defaultBgmKey = hit.fileKey;
-      else if (hit?.name) p.defaultBgmKey = `${hit.name}.mp3`;
-      delete p.defaultBgmId;
+  // 구버전: preset.defaultBgmId가 있으면 -> defaultBgmKey로 변환
+  if (p.defaultBgmId && !p.defaultBgmKey) {
+    const hit = p.bgms.find((b) => b.id === p.defaultBgmId);
+    if (hit?.fileKey) p.defaultBgmKey = hit.fileKey;
+    else if (hit?.name) p.defaultBgmKey = `${hit.name}.mp3`;
+    delete p.defaultBgmId;
+  }
+
+  // bgm들 스키마 보정
+  p.bgms.forEach((b) => {
+    b.id ??= uid();
+
+    if (!b.fileKey) {
+      if (b.name) b.fileKey = `${b.name}.mp3`;
+      else b.fileKey = "";
     }
 
-    // bgm들 스키마 보정
-    p.bgms.forEach((b) => {
-      b.id ??= uid();
-      if (!b.fileKey) {
-        if (b.name) b.fileKey = `${b.name}.mp3`;
-        else b.fileKey = "";
-      }
-      b.keywords ??= "";
-      b.priority ??= 0;
-      b.volume ??= 1.0;
-      b.volLocked ??= false;
-    });
+    b.keywords ??= "";
+    b.priority ??= 0;
+    b.volume ??= 1.0;
+    b.volLocked ??= false;
+
+    // 라이센스/설명 텍스트
+    b.license ??= "";
   });
+});
 
 // 구버전: settings.defaultBgmId 같은 전역 값 남아있으면 제거 (있어도 안 쓰게)
   if (s.defaultBgmId) delete s.defaultBgmId;
@@ -463,6 +537,21 @@ const presetName = preset?.name || "Preset";
 const modeLabel = settings?.keywordMode ? "Keyword" : (settings?.playMode || "manual");
 const meta = `${modeLabel} · ${presetName}`;
 const debugLine = (__abgmDebugMode && __abgmDebugLine) ? String(__abgmDebugLine) : "";
+
+// ===== modal license area =====
+const licWrap = document.getElementById("abgm_np_license_wrap");
+const licText = document.getElementById("abgm_np_license_text");
+
+if (licWrap && licText) {
+  const lic = bgm ? String(bgm.license ?? "").trim() : "";
+  if (lic) {
+    licWrap.style.display = "";
+    licText.textContent = lic;
+  } else {
+    licWrap.style.display = "none";
+    licText.textContent = "";
+  }
+}
 
 // drawer
 _abgmSetText("autobgm_now_title", title);
@@ -1115,11 +1204,15 @@ function renderBgmTable(root, settings) {
           <textarea class="abgm_keywords" placeholder="rain, storm...">${escapeHtml(b.keywords ?? "")}</textarea>
           <small class="abgm-src-title">Source</small>
 
+<!-- 좌측 애들 -->
 <div class="abgm-source-row" style="display:flex; gap:8px; align-items:center;">
   <input type="text" class="abgm_source" placeholder="file.mp3 or https://..." value="${escapeHtml(b.fileKey ?? "")}" style="flex:1; min-width:0;">
-  <div class="menu_button abgm-iconbtn abgm_change_mp3" title="Change MP3" style="white-space:nowrap;">
-    <i class="fa-solid fa-file-audio"></i>
+<div class="menu_button abgm-iconbtn abgm_change_mp3" title="Change MP3" style="white-space:nowrap;">
+  <i class="fa-solid fa-file-audio"></i>
   </div>
+<div class="menu_button abgm-iconbtn abgm_license_btn" title="License / Description" style="white-space:nowrap;">
+  <i class="fa-solid fa-file-lines"></i>
+</div>
 
   <!-- 엔트리별 파일선택 input (숨김) -->
   <input type="file" class="abgm_change_mp3_file" accept="audio/mpeg,audio/mp3" style="display:none;">
@@ -1200,6 +1293,7 @@ function exportPresetFile(preset) {
       priority: Number(b.priority ?? 0),
       volume: Number(b.volume ?? 1),
       volLocked: !!b.volLocked,
+      license: b.license ?? "",
     })),
   };
 
@@ -1226,6 +1320,7 @@ function rekeyPreset(preset) {
     priority: Number(b.priority ?? 0),
     volume: Number(b.volume ?? 1),
     volLocked: !!b.volLocked,
+    license: b.license ?? "",
   }));
 
   if (!p.defaultBgmKey && p.bgms.length && p.bgms[0].fileKey) {
@@ -1379,6 +1474,16 @@ function initModal(overlay) {
 
     updateSelectionUI();
   });
+
+  // ===== License =====
+  const licToggle = root.querySelector("#abgm_np_license_toggle");
+  const licText = root.querySelector("#abgm_np_license_text");
+  licToggle?.addEventListener("click", () => {
+    if (!licText) return;
+    const on = licText.style.display !== "none";
+    licText.style.display = on ? "none" : "block";
+  });
+
 
   // ===== bulk delete =====
   root.querySelector("#abgm_delete_selected")?.addEventListener("click", async () => {
@@ -1678,7 +1783,7 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
       preset.bgms.push({
         id: uid(),
         fileKey,
-        name: basenameNoExt(fileKey),
+        name: basenameNoExt(fk),
         keywords: "",
         priority: 0,
         volume: 1.0,
@@ -1831,6 +1936,26 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
     const preset = getActivePreset(settings);
     const bgm = preset.bgms.find((x) => x.id === id);
     if (!bgm) return;
+
+      // license / description edit
+if (e.target.closest(".abgm_license_btn")) {
+  const current = String(bgm.license ?? "");
+  const out = await abgmPrompt(root, `License / Description (이 엔트리에만 저장됨)`, {
+    title: "License / Description",
+    okText: "확인",
+    cancelText: "취소",
+    resetText: "초기화",
+    initialValue: current,
+    placeholder: "예) CC BY 4.0 / 출처 링크 / 사용조건 요약...",
+  });
+
+  // 취소면 null
+  if (out === null) return;
+  bgm.license = String(out ?? "").trim();
+  saveSettingsDebounced();
+  try { updateNowPlayingUI(); } catch {}
+  return;
+}
 
     // change mp3 (swap only this entry's asset)
 if (e.target.closest(".abgm_change_mp3")) {
