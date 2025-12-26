@@ -978,3 +978,37 @@ body.autobgm-modal-open{ overflow:hidden; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ===== Actions (Copy/Move/Delete) ===== */
+/* 기본(PC/중간폭): 우측 칼럼에서 세로 스택 */
+.abgm-detail-actions{
+  display:flex !important;
+  flex-direction: column !important;
+  gap:10px !important;
+  justify-content:center !important;   /* 세로 중앙 */
+  align-items:flex-end !important;     /* 우측 정렬 */
+  padding-right:14px !important;
+}
+
+/* 버튼 줄바꿈 방지 + 폭 통일(원하면 숫자만 조절) */
+.abgm-detail-actions .menu_button{
+  white-space:nowrap !important;
+  width:110px !important;
+  justify-content:center !important;
+}
+
+/* 모바일(<=520): 아래로 내려간 영역에서 가로 정렬 */
+@media (max-width: 520px){
+  .abgm-detail-actions{
+    grid-column: 1 / -1 !important;    /* 아래 한 줄 먹기 */
+    flex-direction: row !important;    /* 가로 */
+    justify-content:flex-end !important;
+    align-items:center !important;
+    padding-right:0 !important;
+    margin-top:8px !important;
+  }
+
+  .abgm-detail-actions .menu_button{
+    width:auto !important;             /* 모바일에선 폭 고정 풀어주기 */
+  }
+}
