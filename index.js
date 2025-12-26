@@ -291,6 +291,74 @@ function abgmPrompt(containerOrDoc, message, {
   });
 }
 
+/** ========= 항목 이동 ========= */
+function abgmPickPreset(containerOrDoc, settings, {
+  title = "Select Preset",
+  message = "어느 프리셋으로 보낼까?",
+  okText = "확인",
+  cancelText = "취소",
+  excludePresetId = "",
+} = {}) {
+  const doc = containerOrDoc?.ownerDocument || document;
+  const container =
+    containerOrDoc && containerOrDoc.nodeType === 1 ? containerOrDoc : doc.body;
+
+  return new Promise((resolve) => {
+    const wrap = doc.createElement("div");
+    wrap.className = "abgm-confirm-wrap";
+    if (container !== doc.body) wrap.classList.add("abgm-confirm-in-modal");
+
+    const options = Object.values(settings.presets || {})
+      .filter((p) => String(p.id) !== String(excludePresetId))
+      .map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name || p.id)}</option>`)
+      .join("");
+
+    wrap.innerHTML = `
+      <div class="abgm-confirm-backdrop"></div>
+      <div class="abgm-confirm" role="dialog" aria-modal="true">
+        <div class="abgm-confirm-title">${escapeHtml(title)}</div>
+        <div class="abgm-confirm-msg">${escapeHtml(message)}</div>
+
+        <select class="abgm-pickpreset" style="
+          width:100%;
+          margin-top:10px;
+          padding:10px;
+          border-radius:10px;
+          border:1px solid rgba(255,255,255,.14);
+          background:rgba(0,0,0,.25);
+          color:inherit;
+          box-sizing:border-box;
+        ">
+          ${options}
+        </select>
+
+        <div class="abgm-confirm-actions" style="margin-top:10px;">
+          <button class="menu_button abgm-confirm-ok" type="button">${escapeHtml(okText)}</button>
+          <button class="menu_button abgm-confirm-cancel" type="button">${escapeHtml(cancelText)}</button>
+        </div>
+      </div>
+    `;
+
+    const sel = wrap.querySelector(".abgm-pickpreset");
+
+    const done = (v) => {
+      doc.removeEventListener("keydown", onKey);
+      wrap.remove();
+      resolve(v);
+    };
+
+    wrap.querySelector(".abgm-confirm-backdrop")?.addEventListener("click", () => done(null));
+    wrap.querySelector(".abgm-confirm-cancel")?.addEventListener("click", () => done(null));
+    wrap.querySelector(".abgm-confirm-ok")?.addEventListener("click", () => done(sel?.value || null));
+
+    const onKey = (e) => { if (e.key === "Escape") done(null); };
+    doc.addEventListener("keydown", onKey);
+
+    container.appendChild(wrap);
+    setTimeout(() => { try { sel?.focus(); } catch {} }, 0);
+  });
+}
+
 /** ========= IndexedDB Assets =========
  * key: fileKey (예: "neutral_01.mp3")
  * value: Blob(File)
@@ -1094,11 +1162,21 @@ function getSortedBgms(preset, sort) {
 // 프리셋 선택
 function renderPresetSelect(root, settings) {
   const sel = root.querySelector("#abgm_preset_select");
-  const nameInput = root.querySelector("#abgm_preset_name"); // 있을 수도/없을 수도
+  const nameInput = root.querySelector("#abgm_preset_name");
   if (!sel) return;
 
   sel.innerHTML = "";
-  Object.values(settings.presets).forEach((p) => {
+
+  // 프리셋 이름순 정렬
+  const presetsSorted = Object.values(settings.presets).sort((a, b) =>
+    String(a?.name ?? a?.id ?? "").localeCompare(
+      String(b?.name ?? b?.id ?? ""),
+      undefined,
+      { numeric: true, sensitivity: "base" }
+    )
+  );
+
+  presetsSorted.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.id;
     opt.textContent = p.name || p.id;
@@ -1106,10 +1184,10 @@ function renderPresetSelect(root, settings) {
     sel.appendChild(opt);
   });
 
-  // nameInput이 있으면만 채우기
   if (nameInput) nameInput.value = getActivePreset(settings).name || "";
 }
 
+// 디폴트에 이름 뜨는 거 개선
 function renderDefaultSelect(root, settings) {
   const preset = getActivePreset(settings);
   const sel = root.querySelector("#abgm_default_select");
@@ -1117,7 +1195,6 @@ function renderDefaultSelect(root, settings) {
 
   const cur = String(preset.defaultBgmKey ?? "");
   const list = getSortedBgms(preset, getBgmSort(settings));
-  const keys = list.map((b) => String(b.fileKey ?? "")).filter(Boolean);
 
   sel.innerHTML = "";
 
@@ -1128,7 +1205,7 @@ function renderDefaultSelect(root, settings) {
   sel.appendChild(none);
 
   // 현재 default가 룰 목록에 없으면(=missing) 옵션을 하나 만들어서 고정 유지
-  if (cur && !keys.includes(cur)) {
+  if (cur && !list.some((b) => String(b.fileKey ?? "") === cur)) {
     const miss = document.createElement("option");
     miss.value = cur;
     miss.textContent = `${cur} (missing rule)`;
@@ -1136,15 +1213,32 @@ function renderDefaultSelect(root, settings) {
   }
 
   // rules
-  for (const fk of keys) {
+  for (const b of list) {
+    const fk = String(b.fileKey ?? "").trim();
+    if (!fk) continue;
+
     const opt = document.createElement("option");
     opt.value = fk;
-    opt.textContent = fk;
+
+    // 이름 있으면 이름, 없으면 fileKey/URL에서 자동 생성된 표시명
+    opt.textContent = getEntryName(b); 
     sel.appendChild(opt);
   }
 
-  // value로 고정 (selected 속성보다 이게 안전)
   sel.value = cur;
+}
+
+  // Default 자동 세팅 정책: "그 프리셋에 곡이 처음 들어올 때만" 자동 지정
+function maybeSetDefaultOnFirstAdd(preset, newFileKey) {
+  const cur = String(preset.defaultBgmKey ?? "").trim();
+  if (cur) return; // 이미 default가 있으면 절대 건드리지 않음
+
+  const bgmCount = (preset.bgms ?? []).filter(b => String(b?.fileKey ?? "").trim()).length;
+
+  // "첫 곡"일 때만 default 자동 지정
+  if (bgmCount <= 1) {
+    preset.defaultBgmKey = String(newFileKey ?? "").trim();
+  }
 }
 
 function renderBgmTable(root, settings) {
@@ -1243,7 +1337,13 @@ function renderBgmTable(root, settings) {
 
           <!-- Delete (right) -->
           <div class="abgm-detail-actions">
-            <div class="menu_button abgm_del" title="Delete">
+          <div class="menu_button abgm_copy" title="Copy to another preset">
+            <i class="fa-solid fa-copy"></i> Copy
+          </div>
+          <div class="menu_button abgm_move" title="Move to another preset">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i> Move
+          </div>
+          <div class="menu_button abgm_del" title="Delete">
             <i class="fa-solid fa-trash"></i> <span class="abgm-del-label">Delete</span>
             </div>
           </div>
@@ -1840,7 +1940,7 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
       });
     }
 
-    if (!preset.defaultBgmKey) preset.defaultBgmKey = fileKey;
+    maybeSetDefaultOnFirstAdd(preset, fileKey);
 
     e.target.value = "";
     saveSettingsDebounced();
@@ -1872,10 +1972,13 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
           });
         }
       }
-
-      if (!preset.defaultBgmKey && preset.bgms.length && preset.bgms[0].fileKey) {
-        preset.defaultBgmKey = preset.bgms[0].fileKey;
-      }
+      
+      let firstAddedKey = "";
+      for (const fk of importedKeys) {
+        if (!firstAddedKey) firstAddedKey = fk;
+          // bgm push 로직...
+        }
+      maybeSetDefaultOnFirstAdd(preset, firstAddedKey);
 
       saveSettingsDebounced();
       rerenderAll(root, settings);
@@ -1922,7 +2025,9 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
   const newKey = String(e.target.value || "").trim();
   bgm.fileKey = newKey;
 
-  if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
+  if (oldKey && preset.defaultBgmKey === oldKey) {
+      preset.defaultBgmKey = newKey;
+    }
 
   saveSettingsDebounced();
   renderDefaultSelect(root, settings);
@@ -2036,6 +2141,69 @@ if (e.target.closest(".abgm_change_mp3")) {
       return;
     }
 
+    // copy
+if (e.target.closest(".abgm_copy")) {
+  const curPreset = getActivePreset(settings);
+  const targetId = await abgmPickPreset(root, settings, {
+    title: "Copy entry",
+    message: "복사할 프리셋 선택",
+    okText: "확인",
+    cancelText: "취소",
+  });
+  if (!targetId) return;
+
+  const target = settings.presets?.[targetId];
+  if (!target) return;
+
+  target.bgms ??= [];
+  target.bgms.push({
+    ...clone(bgm),
+    id: uid(), // ✅ 복사면 새 id
+  });
+
+  // target default 비어있으면 "자동으로" 바꾸고 싶냐? -> 난 비추라서 안 함
+  saveSettingsDebounced();
+  // 현재 화면 프리셋은 그대로니까 그냥 UI 갱신만
+  rerenderAll(root, settings);
+  return;
+}
+
+// Entry move
+if (e.target.closest(".abgm_move")) {
+  const curPreset = getActivePreset(settings);
+  const targetId = await abgmPickPreset(root, settings, {
+    title: "Move entry",
+    message: "이동할 프리셋 선택",
+    okText: "확인",
+    cancelText: "취소",
+    excludePresetId: curPreset.id,
+  });
+  if (!targetId) return;
+
+  const target = settings.presets?.[targetId];
+  if (!target) return;
+
+  target.bgms ??= [];
+  target.bgms.push({
+    ...clone(bgm),
+    id: uid(), // 이동도 새 id로 안전빵(겹침 방지)
+  });
+
+  // 원본에서 제거
+  const fileKey = bgm.fileKey;
+  curPreset.bgms = (curPreset.bgms ?? []).filter((x) => x.id !== id);
+
+  // default가 옮긴 항목이었다면 보정
+  if (curPreset.defaultBgmKey === fileKey) {
+    curPreset.defaultBgmKey = curPreset.bgms[0]?.fileKey ?? "";
+  }
+
+  root.__abgmSelected?.delete(id);
+  saveSettingsDebounced();
+  rerenderAll(root, settings);
+  return;
+}
+
     // delete
     if (e.target.closest(".abgm_del")) {
       const fk = bgm.fileKey || "(unknown)";
@@ -2112,8 +2280,10 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
     // 엔트리 소스 교체
     bgm.fileKey = newKey;
 
-    // default도 같이 따라가게
-    if (preset.defaultBgmKey === oldKey) preset.defaultBgmKey = newKey;
+    // default 최초만 따라가게
+    if (oldKey && preset.defaultBgmKey === oldKey) {
+  preset.defaultBgmKey = newKey;
+}
 
     // oldKey가 더 이상 참조 안 되면 정리(선택)
     if (oldKey && oldKey !== newKey && !isFileKeyReferenced(settings, oldKey)) {
