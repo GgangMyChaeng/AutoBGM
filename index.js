@@ -433,6 +433,97 @@ async function loadHtml(relPath) {
   return await res.text();
 }
 
+// ===== FreeSources boot wrappers (missing refs fix) =====
+async function bootFreeSourcesSync() {
+  const settings = ensureSettings();
+  await syncBundledFreeSourcesIntoSettings(settings, { force: false, save: true });
+}
+
+// 예전 이름으로 호출하는 곳 있으면 이것도 받쳐줌
+async function syncFreeSourcesFromJson(opts = {}) {
+  const settings = ensureSettings();
+  await syncBundledFreeSourcesIntoSettings(settings, opts);
+}
+
+// 혹시 남아있으면 merge도 받쳐줌 (동작은 "없는 것만"이 아니라 '덮어쓰기'로 맞춤)
+async function mergeBundledFreeSourcesIntoSettings(settings) {
+  await syncBundledFreeSourcesIntoSettings(settings, { force: false, save: true });
+}
+
+/** ========= 제공된 프리소스 인식 (JSON -> settings.freeSources "싹 덮어쓰기") ========= */
+
+let __abgmFreeSourcesLoaded = false;
+
+async function loadBundledFreeSources() {
+  const url = new URL("data/freesources.json", import.meta.url);
+  url.searchParams.set("v", String(Date.now())); // 개발 중 캐시 방지
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.warn("[AutoBGM] freesources.json load failed:", res.status);
+    return [];
+  }
+  const json = await res.json();
+  // 구조 유지: { sources: [...] }
+  return Array.isArray(json?.sources) ? json.sources : [];
+}
+
+function simpleHash(s) {
+  const str = String(s || "");
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36);
+}
+
+function normalizeFreeSourceItem(raw) {
+  const src = String(raw?.src ?? raw?.url ?? raw?.fileKey ?? "").trim();
+  if (!src) return null;
+
+  const title = String(raw?.title ?? raw?.name ?? "").trim() || nameFromSource(src);
+  const durationSec = Number(raw?.durationSec ?? raw?.duration ?? 0) || 0;
+
+  const tagsRaw = raw?.tags;
+  const tags = Array.isArray(tagsRaw)
+    ? tagsRaw.map(t => String(t || "").trim()).filter(Boolean)
+    : String(tagsRaw || "")
+        .split(/[,\n]+/)
+        .map(t => t.trim())
+        .filter(Boolean);
+
+  // id는 믿지 말고, 없으면 src 기반으로 안정 생성
+  const id = String(raw?.id || "").trim() || `fs_${simpleHash(src)}`;
+
+  return { id, src, title, durationSec, tags };
+}
+
+/**
+ * JSON을 진실로 두고 settings.freeSources를 "항상" JSON값으로 교체
+ * - src 기준으로 유니크(중복 src면 마지막 승)
+ */
+async function syncBundledFreeSourcesIntoSettings(settings, { force = false, save = true } = {}) {
+  if (__abgmFreeSourcesLoaded && !force) return;
+
+  const bundledRaw = await loadBundledFreeSources();
+
+  const map = new Map(); // key: src
+  for (const r of bundledRaw) {
+    const it = normalizeFreeSourceItem(r);
+    if (!it) continue;
+    map.set(it.src, it); // 마지막이 승리
+  }
+
+  settings.freeSources = Array.from(map.values());
+  __abgmFreeSourcesLoaded = true;
+
+  if (save) {
+    try { saveSettingsDebounced?.(); } catch {}
+  }
+
+  console.log("[AutoBGM] freeSources synced:", settings.freeSources.length);
+}
+
 /** ========= Settings schema + migration =========
  * preset.bgms[]: { id, fileKey, keywords, priority, volume, volLocked }
  * preset.defaultBgmKey: "neutral_01.mp3"
@@ -467,6 +558,16 @@ function ensureSettings() {
 
   s.ui ??= { bgmSort: "added_asc" };
   s.ui.bgmSort ??= "added_asc";
+
+  // ensureSettings 프리소스
+  s.freeSources ??= [];
+  s.mySources ??= [];
+  s.fsUi ??= { tab: "free", selectedTags: [], search: "" };
+  s.fsUi.cat ??= "all";
+  s.fsUi.previewVolFree ??= 60; // 0~100
+  s.fsUi.previewVolMy ??= 60;   // 0~100
+  s.fsUi.previewVolLockFree ??= false;
+  s.fsUi.previewVolLockMy ??= false;
 
   // 안전장치
   if (!s.presets || Object.keys(s.presets).length === 0) {
@@ -986,6 +1087,22 @@ function isProbablyUrl(s) {
   return /^https?:\/\//i.test(v);
 }
 
+// ===== Dropbox URL normalize (audio용) =====
+function dropboxToRaw(u) {
+  try {
+    const url = new URL(String(u || "").trim());
+    if (!/dropbox\.com$/i.test(url.hostname)) return String(u || "").trim();
+
+    // 미리보기 파라미터 제거 + raw=1 강제
+    url.searchParams.delete("dl");
+    url.searchParams.set("raw", "1");
+
+    return url.toString();
+  } catch {
+    return String(u || "").trim();
+  }
+}
+
 /** ========= ZIP (JSZip 필요) ========= */
 async function ensureJSZipLoaded() {
   if (window.JSZip) return window.JSZip;
@@ -1140,6 +1257,689 @@ if (window.visualViewport) {
   console.log("[AutoBGM] modal opened");
 }
 
+// ===============================
+// FreeSources Modal 프리소스모달 (Free/My + Tag filter AND)
+// ===============================
+const FS_OVERLAY_ID = "abgm_fs_overlay";
+
+// duration seconds -> "m:ss"
+function abgmFmtDur(sec) {
+  const n = Math.max(0, Number(sec || 0));
+  const m = Math.floor(n / 60);
+  const s = Math.floor(n % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function bpmToTempoTag(bpm){
+  const n = Number(bpm);
+  if (!Number.isFinite(n)) return "";
+  if (n < 60)  return "tempo:larghissimo";
+  if (n < 66)  return "tempo:largo";
+  if (n < 76)  return "tempo:adagio";
+  if (n < 108) return "tempo:andante";
+  if (n < 120) return "tempo:moderato";
+  if (n < 156) return "tempo:allegro";
+  if (n < 176) return "tempo:vivace";
+  if (n < 200) return "tempo:presto";
+  return "tempo:prestissimo";
+}
+
+/* =========================
+   Tag auto categorizer
+   ========================= */
+
+// 단어(1토큰) 별칭 (주로 기호/표기 통일)
+const TAG_ALIASES = new Map([
+  ["hip-hop", "hiphop"],
+  ["hip hop", "hiphop"],
+  ["r&b", "rnb"],
+  ["rnb", "rnb"],
+  ["lofi", "lo-fi"], // 취향
+]);
+
+// “문구(여러 단어)”를 통째로 확정 매핑 (제일 정확함)
+const PHRASE_ALIASES = new Map([
+  ["alternative r&b", ["mood:alternative", "genre:rnb"]],
+  ["acoustic pop", ["inst:acoustic", "genre:pop"]],
+  ["neo soul", ["genre:neo_soul"]],
+  ["bossa nova", ["genre:bossa_nova"]],
+  ["lo-fi hip hop", ["mood:lofi", "genre:hiphop"]],
+  ["glitch hop", ["genre:glitch_hop"]],
+  ["jazz hop", ["genre:jazz_hop"]],
+  ["industrial techno", ["genre:industrial", "genre:techno"]],
+  ["electronic/edm", ["genre:electronic", "genre:edm"]],
+  ["darksynth", ["genre:darksynth", "mood:dark", "inst:synth"]],
+  ["french glitch", ["genre:french", "genre:glitch"]],
+  ["808 bassline", ["inst:808_bass"]],
+  ["industrial horror", ["mood:industrial", "mood:horror"]],
+  ["mechanical groove", ["mood:mechanical", "mood:groove"]],
+  ["night vibes", ["mood:night_vibes"]],
+  ["tension", ["mood:tense"]],
+  ["high-energy j-rock", ["mood:high-energy", "genre:j-rock"]],
+]);
+
+const GENRE_WORDS = new Set([
+  "blues","jazz","rock","pop","country","classical","folk","funk","soul","reggae","metal","ambient",
+  "electronic","edm","hiphop","rap","rnb","drill","idm","techno","glitch","j-rock"
+]);
+
+const MOOD_WORDS = new Set([
+  "calm","dark","sad","happy","tense","chill","cozy","epic","mysterious",
+  "alternative","chaotic","cinematic","cold","cyberpunk","tension","night","tight","lofi",
+  "east asian influence","exploration","high-energy","hopeless","horizon","military",
+  "underscore","mundane","soft"
+]);
+
+const INST_WORDS = new Set([
+  "piano","guitar","strings","synth","bass","drums","orchestra",
+  "acoustic","808","turntable","scratch","808_bass"
+]);
+
+const LYRIC_WORDS = new Set([
+  "lyric","lyrics","no lyric","instrumental","vocal","male","female"
+]);
+
+function abgmCanonRawTag(raw) {
+  let s = String(raw || "").trim().toLowerCase();
+  if (!s) return "";
+
+  // 공백 정리
+  s = s.replace(/\s+/g, " ");
+
+  // 숫자만 있으면 bpm
+  if (/^\d{2,3}$/.test(s)) {
+    const bpm = Number(s);
+    if (bpm >= 40 && bpm <= 260) return `bpm:${bpm}`;
+  }
+
+  // 통째 문구 별칭 먼저
+  if (PHRASE_ALIASES.has(s)) return s;
+
+  // 일반 별칭 적용 (예: "r&b" → "rnb")
+  if (TAG_ALIASES.has(s)) s = TAG_ALIASES.get(s);
+
+  return s;
+}
+
+// ✅ “하나 입력”을 “여러 태그”로 확장
+function abgmNormTags(raw) {
+  const s0 = abgmCanonRawTag(raw);
+  if (!s0) return [];
+
+  // bpm:xxx 같은 건 그대로 단일 반환
+  if (s0.startsWith("bpm:")) return [s0];
+
+  // 이미 cat:tag 형태면 그대로
+  if (s0.includes(":") && !PHRASE_ALIASES.has(s0)) return [s0];
+
+  // 문구 확정 매핑
+  if (PHRASE_ALIASES.has(s0)) return PHRASE_ALIASES.get(s0).slice();
+
+  // "/" 같은 구분자 들어오면 나눠서 재귀 처리
+  if (s0.includes("/")) {
+    return s0.split("/").flatMap(part => abgmNormTags(part));
+  }
+
+  // 여러 단어면 “마지막 단어=장르” 휴리스틱 (대충 알터네이티브 알앤비 같은 거)
+  const toks = s0.split(" ").filter(Boolean);
+  if (toks.length >= 2) {
+    const lastRaw = toks[toks.length - 1];
+    const last = TAG_ALIASES.get(lastRaw) || lastRaw;
+
+    // 마지막이 장르면: genre:last + 앞 단어들은 mood/inst로 분류 시도
+    if (GENRE_WORDS.has(last)) {
+      const out = [`genre:${last}`];
+      for (const w0 of toks.slice(0, -1)) {
+        const w = TAG_ALIASES.get(w0) || w0;
+        if (INST_WORDS.has(w)) out.push(`inst:${w}`);
+        else if (MOOD_WORDS.has(w)) out.push(`mood:${w}`);
+        else out.push(w); // 모르면 기존처럼 etc(콜론 없는 태그)로 둠
+      }
+      return out;
+    }
+  }
+
+  // 한 단어면 단어사전으로 분류
+  if (GENRE_WORDS.has(s0)) return [`genre:${s0}`];
+  if (MOOD_WORDS.has(s0))  return [`mood:${s0}`];
+  if (INST_WORDS.has(s0))  return [`inst:${s0}`];
+  if (LYRIC_WORDS.has(s0)) return [`lyric:${s0}`];
+
+  // 모르면 그대로 (etc)
+  return [s0];
+}
+
+// 기존 코드 호환용: “단일 문자열”만 필요한 곳에서 쓰기
+function abgmNormTag(raw) {
+  return abgmNormTags(raw)[0] || "";
+}
+
+function matchTagsAND(itemTags = [], selectedSet) {
+  if (!selectedSet || selectedSet.size === 0) return true;
+  const set = new Set((itemTags || []).flatMap(abgmNormTags).filter(Boolean));
+  for (const t of selectedSet) {
+    if (!set.has(abgmNormTag(t))) return false;
+  }
+  return true;
+}
+
+function matchSearch(item, q) {
+  const s = String(q || "").trim().toLowerCase();
+  if (!s) return true;
+
+  const title = String(item?.title ?? item?.name ?? "").toLowerCase();
+  const tags = (item?.tags ?? []).map(abgmNormTag).join(" ");
+  const src = String(item?.src ?? item?.fileKey ?? "").toLowerCase();
+
+  return (title.includes(s) || tags.includes(s) || src.includes(s));
+}
+
+function getFsActiveList(settings) {
+  const tab = String(settings?.fsUi?.tab || "free");
+  const arr = tab === "my" ? (settings.mySources ?? []) : (settings.freeSources ?? []);
+  return Array.isArray(arr) ? arr : [];
+}
+
+// 프리뷰 볼륨
+function fsGetPreviewVol100(settings) {
+  const tab = String(settings?.fsUi?.tab || "free");
+  const v = (tab === "my") ? settings?.fsUi?.previewVolMy : settings?.fsUi?.previewVolFree;
+  const n = Math.max(0, Math.min(100, Number(v ?? 60)));
+  return Number.isFinite(n) ? n : 60;
+}
+function fsSetPreviewVol100(settings, v100) {
+  const tab = String(settings?.fsUi?.tab || "free");
+  const n = Math.max(0, Math.min(100, Number(v100 ?? 60)));
+  if (tab === "my") settings.fsUi.previewVolMy = n;
+  else settings.fsUi.previewVolFree = n;
+}
+function fsGetPreviewLock(settings) {
+  const tab = String(settings?.fsUi?.tab || "free");
+  return tab === "my" ? !!settings?.fsUi?.previewVolLockMy : !!settings?.fsUi?.previewVolLockFree;
+}
+function fsSetPreviewLock(settings, locked) {
+  const tab = String(settings?.fsUi?.tab || "free");
+  if (tab === "my") settings.fsUi.previewVolLockMy = !!locked;
+  else settings.fsUi.previewVolLockFree = !!locked;
+}
+
+// ===== tag display helper (tagCat 근처에 추가 추천) =====
+function tagVal(t){
+  const s = abgmNormTag(t);
+  const i = s.indexOf(":");
+  return i > 0 ? s.slice(i + 1) : s;
+}
+
+const TAG_PRETTY_MAP = new Map([
+  ["rnb", "R&B"],
+  ["hiphop", "hip-hop"],
+  ["lofi", "lo-fi"],
+  ["idm", "IDM"],
+  ["edm", "EDM"],
+]);
+
+function tagPretty(t){
+  const s = abgmNormTag(t);
+  const cat = tagCat(s);
+  let v = tagVal(s).replace(/[_]+/g, " ").trim(); // neo_soul -> neo soul
+
+  // 약간만 보기 좋게
+  if (TAG_PRETTY_MAP.has(v)) v = TAG_PRETTY_MAP.get(v);
+
+  // bpm은 표시만 예쁘게
+  if (cat === "bpm") return `${v} BPM`;
+
+  return v;
+}
+
+// 카테고리별 태그 수집
+function tagCat(t) {
+  const s = String(t || "").trim().toLowerCase();
+  const i = s.indexOf(":");
+  if (i <= 0) return "etc";
+  return s.slice(0, i);
+}
+
+const TAG_CAT_ORDER = ["genre","mood","inst","lyric","bpm","tempo","etc"];
+
+function tagSortKey(t){
+  const s = abgmNormTag(t);
+  const cat = tagCat(s);
+  const ci = TAG_CAT_ORDER.indexOf(cat);
+  const catRank = ci === -1 ? 999 : ci;
+
+  // bpm은 숫자 정렬
+  if (cat === "bpm") {
+    const n = Number(s.split(":")[1] ?? 0);
+    return [catRank, n, s];
+  }
+  return [catRank, 0, s];
+}
+
+function sortTags(arr){
+  return [...arr].sort((a,b)=>{
+    const A = tagSortKey(a), B = tagSortKey(b);
+    if (A[0] !== B[0]) return A[0]-B[0];
+    if (A[1] !== B[1]) return A[1]-B[1];
+    return String(A[2]).localeCompare(String(B[2]), undefined, {numeric:true, sensitivity:"base"});
+  });
+}
+
+function collectAllTagsForTabAndCat(settings) {
+  const list = getFsActiveList(settings);
+  const cat = String(settings?.fsUi?.cat || "all");
+  const bag = new Set();
+
+  for (const it of list) {
+    for (const raw of (it?.tags ?? [])) {
+      const t = abgmNormTag(raw);
+      if (!t) continue;
+
+      const c = tagCat(t);
+
+      // All = "분류 안 된 것만" (콜론 없는 태그들 = etc)
+      if (cat === "all") {
+        if (c !== "etc") continue;
+      } else {
+        if (c !== cat) continue;
+      }
+
+      bag.add(t);
+    }
+  }
+  return sortTags(Array.from(bag));
+} // 태그 수집 닫
+
+function renderFsTagPicker(root, settings) {
+  const box = root.querySelector("#abgm_fs_tag_picker");
+  if (!box) return;
+
+  // computed 기준으로 진짜 열림/닫힘 판단
+  const open = getComputedStyle(box).display !== "none";
+  if (!open) return;
+
+  const wrap   = root.querySelector(".abgm-fs-wrap") || root;
+  const catbar = root.querySelector("#abgm_fs_catbar");
+  if (!catbar) return;
+
+  const top = catbar.offsetTop + catbar.offsetHeight + 8;
+  box.style.top = `${top}px`;
+
+  const wrapH = wrap.clientHeight || 0;
+  const maxH = Math.max(120, wrapH - top - 12);
+  box.style.maxHeight = `${Math.min(240, maxH)}px`;
+
+  const all = collectAllTagsForTabAndCat(settings);
+  const selected = new Set((settings.fsUi?.selectedTags ?? []).map(abgmNormTag).filter(Boolean));
+
+  box.innerHTML = "";
+
+  if (!all.length) {
+    const p = document.createElement("div");
+    p.style.opacity = ".75";
+    p.style.fontSize = "12px";
+    p.style.padding = "6px 2px";
+    p.textContent = "태그 없음";
+    box.appendChild(p);
+    return;
+  }
+
+  for (const t of all) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "menu_button abgm-fs-tagpick";
+    btn.dataset.tag = t;
+    const label = tagPretty(t);
+    btn.textContent = selected.has(t) ? `✅ ${label}` : label;
+    btn.title = t; // hover하면 원본(genre:xxx) 보이게
+    box.appendChild(btn);
+  }
+}
+
+function fsRelayoutTagPicker(root) {
+  const box = root.querySelector("#abgm_fs_tag_picker");
+  if (!box || box.style.display === "none") return;
+
+  const wrap   = root.querySelector(".abgm-fs-wrap") || root;
+  const catbar = root.querySelector("#abgm_fs_catbar");
+  if (!catbar) return;
+
+  const top = catbar.offsetTop + catbar.offsetHeight + 8;
+  box.style.top = `${top}px`;
+
+  const wrapH = wrap.clientHeight || 0;
+  const maxH = Math.max(120, wrapH - top - 12);
+  box.style.maxHeight = `${Math.min(240, maxH)}px`;
+}
+
+
+function renderFsList(root, settings) {
+  const listEl = root.querySelector("#abgm_fs_list");
+  if (!listEl) return;
+
+  const selected = new Set(
+    (settings.fsUi?.selectedTags ?? []).map(abgmNormTag).filter(Boolean)
+  );
+  const q = String(settings.fsUi?.search ?? "");
+
+  const listRaw = getFsActiveList(settings);
+
+  const filtered = listRaw
+    .filter((it) => matchTagsAND(it?.tags ?? [], selected) && matchSearch(it, q))
+    // 이름 A→Z 강제
+    .sort((a, b) => {
+      const an = String(a?.title ?? a?.name ?? "").trim();
+      const bn = String(b?.title ?? b?.name ?? "").trim();
+      return an.localeCompare(bn, undefined, { numeric: true, sensitivity: "base" });
+    });
+
+  listEl.innerHTML = "";
+
+  if (!filtered.length) {
+    const empty = document.createElement("div");
+    empty.style.opacity = ".75";
+    empty.style.fontSize = "12px";
+    empty.style.padding = "10px";
+    empty.textContent = "결과 없음";
+    listEl.appendChild(empty);
+    return;
+  }
+
+  for (const it of filtered) {
+    const id = String(it?.id ?? "");
+    const title = String(it?.title ?? it?.name ?? "(no title)");
+    const dur = abgmFmtDur(it?.durationSec ?? 0);
+    const tags = Array.isArray(it?.tags) ? it.tags.map(abgmNormTag).filter(Boolean) : [];
+    const src = String(it?.src ?? it?.fileKey ?? "");
+
+    const row = document.createElement("div");
+    row.className = "abgm-fs-item";
+    row.dataset.id = id;
+
+    row.innerHTML = `
+      <button type="button" class="abgm-fs-main" title="Toggle tags">
+        <div class="abgm-fs-name">${escapeHtml(title)}</div>
+        <div class="abgm-fs-time">${escapeHtml(dur)}</div>
+      </button>
+
+      <div class="abgm-fs-side">
+        <div class="abgm-fs-actions">
+          <button type="button" class="menu_button abgm-fs-play" title="Play" data-src="${escapeHtml(src)}">▶</button>
+          <button type="button" class="menu_button abgm-fs-copy" title="Copy" data-src="${escapeHtml(src)}">Copy</button>
+        </div>
+
+        <div class="abgm-fs-tagpanel">
+          ${tags.map(t => `<button type="button" class="abgm-fs-tag menu_button" data-tag="${escapeHtml(t)}" title="${escapeHtml(t)}">#${escapeHtml(tagPretty(t))}</button>`).join("")}
+        </div>
+      </div>
+    `;
+
+    listEl.appendChild(row);
+  }
+}
+
+// ===== FreeSources UI state =====
+function renderFsAll(root, settings) {
+  // tab active UI
+  root.querySelectorAll(".abgm-fs-tab")?.forEach?.((b) => {
+    const t = String(b.dataset.tab || "");
+    const on = t === String(settings.fsUi?.tab || "free");
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+
+  // search ui
+  const search = root.querySelector("#abgm_fs_search");
+  if (search) search.value = String(settings.fsUi?.search ?? "");
+
+  // cat active UI
+  const cur = String(settings?.fsUi?.cat || "all");
+  root.querySelectorAll(".abgm-fs-cat")?.forEach?.((b) => {
+    b.classList.toggle("is-active", String(b.dataset.cat || "all") === cur);
+  });
+
+  renderFsTagPicker(root, settings);
+  renderFsList(root, settings);
+  renderFsPreviewVol(root, settings);
+}
+
+function renderFsPreviewVol(root, settings) {
+  const range = root.querySelector("#abgm_fs_prevvol");
+  const valEl = root.querySelector("#abgm_fs_prevvol_val");
+  const lockBtn = root.querySelector("#abgm_fs_prevvol_lock");
+  const lockIcon = lockBtn?.querySelector?.("i");
+  if (!range) return;
+
+  const v100 = fsGetPreviewVol100(settings);
+  const locked = fsGetPreviewLock(settings);
+
+  range.value = String(v100);
+  range.disabled = !!locked;
+  if (valEl) valEl.textContent = `${v100}%`;
+  if (lockIcon) lockIcon.className = `fa-solid ${locked ? "fa-lock" : "fa-lock-open"}`;
+  if (lockBtn) lockBtn.classList.toggle("abgm-locked", !!locked);
+}
+
+// open/close
+function closeFreeSourcesModal() {
+  const overlay = document.getElementById(FS_OVERLAY_ID);
+  if (overlay) overlay.remove();
+  window.removeEventListener("keydown", abgmFsOnEsc);
+}
+
+function abgmFsOnEsc(e) {
+  if (e.key === "Escape") closeFreeSourcesModal();
+}
+
+// main
+async function openFreeSourcesModal() {
+  await syncFreeSourcesFromJson({ force: true, save: true });
+  if (document.getElementById(FS_OVERLAY_ID)) return;
+
+  let html = "";
+  try {
+    html = await loadHtml("templates/freesources.html");
+  } catch (e) {
+    console.error("[AutoBGM] freesources.html load failed", e);
+    return;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.id = FS_OVERLAY_ID;
+  overlay.className = "autobgm-overlay"; // 니 기존 overlay css 재활용
+  overlay.innerHTML = html;
+
+  // 바깥 클릭 닫기(원하면)
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeFreeSourcesModal();
+  });
+
+  const host = getModalHost();
+  const cs = getComputedStyle(host);
+  if (cs.position === "static") host.style.position = "relative";
+
+  // overlay 스타일(니 openModal 스타일이랑 맞춤)
+  const setO = (k, v) => overlay.style.setProperty(k, v, "important");
+  setO("position", "absolute");
+  setO("inset", "0");
+  setO("display", "block");
+  setO("overflow", "auto");
+  setO("-webkit-overflow-scrolling", "touch");
+  setO("background", "rgba(0,0,0,.55)");
+  setO("z-index", "2147483647");
+  setO("padding", "0");
+
+  host.appendChild(overlay);
+  window.addEventListener("keydown", abgmFsOnEsc);
+
+  await initFreeSourcesModal(overlay);
+  console.log("[AutoBGM] freesources modal opened");
+}
+
+async function initFreeSourcesModal(overlay) {
+  const settings = ensureSettings();
+  await syncBundledFreeSourcesIntoSettings(settings, { force: true, save: true });
+
+  const root = overlay;
+
+  root.addEventListener("scroll", () => fsRelayoutTagPicker(root), true);
+  window.addEventListener("resize", () => fsRelayoutTagPicker(root));
+
+  // close btn
+  root.querySelector(".abgm-fs-close")?.addEventListener("click", closeFreeSourcesModal);
+
+  // tab switch
+  root.querySelectorAll(".abgm-fs-tab")?.forEach?.((btn) => {
+    btn.addEventListener("click", () => {
+      settings.fsUi.tab = String(btn.dataset.tab || "free");
+      settings.fsUi.search = "";
+      settings.fsUi.selectedTags = [];
+      settings.fsUi.cat = "all";
+
+      // picker 닫기
+      const picker = root.querySelector("#abgm_fs_tag_picker");
+      if (picker) picker.style.display = "none";
+
+      saveSettingsDebounced();
+      renderFsAll(root, settings);
+    });
+  });
+
+  // category click => dropdown toggle
+  root.querySelectorAll(".abgm-fs-cat")?.forEach?.((btn) => {
+    btn.addEventListener("click", () => {
+      const nextCat = String(btn.dataset.cat || "all");
+      const picker = root.querySelector("#abgm_fs_tag_picker");
+      if (!picker) return;
+
+      const sameCat = String(settings.fsUi.cat || "all") === nextCat;
+      const isOpen = picker.style.display !== "none";
+
+      settings.fsUi.cat = nextCat;
+
+      // 같은 카테고리 다시 누르면 닫기 / 아니면 열기
+      picker.style.display = (sameCat && isOpen) ? "none" : "block";
+
+      saveSettingsDebounced();
+      renderFsAll(root, settings);
+    });
+  });
+
+  // search
+  const search = root.querySelector("#abgm_fs_search");
+  search?.addEventListener("input", (e) => {
+    settings.fsUi.search = e.target.value || "";
+    saveSettingsDebounced();
+    renderFsList(root, settings);
+  });
+
+  // 프리뷰 볼륨
+  const prevRange = root.querySelector("#abgm_fs_prevvol");
+  prevRange?.addEventListener("input", (e) => {
+    if (fsGetPreviewLock(settings)) return;
+    fsSetPreviewVol100(settings, e.target.value);
+    saveSettingsDebounced();
+    renderFsPreviewVol(root, settings);
+    try {
+    const v = fsGetPreviewVol100(settings) / 100;
+    if (_testAudio && _testAudio.src) _testAudio.volume = Math.max(0, Math.min(1, v));
+    } catch {}
+  });
+
+  // clear
+  root.querySelector("#abgm_fs_clear")?.addEventListener("click", () => {
+    settings.fsUi.search = "";
+    settings.fsUi.selectedTags = [];
+    settings.fsUi.cat = "all";
+    const picker = root.querySelector("#abgm_fs_tag_picker");
+    if (picker) picker.style.display = "none";
+    saveSettingsDebounced();
+    renderFsAll(root, settings);
+  });
+
+  // ===== event delegation =====
+  root.addEventListener("click", (e) => {
+    // tag pick toggle (in dropdown)
+    const pick = e.target.closest(".abgm-fs-tagpick");
+    if (pick && pick.dataset.tag) {
+      const t = abgmNormTag(pick.dataset.tag);
+      const set = new Set((settings.fsUi.selectedTags ?? []).map(abgmNormTag).filter(Boolean));
+      if (set.has(t)) set.delete(t);
+      else set.add(t);
+      settings.fsUi.selectedTags = Array.from(set);
+      saveSettingsDebounced();
+      renderFsList(root, settings);
+      renderFsTagPicker(root, settings); // 표시만 갱신
+      return;
+    }
+
+    // item main click => toggle show-tags (actions <-> tags panel)
+    const main = e.target.closest(".abgm-fs-main");
+    if (main) {
+      const row = main.closest(".abgm-fs-item");
+      if (!row) return;
+      row.classList.toggle("show-tags");
+      return;
+    }
+
+    // Preview Vol
+    const prevLockBtn = e.target.closest("#abgm_fs_prevvol_lock");
+    if (prevLockBtn) {
+      fsSetPreviewLock(settings, !fsGetPreviewLock(settings));
+      saveSettingsDebounced();
+      renderFsPreviewVol(root, settings);
+      return;
+    }
+
+    // play
+    const playBtn = e.target.closest(".abgm-fs-play");
+    if (playBtn) {
+      const src = String(playBtn.dataset.src || "").trim();
+      if (!src) return;
+      const v = fsGetPreviewVol100(settings) / 100;
+      try { playAsset(src, v); } catch {}
+      return;
+    }
+
+    // copy
+    const copyBtn = e.target.closest(".abgm-fs-copy");
+    if (copyBtn) {
+      const src = String(copyBtn.dataset.src || "").trim();
+      if (!src) return;
+      navigator.clipboard?.writeText?.(src).catch(() => {});
+      return;
+    }
+
+    // tag button inside item tagpanel => 필터에 추가(원하면)
+    const tagBtn = e.target.closest(".abgm-fs-tag");
+    if (tagBtn && tagBtn.dataset.tag) {
+      const t = abgmNormTag(tagBtn.dataset.tag);
+      const set = new Set((settings.fsUi.selectedTags ?? []).map(abgmNormTag).filter(Boolean));
+      set.add(t);
+      settings.fsUi.selectedTags = Array.from(set);
+      saveSettingsDebounced();
+      renderFsList(root, settings);
+      return;
+    }
+  });
+
+  // 밖 클릭하면 picker 닫기(원하면)
+  root.addEventListener("mousedown", (e) => {
+    const picker = root.querySelector("#abgm_fs_tag_picker");
+    if (!picker) return;
+    const inPicker = e.target.closest("#abgm_fs_tag_picker");
+    const inCat = e.target.closest(".abgm-fs-catbar");
+    if (!inPicker && !inCat) picker.style.display = "none";
+  }, true);
+
+  renderFsAll(root, settings);
+}
+
+// ===============================
+// (연결) "BGM List의 MP3 추가 버튼 좌측" 버튼에서 호출만 하면 됨
+// 예: root.querySelector("#abgm_open_freesources")?.addEventListener("click", openFreeSourcesModal);
+// ===============================
+
 /** ========= UI render ========= */
 function getBgmSort(settings) {
   return settings?.ui?.bgmSort ?? "added_asc";
@@ -1151,39 +1951,38 @@ function getSortedBgms(preset, sort) {
 
   // 우선도 순
   if (mode === "priority_asc" || mode === "priority_desc") {
-  const dir = (mode === "priority_desc") ? -1 : 1; // asc=1, desc=-1
+    const dir = (mode === "priority_desc") ? -1 : 1;
 
-  arr.sort((a, b) => {
-    const pa = Number(a?.priority ?? 0);
-    const pb = Number(b?.priority ?? 0);
+    arr.sort((a, b) => {
+      const pa = Number(a?.priority ?? 0);
+      const pb = Number(b?.priority ?? 0);
 
-    if (pa !== pb) return (pa - pb) * dir; // 우선도 방향만 바꿈
+      if (pa !== pb) return (pa - pb) * dir;
 
-    // 동률이면 이름 A-Z (항상 A-Z 유지)
-    return getEntryName(a).localeCompare(
-      getEntryName(b),
-      undefined,
-      { numeric: true, sensitivity: "base" }
-    );
-  });
-    
+      return getEntryName(a).localeCompare(
+        getEntryName(b),
+        undefined,
+        { numeric: true, sensitivity: "base" }
+      );
+    });
+
     return arr;
-}
+  }
 
   // 이름순
   if (mode === "name_asc" || mode === "name_desc") {
-  arr.sort((a, b) =>
-    getEntryName(a).localeCompare(
-      getEntryName(b),
-      undefined,
-      { numeric: true, sensitivity: "base" }
-    )
-  );
-  if (mode === "name_desc") arr.reverse();
-  return arr;
-}
+    arr.sort((a, b) =>
+      getEntryName(a).localeCompare(
+        getEntryName(b),
+        undefined,
+        { numeric: true, sensitivity: "base" }
+      )
+    );
+    if (mode === "name_desc") arr.reverse();
+    return arr;
+  }
 
-    // 추가순
+  // 추가순
   if (mode === "added_desc") return arr.reverse();
   return arr; // added_asc
 }
@@ -1503,15 +2302,15 @@ function initModal(overlay) {
   root.__abgmExpanded = new Set();
 
   const updateSelectionUI = () => {
-    const preset = getActivePreset(settings);
-    const list = getSortedBgms(preset, getBgmSort(settings));
-    const selected = root.__abgmSelected;
+  const preset = getActivePreset(settings);
+  const list = getSortedBgms(preset, getBgmSort(settings));
+  const selected = root.__abgmSelected;
 
-    const countEl = root.querySelector("#abgm_selected_count");
-    if (countEl) countEl.textContent = `${selected.size} selected`;
+  const countEl = root.querySelector("#abgm_selected_count");
+  if (countEl) countEl.textContent = `${selected.size} selected`;
 
-    const allChk = root.querySelector("#abgm_sel_all");
-    if (allChk) {
+  const allChk = root.querySelector("#abgm_sel_all");
+  if (allChk) {
       const total = list.length;
       const checked = list.filter((b) => selected.has(b.id)).length;
       allChk.checked = total > 0 && checked === total;
@@ -1836,7 +2635,9 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
   updateNowPlayingUI();
 });
 
-    // ===== Preset Binding UI (bind preset to character cards) =====
+  root.querySelector("#abgm_open_freesources")?.addEventListener("click", openFreeSourcesModal);
+
+  // ===== Preset Binding UI (bind preset to character cards) =====
   const bindOpen = root.querySelector("#abgm_bind_open");
   const bindOverlay = root.querySelector("#abgm_bind_overlay");
   const bindClose = root.querySelector("#abgm_bind_close");
@@ -1963,6 +2764,7 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
     const fileKey = file.name;
 
     await idbPut(fileKey, file);
+    const durationSec = await abgmGetDurationSecFromBlob(file);
     const assets = ensureAssetList(settings);
     assets[fileKey] = { fileKey, label: fileKey.replace(/\.mp3$/i, "") };
 
@@ -1976,6 +2778,7 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
         priority: 0,
         volume: 1.0,
         volLocked: false,
+        durationSec,
       });
     }
 
@@ -2058,15 +2861,19 @@ root.querySelector("#abgm_reset_vol_selected")?.addEventListener("click", async 
       return;
     }
 
-  // Source (정규화된 거)
-  if (e.target.classList.contains("abgm_source")) {
+// Source (정규화된 거)
+if (e.target.classList.contains("abgm_source")) {
   const oldKey = String(bgm.fileKey ?? "");
-  const newKey = String(e.target.value || "").trim();
+
+  let newKey = String(e.target.value || "").trim();
+  newKey = dropboxToRaw(newKey);     // 여기
+  e.target.value = newKey;           // 입력창도 변환된 걸로 보여주기
+
   bgm.fileKey = newKey;
 
   if (oldKey && preset.defaultBgmKey === oldKey) {
-      preset.defaultBgmKey = newKey;
-    }
+    preset.defaultBgmKey = newKey;
+  }
 
   saveSettingsDebounced();
   renderDefaultSelect(root, settings);
@@ -2386,6 +3193,15 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
+  // ===== Free Sources button bind =====
+  const freeBtn = root.querySelector("#abgm_free_open"); // popup.html 버튼 id
+  if (freeBtn && freeBtn.dataset.bound !== "1") {
+    freeBtn.dataset.bound = "1";
+    freeBtn.addEventListener("click", () => {
+      openFreeSourcesModal(root);
+    });
+  }
+
   // ===== 헬프 토글 =====
   function setupHelpToggles(root) {
   // 버튼ID : 박스ID
@@ -2442,7 +3258,7 @@ root.querySelector("#abgm_bgm_tbody")?.addEventListener("change", async (e) => {
   setupHelpToggles(root);
 } // initModal 닫기
 
-/** ========= Side menu mount ========= */
+/** ========= Side menu mount 마운트 ========= */
 async function mount() {
   const host = document.querySelector("#extensions_settings");
   if (!host) return;
@@ -2644,11 +3460,22 @@ async function mount() {
   }
 }
 
-function init() {
+// 프리소스 관련
+async function bootstrapDataOnce() {
+  if (window.__AUTOBGM_FS_BOOTSTRAPPED__) return;
+  window.__AUTOBGM_FS_BOOTSTRAPPED__ = true;
+
+  const settings = ensureSettings(); // 기존 거 그대로 사용
+  await mergeBundledFreeSourcesIntoSettings(settings);
+}
+
+/** ========= init 이닛 ========= */
+async function init() {
   // 중복 로드/실행 방지 (메뉴 2개 뜨는 거 방지)
   if (window.__AUTOBGM_BOOTED__) return;
   window.__AUTOBGM_BOOTED__ = true;
 
+  await bootFreeSourcesSync();
   mount();
   startEngine();
   const obs = new MutationObserver(() => mount());
@@ -3025,7 +3852,6 @@ function startEngine() {
   _engineTimer = setInterval(engineTick, 900);
   engineTick();
 }
-  
 
 (async () => {
   try {
@@ -3045,3 +3871,26 @@ function startEngine() {
     console.error("[AutoBGM] boot failed", e);
   }
 })();
+
+// ====== mp3 및 url 시간 인식 ======
+async function abgmGetDurationSecFromBlob(blob) {
+  return new Promise((resolve) => {
+    const audio = document.createElement("audio");
+    audio.preload = "metadata";
+
+    const url = URL.createObjectURL(blob);
+
+    audio.onloadedmetadata = () => {
+      const sec = audio.duration;
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(sec) ? sec : 0);
+    };
+
+    audio.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(0);
+    };
+
+    audio.src = url;
+  });
+}
