@@ -1017,3 +1017,323 @@ body.autobgm-modal-open{ overflow:hidden; }
     width:auto !important;             /* 모바일에선 폭 고정 풀어주기 */
   }
 }
+
+/* =========================
+   FreeSources UI 프리소스 UI (Modal)
+   ========================= */
+
+.abgm-fs-wrap{
+  padding:14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  background:rgba(0,0,0,.18);
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  max-height:85vh;   /* freesources.html 인라인에 이미 있으면 중복 OK */
+  position: relative;
+  overflow: visible;
+}
+
+#abgm_fs_tag_picker{
+  position: absolute;
+  z-index: 50;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-content:flex-start;
+  overflow:auto;
+  padding:8px;
+}
+
+/* top bar */
+.abgm-fs-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+/* tabs */
+.abgm-fs-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  width:100%;
+  max-width:300px;
+}
+
+.abgm-fs-tab{
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04);
+  border-radius:10px;
+  padding:10px 16px;
+  text-align:center;
+  opacity:.65;
+  color:rgba(255,255,255,.75);
+  transition:all .15s ease;
+  cursor:pointer;
+  font-size:14px;
+}
+.abgm-fs-tab:hover{
+  opacity:.85;
+  background:rgba(255,255,255,.08);
+}
+.abgm-fs-tab.is-active{
+  opacity:1;
+  color:rgba(255,255,255,.95);
+  background:rgba(255,255,255,.14);
+  border-color:rgba(255,255,255,.22);
+  transform:none;
+  box-shadow:none;
+}
+
+/* search row */
+.abgm-fs-searchrow{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.abgm-fs-search{
+  flex:1;
+  min-width:160px;
+  padding:9px 11px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.25);
+  color:inherit;
+  box-sizing:border-box;
+}
+
+.abgm-fs-clear{
+  white-space:nowrap;
+}
+
+/* preview 볼륨들 */
+.abgm-fs-prevrow{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap; /* 화면 좁을 때 안전빵 */
+}
+
+.abgm-fs-prevlabel{
+  opacity:.8;
+  white-space:nowrap;
+}
+
+.abgm-fs-prevvol{
+  width: clamp(160px, 32vw, 320px);
+  max-width: 360px;
+  min-width: 160px;
+  flex: 0 1 auto;
+}
+
+.abgm-fs-prevval{
+  width: 54px;
+  text-align:right;
+  opacity:.85;
+  white-space:nowrap;
+}
+
+.abgm-fs-prevlock{
+  width: 34px;
+  height: 30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 10px;
+}
+
+.abgm-fs-prevvol:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+/* category bar */
+.abgm-fs-catbar{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:repeat(6, 1fr);
+  gap:10px;
+}
+
+.abgm-fs-cat{
+  width:100%;
+  border-radius:10px;
+  padding:10px 8px;
+  text-align:center;
+  opacity:.65;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  transition:all .15s ease;
+  cursor:pointer;
+  font-size:13px;
+}
+.abgm-fs-cat:hover{
+  opacity:.85;
+  background:rgba(255,255,255,.08);
+}
+.abgm-fs-cat.is-active{
+  opacity:1;
+  background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.2);
+  box-shadow:none;
+}
+
+/* dropdown picker (doesn't "consume space" vibe) */
+.abgm-fs-picker{
+  position:absolute;
+  left:14px;
+  right:14px;
+  top:112px; /* 대충: 탭+검색+카테고리 아래. 필요하면 JS로 catbar 기준으로 계산도 가능 */
+  z-index:3;
+
+  padding:10px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:rgba(0,0,0,.88);
+  backdrop-filter: blur(6px);
+
+  max-height:180px;
+  overflow:auto;
+}
+
+.abgm-fs-tagpick{
+  width:auto !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  margin:4px 6px 0 0;
+  flex:0 0 auto !important;
+  white-space:nowrap;
+  padding:8px 10px;
+  border-radius:10px;
+  opacity:.9;
+}
+
+/* list */
+.abgm-fs-list{
+  margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  flex:1 1 auto;
+  min-height:0;      /* flex에서 overflow 먹이려면 필수 */
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+/* item row */
+.abgm-fs-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:rgba(0,0,0,.22);
+  transition:background .15s ease;
+}
+.abgm-fs-item:hover{
+  background:rgba(0,0,0,.32);
+}
+
+.abgm-fs-main{
+  flex:1 1 auto;
+  min-width:0; /* 이거 중요: flex 자식이 텍스트 오버플로우 제대로 먹게 */
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  background:transparent;
+  border:0;
+  color:inherit;
+  padding:0;
+  cursor:pointer;
+  text-align:left;
+}
+
+.abgm-fs-name{
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* flex 자식 텍스트는 min-width:0 없으면 안 줄어듦 */
+.abgm-fs-item { min-width: 0; }
+.abgm-fs-main { min-width: 0; }  /* 이게 제일 중요 */
+.abgm-fs-name { min-width: 0; }
+
+/* 모바일: 2줄까지 허용 + 라인클램프 */
+@media (max-width: 520px){
+  .abgm-fs-name{
+    white-space: nowrap;          /* 한 줄 고정 */
+    overflow: hidden;             /* 넘치면 숨김 */
+    text-overflow: ellipsis;
+    display: block;
+  }
+}
+
+.abgm-fs-time{
+  opacity:.75;
+  font-size:12px;
+}
+
+.abgm-fs-side{
+  flex:0 0 auto;
+  width: auto;
+  min-width:0px;
+  max-width:none;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+/* actions default */
+.abgm-fs-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  width:auto;
+}
+
+/* tag panel (replaces action area) */
+.abgm-fs-tagpanel{
+  width:100%;
+  max-height:80px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.3);
+  
+  /* 가로 배치용 */
+  display:none; /* 기본은 숨김 */
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:flex-start;
+}
+
+.abgm-fs-tag{
+  display:inline-block;
+  flex-shrink:0;
+  margin:0;
+  border-radius:8px;
+  padding:6px 12px;
+  font-size:11px;
+  opacity:.88;
+  white-space:nowrap;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+}
+
+/* toggle class */
+.abgm-fs-item.show-tags .abgm-fs-actions{ display:none; }
+.abgm-fs-item.show-tags .abgm-fs-tagpanel{ display:flex; }
